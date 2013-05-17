@@ -63,6 +63,17 @@ class Sink extends Cell {
 
     LinkedHashMap<Integer, Double> result = new LinkedHashMap<Integer, Double>();
 
+    /* We first add all the densities */
+    Iterator<Entry<Integer, Double>> densities_it = densities
+        .entrySet()
+        .iterator();
+    Entry<Integer, Double> entry;
+    while (densities_it.hasNext()) {
+      entry = densities_it.next();
+      result.put(new Integer(entry.getKey()), new Double(entry.getValue()));
+    }
+    
+    /* Then we add the in_flows */
     Iterator<Entry<Integer, Double>> iterator_in_flows = in_flows
         .entrySet().iterator();
     Entry<Integer, Double> f_in;
@@ -74,7 +85,7 @@ class Sink extends Cell {
       commodity = f_in.getKey();
       in_flow = f_in.getValue();
 
-      density = densities.get(commodity);
+      density = result.get(commodity);
       if (density == null) {
         density = delta_t * in_flow;
       } else {

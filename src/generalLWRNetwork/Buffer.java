@@ -67,6 +67,19 @@ public class Buffer extends Cell {
       LinkedHashMap<Integer, Double> out_flows, double delta_t) {
 
     LinkedHashMap<Integer, Double> result = new LinkedHashMap<Integer, Double>();
+    
+    /* We first add all the densities */
+    Iterator<Entry<Integer, Double>> densities_it = densities
+        .entrySet()
+        .iterator();
+    Entry<Integer, Double> entry;
+    while (densities_it.hasNext()) {
+      entry = densities_it.next();
+      result.put(new Integer(entry.getKey()), new Double(entry.getValue()));
+    }
+
+
+    /* We update the densities for the flow that have out_flows */
     Iterator<Entry<Integer, Double>> iterator_out_flows =
         out_flows.entrySet().iterator();
     Entry<Integer, Double> f_out;
@@ -78,7 +91,7 @@ public class Buffer extends Cell {
       commodity = f_out.getKey();
       out_flow = f_out.getValue();
 
-      density = densities.get(commodity);
+      density = result.get(commodity);
       assert density != null : "In the buffer, the density of an existing commodity should not be null";
 
       density = density - delta_t * out_flow;
@@ -86,6 +99,8 @@ public class Buffer extends Cell {
 
       if (density != 0) {
         result.put(commodity, density);
+      } else {
+        result.remove(commodity);
       }
     }
     return result;

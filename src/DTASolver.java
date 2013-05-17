@@ -55,6 +55,8 @@ public class DTASolver {
     System.out.println("Printing the compact form");
     lwr_network.print();
     
+    lwr_network.printInternalSplitRatios();
+    
     Demand demand = new Demand(time_discretization);
     demand.add(0, 3);
     demand.add(1, 4);
@@ -74,29 +76,25 @@ public class DTASolver {
       profiles[k] = lwr_network.emptyProfile();
     }
 
-    for (int k = 0; k < time_discretization.getNb_steps() - 1; k++) {
+    for (int k = 0; k < time_discretization.getNb_steps(); k++) {
       if (k == 0) {
-        profiles[k] = lwr_network.simulateNextProfile(
-            lwr_network.emptyProfile(),
-            lwr_network.emptyProfile(), delta_t,
-            total_demand[k], splits.get(k),
-            k);
+        profiles[k] = lwr_network.emptyProfile();
       } else if (k == 1) {
-        profiles[k] = lwr_network.simulateNextProfile(
+        profiles[k] = lwr_network.simulateProfileFrom(
             lwr_network.emptyProfile(),
             profiles[k - 1], delta_t,
-            total_demand[k], splits.get(k),
-            k);
+            total_demand[k-1], splits.get(k-1),
+            k-1);
       } else {
-        profiles[k] = lwr_network.simulateNextProfile(profiles[k - 2],
+        profiles[k] = lwr_network.simulateProfileFrom(profiles[k - 2],
             profiles[k - 1], delta_t,
-            total_demand[k], splits.get(k),
-            k);
+            total_demand[k-1], splits.get(k-1),
+            k-1);
       }
 
       if (k > 0) {
-        System.out.println("Printing profile at time step " + (k - 1));
-        profiles[k - 1].print();
+        System.out.println("****** Printing profile at time step " + (k-1) + "********");
+        profiles[k-1].print();
       }
     }
     /*

@@ -22,11 +22,6 @@ public class Junction {
     this.next = successor.clone();
   }
 
-
-  public void updateConnectedCells() {
-    
-  }
-
   public int getUniqueId() {
     return unique_id;
   }

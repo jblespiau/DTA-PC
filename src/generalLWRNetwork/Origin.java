@@ -88,7 +88,7 @@ class Origin {
         total_density += demand * split_entry.getValue();
         new_densities.put(commodity, demand * split_entry.getValue());
       } else {
-        total_density = previous_density + demand * split_entry.getValue();
+        total_density += previous_density + demand * split_entry.getValue();
         new_densities.put(commodity, previous_density + demand
             * split_entry.getValue());
       }

@@ -1,5 +1,6 @@
 package generalNetwork.state.splitRatios;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 
 /**
@@ -29,4 +30,12 @@ public class IntertemporalJunctionSplitRatios {
   public void addCompliantSplitRatio(int in_link_id, int out_link_id, int commodity, double split) {
     compliant_split_ratios.put(new Triplet(in_link_id, out_link_id, commodity), split);
   }
+
+  @Override
+  public String toString() {
+    return "IntertemporalJunctionSplitRatios [non_compliant_split_ratios="
+        + Arrays.toString(non_compliant_split_ratios)
+        + ",\n compliant_split_ratios=" + compliant_split_ratios + "]";
+  }
+  
 }

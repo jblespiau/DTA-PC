@@ -37,4 +37,10 @@ public class Triplet {
       return false;
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "Triplet [in=" + incoming + ", out=" + outgoing
+        + ", c=" + commodity + "]";
+  }
 }

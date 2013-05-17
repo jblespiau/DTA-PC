@@ -36,7 +36,14 @@ public class IntertemporalSplitRatios {
 
   public void addCompliantSRToJunction(int in_id, int out_id, int commodity,
       int split, Junction junction) {
-    junctions_split_ratios.get(junction.getUniqueId()).addCompliantSplitRatio(in_id, out_id,
+    junctions_split_ratios.get(junction.getUniqueId()).addCompliantSplitRatio(
+        in_id, out_id,
         commodity, split);
+  }
+
+  @Override
+  public String toString() {
+    return "IntertemporalSplitRatios \n[junctions_split_ratios=\n"
+        + junctions_split_ratios + "]";
   }
 }

@@ -97,6 +97,19 @@ public class LWR_network {
 
   }
 
+  public void printInternalSplitRatios() {
+    System.out.println("Printing the internal split ratios:");
+    System.out.println(internal_split_ratios.toString());
+  }
+
+  public int getNb_Cells() {
+    return cells.length;
+  }
+
+  public int getNb_Junctions() {
+    return junctions.length;
+  }
+
   public void addCell(Cell c) {
     cells[c.getUniqueId()] = c;
   }
@@ -187,7 +200,7 @@ public class LWR_network {
    * 
    */
   /* Works for only one source, one destination */
-  public Profile simulateNextProfile(Profile previous_profile, Profile p,
+  public Profile simulateProfileFrom(Profile previous_profile, Profile p,
       double delta_t, Double origin_demand, HashMapPairDouble splits,
       int time_step) {
     assert p.size() == cells.length : "The profile size must correspond to the size of the network";
@@ -237,7 +250,13 @@ public class LWR_network {
         CellInfo previous = p.get(j.getPrev()[0]);
         CellInfo next = p.get(j.getNext()[0]);
         flow = Math.min(next.supply, previous.demand);
-        previous.updateOutFlows(flow);
+        if (j_id == 0) {
+          System.out.println("Flow in Junction 0 at time step " + time_step
+              + ": " + flow);
+          previous.updateOutFlows(flow);
+          System.out.println("Previous cellInfo ");
+          previous.print();
+        }
         next.updateInFlows(flow);
       } else if (previous_cells.length == 1) {
 
@@ -278,10 +297,6 @@ public class LWR_network {
           entry = iterator.next();
           triplet = entry.getKey();
           beta_ijc = entry.getValue();
-
-          assert cell_i != null;
-          assert cell_i.partial_densities != null;
-          assert triplet != null;
 
           density_ic = cell_i.partial_densities.get(triplet.commodity);
           if (density_ic == null)
@@ -349,6 +364,7 @@ public class LWR_network {
         System.exit(1);
       }
     }
+
     /* Creation of the new profile with the new densities */
     LinkedHashMap<Integer, Double> new_densities, densities, in_flows, out_flows;
     CellInfo cell_info;
@@ -368,25 +384,6 @@ public class LWR_network {
     return next_profile;
   }
 
-  public void printNetwork() {
-    System.out.println("Cells:");
-    printCells();
-    System.out.println("Junctions:");
-    printJunctions();
-  }
-
-  private void printCells() {
-    for (int i = 0; i < cells.length; i++) {
-      System.out.println(cells[i].toString());
-    }
-  }
-
-  private void printJunctions() {
-    for (int i = 0; i < junctions.length; i++) {
-      System.out.println(junctions[i].toString());
-    }
-  }
-
   public Profile emptyProfile() {
     Profile initial_profile = new Profile(cells.length);
     for (int cell_id = 0; cell_id < cells.length; cell_id++) {
@@ -403,11 +400,4 @@ public class LWR_network {
     return res;
   }
 
-  public int getNb_Cells() {
-    return cells.length;
-  }
-
-  public int getNb_Junctions() {
-    return junctions.length;
-  }
 }
