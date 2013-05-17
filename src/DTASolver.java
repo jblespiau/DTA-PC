@@ -1,18 +1,15 @@
-import java.util.ArrayList;
-import java.util.LinkedList;
-
 import generalLWRNetwork.DiscretizedGraph;
 import generalLWRNetwork.LWR_network;
+import generalNetwork.data.Json_data;
+import generalNetwork.data.demand.DemandFactory;
+import generalNetwork.data.demand.DemandsFactory;
 import generalNetwork.graph.Graph;
-import generalNetwork.graph.MutableGraph;
 import generalNetwork.graph.json.JsonFactory;
 import generalNetwork.state.Profile;
-import generalNetwork.state.splitRatios.IntertemporalJunctionSplitRatios;
 import generalNetwork.state.splitRatios.IntertemporalOriginSplitRatios;
 import model.networkFactory.NormalRoad;
 import model.networkFactory.Path;
 
-import demandFactory.Demand;
 import dta_solver.*;
 
 /**
@@ -35,12 +32,13 @@ public class DTASolver {
     int nb_steps = 10;
     double delta_t = 1;
     Discretization time_discretization = new Discretization(delta_t, nb_steps);
+    // createDemand(time_discretization, 1);
 
     /* Creation of the network */
     JsonFactory json = new JsonFactory(true);
 
     System.out.print("Loading of the graph from JSON...");
-    Graph json_graph = json.fromFile("graphs/parallelPath.json");
+    Graph json_graph = json.graphFromFile("graphs/parallelPath.json");
     System.out.println("Done");
 
     System.out.print("Discretization of the graph...");
@@ -54,10 +52,16 @@ public class DTASolver {
 
     System.out.println("Printing the compact form");
     lwr_network.print();
-    
+
     lwr_network.printInternalSplitRatios();
-    
-    Demand demand = new Demand(time_discretization);
+
+    Json_data demands = json.dataFromFile("graphs/parallelPathData.json");
+    DemandsFactory df = new DemandsFactory(time_discretization,
+        demands.delta_t, demands.demands, lwr_network.getJunctions());
+    DemandFactory demand = new DemandFactory(time_discretization);
+
+    System.out.println("Demands: " + df.toString());
+
     demand.add(0, 3);
     demand.add(1, 4);
     demand.add(2, 5);
@@ -83,18 +87,19 @@ public class DTASolver {
         profiles[k] = lwr_network.simulateProfileFrom(
             lwr_network.emptyProfile(),
             profiles[k - 1], delta_t,
-            total_demand[k-1], splits.get(k-1),
-            k-1);
+            total_demand[k - 1], splits.get(k - 1),
+            k - 1);
       } else {
         profiles[k] = lwr_network.simulateProfileFrom(profiles[k - 2],
             profiles[k - 1], delta_t,
-            total_demand[k-1], splits.get(k-1),
-            k-1);
+            total_demand[k - 1], splits.get(k - 1),
+            k - 1);
       }
 
       if (k > 0) {
-        System.out.println("****** Printing profile at time step " + (k-1) + "********");
-        profiles[k-1].print();
+        System.out.println("****** Printing profile at time step " + (k - 1)
+            + "********");
+        profiles[k - 1].print();
       }
     }
     /*
@@ -102,6 +107,31 @@ public class DTASolver {
      * LWR_network lwr_network = new LWR_network(discretized_graph);
      * lwr_network.printNetwork();
      */
+  }
+
+  public static void createDemand(Discretization time, int nb_origins) {
+    DemandsFactory df = new DemandsFactory(time, nb_origins);
+
+    DemandFactory demand = new DemandFactory(time);
+    demand.add(0, 1);
+    demand.add(1, 2);
+    demand.add(3, 3);
+    demand.add(4, 2);
+    demand.add(5, 3);
+    demand.add(6, 4);
+    demand.add(7, 3);
+    demand.add(8, 2);
+    demand.add(9, 3);
+    demand.add(10, 2);
+
+    for (int i = 0; i < nb_origins; i++) {
+      df.put(i, demand);
+    }
+
+    Json_data jsondata = new Json_data(df.buildDemands().buildJsonDemand(),
+        null);
+    JsonFactory json = new JsonFactory(true);
+    json.toFile(jsondata, "test.json");
   }
 
   public static void parallelNetwork() {

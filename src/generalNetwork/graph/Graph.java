@@ -41,7 +41,7 @@ public class Graph {
   Destination[] destinations;
 
   static public Graph fromFile(String file_name) {
-    return new JsonFactory().fromFile(file_name);
+    return new JsonFactory().graphFromFile(file_name);
   }
 
   /**

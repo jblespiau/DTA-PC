@@ -1,4 +1,4 @@
-package demandFactory;
+package generalNetwork.data.demand;
 
 import java.util.Comparator;
 

@@ -1,5 +1,6 @@
 package generalNetwork.graph.json;
 
+import generalNetwork.data.Json_data;
 import generalNetwork.graph.Graph;
 import generalNetwork.graph.Node;
 
@@ -63,7 +64,7 @@ public class JsonFactory {
 
   }
 
-  public Graph fromFile(String file_name) {
+  public Graph graphFromFile(String file_name) {
 
     Reader reader = null;
     try {
@@ -86,5 +87,43 @@ public class JsonFactory {
     }
 
     return graph;
+  }
+
+  public void toFile(Json_data data, String file_name) {
+    Writer writer = null;
+    try {
+      writer = new FileWriter(file_name);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    gson.toJson(data, Json_data.class, writer);
+
+    try {
+      if (writer != null)
+        writer.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  public Json_data dataFromFile(String file_name) {
+    Reader reader = null;
+    try {
+      reader = new FileReader(file_name);
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+
+    Json_data data = gson.fromJson(reader, Json_data.class);
+
+    try {
+      if (reader != null)
+        reader.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return data;
   }
 }

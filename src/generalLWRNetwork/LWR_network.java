@@ -130,6 +130,10 @@ public class LWR_network {
     return junctions[i];
   }
 
+  public Junction[] getJunctions() {
+    return junctions;
+  }
+
   public int getNumber_paths() {
     int result = 0;
     for (int i = 0; i < sources.length; i++) {
