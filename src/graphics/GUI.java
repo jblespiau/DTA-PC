@@ -7,7 +7,7 @@ import javax.swing.JPanel;
 
 /**
  * @class GUI
- * @brief Creats a fram to display a panel
+ * @brief Creates a frame to display a panel
  *
  */
 public class GUI extends JFrame {

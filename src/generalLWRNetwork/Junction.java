@@ -2,12 +2,13 @@ package generalLWRNetwork;
 
 import generalNetwork.state.CellInfo;
 import generalNetwork.state.Profile;
-import generalNetwork.state.splitRatios.JunctionSplitRatios;
-import generalNetwork.state.splitRatios.Triplet;
+import generalNetwork.state.internalSplitRatios.JunctionSplitRatios;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+
+import dataStructures.Triplet;
 
 /**
  * @brief Represent a junctions between cells

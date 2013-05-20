@@ -14,11 +14,12 @@ import org.jfree.data.xy.XYSeriesCollection;
 import dta_solver.Discretization;
 
 /**
- * @brief It will represents a demand graph of flow which is independent of any
- *        variables of the problem (in particular delta_t)
+ * @brief Represents the graph of a function.
+ *        For instance it can be used to represent the flow in a form which is
+ *        independent of any variables of the problem (in particular delta_t)
  * 
  * 
- * @details To use it, first add the Points on your demand graph and then call
+ * @details To use it, first add the Points (x, f(x)) of the graph and then call
  *          the build function.
  * 
  *          For now, it is a constant piecewise function: you add points in the
@@ -26,11 +27,11 @@ import dta_solver.Discretization;
  *          time less than t being defined and attributes the same value.
  * 
  */
-public class DemandFactory {
+public class FunctionGraph {
   private TreeSet<Point> values;
   private Discretization time_discretization;
 
-  public DemandFactory(Discretization time) {
+  public FunctionGraph(Discretization time) {
     this.time_discretization = time;
     values = new TreeSet<Point>(new PointComparator());
   }

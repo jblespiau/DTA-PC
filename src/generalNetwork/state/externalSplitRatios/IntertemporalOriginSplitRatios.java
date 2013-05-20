@@ -1,12 +1,17 @@
-package generalNetwork.state.splitRatios;
+package generalNetwork.state.externalSplitRatios;
+
+
 
 import java.util.Arrays;
+
+import dataStructures.HashMapPairDouble;
+import dataStructures.PairBufferCommodity;
 
 public class IntertemporalOriginSplitRatios {
 
   /*
    * split_ratios[k] are the split ratios for the origin at time step k
-   * HashMapPairDouble.get(Pair(buffer_id, commodity)) is the split ratio of commotidy 
+   * HashMapPairDouble.get(Pair(buffer_id, commodity)) is the split ratio of commodity 
    * into the buffer which id is buffer_id
    */
   HashMapPairDouble[] split_ratios;

@@ -16,7 +16,7 @@ public class DemandsFactory {
 
   private Discretization time;
   /* Maps origin_id -> demand for all time steps */
-  LinkedHashMap<Integer, DemandFactory> demands;
+  LinkedHashMap<Integer, FunctionGraph> demands;
 
   /**
    * 
@@ -33,11 +33,11 @@ public class DemandsFactory {
       JsonDemand[] json_demands,
       Junction[] junctions) {
     this.time = time;
-    demands = new LinkedHashMap<Integer, DemandFactory>(json_demands.length);
+    demands = new LinkedHashMap<Integer, FunctionGraph>(json_demands.length);
 
-    DemandFactory tmp;
+    FunctionGraph tmp;
     for (int i = 0; i < json_demands.length; i++) {
-     tmp = new DemandFactory(time);
+     tmp = new FunctionGraph(time);
      for (int k = 0; k < json_demands[i].demand.length; k++) {
         tmp.add(k * delta_t, json_demands[i].demand[k]);
       }
@@ -48,18 +48,18 @@ public class DemandsFactory {
 
   public DemandsFactory(Discretization time, int nb_origins) {
     this.time = time;
-    demands = new LinkedHashMap<Integer, DemandFactory>(nb_origins);
+    demands = new LinkedHashMap<Integer, FunctionGraph>(nb_origins);
   }
 
-  public void put(int origin_id, DemandFactory df) {
+  public void put(int origin_id, FunctionGraph df) {
     demands.put(origin_id, df);
   }
 
   public void put(int origin_id, int t, double demand) {
-    DemandFactory tmp = demands.get(origin_id);
+    FunctionGraph tmp = demands.get(origin_id);
 
     if (tmp == null) {
-      tmp = new DemandFactory(time);
+      tmp = new FunctionGraph(time);
       tmp.add(t, demand);
       demands.put(origin_id, tmp);
       return;
@@ -70,9 +70,9 @@ public class DemandsFactory {
   public Demands buildDemands() {
     Demands result = new Demands(demands.size());
 
-    Iterator<Entry<Integer, DemandFactory>> iterator =
+    Iterator<Entry<Integer, FunctionGraph>> iterator =
         demands.entrySet().iterator();
-    Entry<Integer, DemandFactory> entry;
+    Entry<Integer, FunctionGraph> entry;
     while (iterator.hasNext()) {
       entry = iterator.next();
       result.put(entry.getKey(), entry.getValue().buildDemand());

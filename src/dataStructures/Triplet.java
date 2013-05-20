@@ -1,5 +1,11 @@
-package generalNetwork.state.splitRatios;
+package dataStructures;
 
+/**
+ * @brief Tuple composed of the id of an incoming-link, outgoing-link and a
+ *        commodity.
+ *        It is used to specify split-ratios at a junction 
+ *        Used in @ref IntertemporalJunctionSplitRatios.java
+ */
 public class Triplet {
 
   public int incoming, outgoing, commodity;

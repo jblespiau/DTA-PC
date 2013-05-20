@@ -1,4 +1,4 @@
-package generalLWRNetwork;
+package dataStructures;
 
 class Pair {
 

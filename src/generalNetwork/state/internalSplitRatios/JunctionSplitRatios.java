@@ -1,17 +1,21 @@
-package generalNetwork.state.splitRatios;
+package generalNetwork.state.internalSplitRatios;
+
 
 
 import java.util.LinkedHashMap;
+
+import dataStructures.HashMapTripletDouble;
+import dataStructures.Triplet;
 
 /**
  * @brief Describe the split ratios for a junction at a given time step
  */
 public class JunctionSplitRatios {
 
-  public HashMapPairDouble non_compliant_split_ratios;
+  public HashMapTripletDouble non_compliant_split_ratios;
   public LinkedHashMap<Triplet, Double> compliant_split_ratios;
 
-  public JunctionSplitRatios(HashMapPairDouble nc, LinkedHashMap<Triplet, Double> c) {
+  public JunctionSplitRatios(HashMapTripletDouble nc, LinkedHashMap<Triplet, Double> c) {
     non_compliant_split_ratios = nc;
     compliant_split_ratios = c;
   }

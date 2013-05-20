@@ -1,12 +1,12 @@
 import generalLWRNetwork.DiscretizedGraph;
 import generalLWRNetwork.LWR_network;
 import generalNetwork.data.Json_data;
-import generalNetwork.data.demand.DemandFactory;
+import generalNetwork.data.demand.FunctionGraph;
 import generalNetwork.data.demand.DemandsFactory;
 import generalNetwork.graph.Graph;
 import generalNetwork.graph.json.JsonFactory;
 import generalNetwork.state.Profile;
-import generalNetwork.state.splitRatios.IntertemporalOriginSplitRatios;
+import generalNetwork.state.externalSplitRatios.IntertemporalOriginSplitRatios;
 import model.networkFactory.NormalRoad;
 import model.networkFactory.Path;
 
@@ -58,7 +58,7 @@ public class DTASolver {
     Json_data demands = json.dataFromFile("graphs/parallelPathData.json");
     DemandsFactory df = new DemandsFactory(time_discretization,
         demands.delta_t, demands.demands, lwr_network.getJunctions());
-    DemandFactory demand = new DemandFactory(time_discretization);
+    FunctionGraph demand = new FunctionGraph(time_discretization);
 
     System.out.println("Demands: " + df.toString());
 
@@ -112,7 +112,7 @@ public class DTASolver {
   public static void createDemand(Discretization time, int nb_origins) {
     DemandsFactory df = new DemandsFactory(time, nb_origins);
 
-    DemandFactory demand = new DemandFactory(time);
+    FunctionGraph demand = new FunctionGraph(time);
     demand.add(0, 1);
     demand.add(1, 2);
     demand.add(3, 3);

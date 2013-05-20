@@ -21,20 +21,20 @@ public class Json_data {
 
   /*
    * The description of the demand at every origin.
-   * Converted in DemandsFactory
+   * Converted in @ref DemandsFactory.java
    */
   @Expose
   public JsonDemand[] demands;
   /*
    * The description of the split-ratios at every complex junctions
    * (i.e. not nx1)
-   * Converted in ??
+   * Converted in @ref IntertemporalSplitRatios.java
    */
   @Expose
-  public JsonSplitRatios[] split_ratios;
+  public JsonJunctionSplitRatios[] compliant_split_ratios;
 
-  public Json_data(JsonDemand[] d, JsonSplitRatios[] sr) {
+  public Json_data(JsonDemand[] d, JsonJunctionSplitRatios[] sr) {
     demands = d;
-    split_ratios = sr;
+    compliant_split_ratios = sr;
   }
 }

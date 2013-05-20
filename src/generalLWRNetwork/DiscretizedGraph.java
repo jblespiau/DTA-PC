@@ -4,13 +4,14 @@ import generalNetwork.graph.Graph;
 import generalNetwork.graph.Link;
 import generalNetwork.graph.Node;
 import generalNetwork.graph.Path;
-import generalNetwork.state.splitRatios.IntertemporalSplitRatios;
+import generalNetwork.state.internalSplitRatios.IntertemporalSplitRatios;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 
 public class DiscretizedGraph {
 
+  // TODO: turn everything in private
   /*
    * Contains the junctions which were not present in the graph added
    * because of the discretization
@@ -30,11 +31,10 @@ public class DiscretizedGraph {
   /* Contains the destinations */
   Destination[] destinations;
   int total_nb_junctions = 0, total_nb_cells = 0;
-  
 
   IntertemporalSplitRatios split_ratios;
   int nb_paths;
-  
+
   public DiscretizedGraph(Graph g, double delta_t, int time_steps) {
     new_cells = new LinkedList<Cell>();
     new_junctions = new LinkedList<Junction>();
@@ -215,5 +215,38 @@ public class DiscretizedGraph {
      * node is Nx1 junction
      */
     assert (junctions[links[current_link_id].to.getUnique_id()].getNext().length <= 1) : "The arrival of a path should not have multiple exits";
+  }
+
+  /**
+   * @brief Give the junction created from the node of the given id
+   * @param node_id
+   *          The id of a node in the general graph
+   * @return The junction that corresponds to this node in the discretized
+   *         version
+   */
+  public Junction nodeToJunction(int node_id) {
+    return junctions[node_id];
+  }
+
+  /**
+   * @brief Returns the first cell of the equivalent representation of the link
+   *        of the given id
+   * @param link_id
+   *          The id of the link in the general graph
+   * @return The first cell of the discretized version of the link
+   */
+  public Cell firstCellofLink(int link_id) {
+    return link_to_cells[link_id].begin;
+  }
+
+  /**
+   * @brief Returns the last cell of the equivalent representation of the link
+   *        of the given id
+   * @param link_id
+   *          The id of the link in the general graph
+   * @return The last cell of the discretized version of the link
+   */
+  public Cell lastCellofLink(int link_id) {
+    return link_to_cells[link_id].end;
   }
 }

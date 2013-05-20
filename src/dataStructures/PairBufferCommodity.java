@@ -1,5 +1,9 @@
-package generalNetwork.state.splitRatios;
+package dataStructures;
 
+/**
+ * @brief Tuple containing the id of a buffer and the one of a commodity.
+ *        Used to describe the split-ratios at an origin
+ */
 public class PairBufferCommodity {
 
   public int buffer_id, commodity;

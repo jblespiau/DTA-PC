@@ -1,5 +1,8 @@
-package dataStructure;
+package dataStructures;
 
+/**
+ * @brief A simple mutable implementation of Double. Used in @ref HollowHashMap
+ */
 public class MutableDouble {
 
   public double d;

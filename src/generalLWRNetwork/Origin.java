@@ -1,13 +1,14 @@
 package generalLWRNetwork;
 
 import generalNetwork.state.Profile;
-import generalNetwork.state.splitRatios.HashMapPairDouble;
-import generalNetwork.state.splitRatios.PairBufferCommodity;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
+
+import dataStructures.HashMapPairDouble;
+import dataStructures.PairBufferCommodity;
 
 class Origin {
 

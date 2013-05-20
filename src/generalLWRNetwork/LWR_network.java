@@ -2,15 +2,15 @@ package generalLWRNetwork;
 
 import generalNetwork.state.CellInfo;
 import generalNetwork.state.Profile;
-import generalNetwork.state.splitRatios.HashMapPairDouble;
-import generalNetwork.state.splitRatios.IntertemporalSplitRatios;
-import generalNetwork.state.splitRatios.JunctionSplitRatios;
-import generalNetwork.state.splitRatios.Triplet;
+import generalNetwork.state.internalSplitRatios.IntertemporalSplitRatios;
+import generalNetwork.state.internalSplitRatios.JunctionSplitRatios;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.ListIterator;
 import java.util.Map.Entry;
+
+import dataStructures.HashMapPairDouble;
 
 public class LWR_network {
 
@@ -155,44 +155,6 @@ public class LWR_network {
   }
 
   /**
-   * @brief Add flow in a given cell_info representing a buffer
-   * @param previous_densities
-   *          This is NOT modified
-   * @param demands
-   *          The demand we want to add in the buffer
-   * @param cell_info
-   *          The information of the buffer
-   */
-  private void injectDemand(
-      LinkedHashMap<Integer, Double> previous_densities,
-      LinkedHashMap<Integer, Double> demands, CellInfo cell_info) {
-
-    LinkedHashMap<Integer, Double> new_densities = new LinkedHashMap<Integer, Double>(
-        previous_densities.size());
-
-    Iterator<Entry<Integer, Double>> demand_iterator = demands.entrySet()
-        .iterator();
-    Entry<Integer, Double> pair;
-    Double previous_density;
-    double total_density = 0;
-    while (demand_iterator.hasNext()) {
-      pair = demand_iterator.next();
-      previous_density = previous_densities.get(pair.getKey());
-
-      if (previous_density == null) {
-        total_density += pair.getValue();
-        new_densities.put(pair.getKey(), pair.getValue());
-      } else {
-        total_density += previous_density + pair.getValue();
-        new_densities.put(pair.getKey(),
-            previous_density + pair.getValue());
-      }
-    }
-    cell_info.total_density = total_density;
-    cell_info.partial_densities = new_densities;
-  }
-
-  /**
    * @details - Add the demand in the buffer of the previous profile to get
    *          the buffer of the profile p
    *          - Computes the demand and supply of profile p
@@ -201,7 +163,7 @@ public class LWR_network {
    * @param previous_profile
    *          This is NOT modified
    * @param p
-   *          Only the buffer of this profile are modified
+   *          Only the buffers of this profile are modified
    * @param demands
    *          demands[i] is the demand {(commodity, value)} we have to put
    *          in entries[i]
@@ -253,7 +215,6 @@ public class LWR_network {
       JunctionSplitRatios junction_sr =
           internal_split_ratios.get(time_step, j_id);
       junctions[j_id].solveJunction(p, time_step, junction_sr, cells);
-
     }
 
     /* Creation of the new profile with the new densities */
