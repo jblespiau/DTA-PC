@@ -33,4 +33,10 @@ public class PairBufferCommodity {
       return false;
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "PairBufferCommodity [buffer_id=" + buffer_id + ", c="
+        + commodity + "]";
+  }
 }

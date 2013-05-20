@@ -38,4 +38,10 @@ public class IntertemporalOriginSplitRatios {
     }
 
   }
+
+  @Override
+  public String toString() {
+    return "IntertemporalOriginSplitRatios [split_ratios="
+        + Arrays.toString(split_ratios) + "]";
+  }
 }
