@@ -27,7 +27,12 @@ public class IntertemporalSplitRatios {
   }
 
   public JunctionSplitRatios get(int time_step, int junction_id) {
-    return junctions_split_ratios.get(junction_id).get(time_step);
+    IntertemporalJunctionSplitRatios sr = junctions_split_ratios
+        .get(junction_id);
+    if (sr == null)
+      return null;
+    else
+      return junctions_split_ratios.get(junction_id).get(time_step);
   }
 
   public IntertemporalJunctionSplitRatios get(int junction_id) {

@@ -73,7 +73,7 @@ public class DTASolver {
 
     splits.automatic_uniform_distribution(0, 2,
         time_discretization.getNb_steps(), 1);
-
+    System.out.println("External Split-ratios " + splits.toString());
     Profile[] profiles = new Profile[time_discretization.getNb_steps()];
 
     for (int k = 0; k < time_discretization.getNb_steps(); k++) {

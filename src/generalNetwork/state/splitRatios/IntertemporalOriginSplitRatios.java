@@ -1,5 +1,7 @@
 package generalNetwork.state.splitRatios;
 
+import java.util.Arrays;
+
 public class IntertemporalOriginSplitRatios {
 
   /*
@@ -26,7 +28,7 @@ public class IntertemporalOriginSplitRatios {
 
   public void automatic_uniform_distribution(int commodity_1, int commodity_n,
       int time_step, int nb_buffers) {
-    double share = 1.0 / ((double) nb_buffers);
+    double share = 1.0 / ((double) (commodity_n - commodity_1 + 1));
     for (int k = 0; k < time_step; k++) {
       for (int c = commodity_1; c <= commodity_n; c++) {
         for (int b = 0; b < nb_buffers; b++) {
