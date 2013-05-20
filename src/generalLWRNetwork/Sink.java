@@ -97,4 +97,9 @@ class Sink extends Cell {
     }
     return result;
   }
+
+  @Override
+  public boolean isSink() {
+    return true;
+  }
 }

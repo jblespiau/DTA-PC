@@ -111,4 +111,9 @@ public class Buffer extends Cell {
     return new LinkedHashMap<Integer, Double>();
   }
 
+  @Override
+  public boolean isSink() {
+    return false;
+  }
+
 }

@@ -25,6 +25,8 @@ public abstract class Cell {
    * ----Demand ---- Supply
    */
 
+  abstract public boolean isSink();
+  
   abstract public String toString();
 
   public abstract void print();

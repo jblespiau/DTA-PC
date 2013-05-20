@@ -195,4 +195,9 @@ class RoadChunk extends Cell {
     return result;
   }
 
+  @Override
+  public boolean isSink() {
+    return false;
+  }
+
 }
