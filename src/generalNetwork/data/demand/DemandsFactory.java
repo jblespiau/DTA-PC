@@ -37,8 +37,8 @@ public class DemandsFactory {
 
     DemandFactory tmp;
     for (int i = 0; i < json_demands.length; i++) {
-      tmp = new DemandFactory(time);
-      for (int k = 0; k < json_demands[i].demand.length; k++) {
+     tmp = new DemandFactory(time);
+     for (int k = 0; k < json_demands[i].demand.length; k++) {
         tmp.add(k * delta_t, json_demands[i].demand[k]);
       }
       demands.put(junctions[json_demands[i].origin_id].getUniqueId(),
