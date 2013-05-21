@@ -185,7 +185,8 @@ public class LWR_network {
       sources[b].injectDemand(previous_profile,
           p,
           origin_demand.get(sources[b], time_step),
-          splits.get(sources[b], time_step));
+          splits.get(sources[b], time_step), 
+          delta_t);
     }
 
     /* Computation of the demand and supply */

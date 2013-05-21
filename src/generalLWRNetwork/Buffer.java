@@ -78,7 +78,6 @@ public class Buffer extends Cell {
       result.put(new Integer(entry.getKey()), new Double(entry.getValue()));
     }
 
-
     /* We update the densities for the flow that have out_flows */
     Iterator<Entry<Integer, Double>> iterator_out_flows =
         out_flows.entrySet().iterator();

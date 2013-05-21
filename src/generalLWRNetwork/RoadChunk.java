@@ -189,7 +189,6 @@ class RoadChunk extends Cell {
         result.remove(commodity);
       else
         result.put(commodity, density);
-
     }
 
     return result;

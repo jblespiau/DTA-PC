@@ -131,4 +131,13 @@ public class CellInfo {
     in_flows.clear();
     out_flows.clear();
   }
+
+  public void recomputeTotalDensity() {
+    Iterator<Double> it = partial_densities.values().iterator();
+    double total_density = 0;
+    while (it.hasNext()) {
+      total_density += it.next();
+    }
+    this.total_density = total_density;
+  }
 }

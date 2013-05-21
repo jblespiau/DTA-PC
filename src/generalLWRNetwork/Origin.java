@@ -76,24 +76,20 @@ public class Origin {
    *          The split ratios to divide up the demand
    */
   public void injectDemand(Profile previous_profile, Profile p, Double demand,
-      HashMapIntegerDouble splits) {
+      HashMapIntegerDouble splits, double delta_t) {
 
     LinkedHashMap<Integer, Double> previous_densities;
     previous_densities = previous_profile.get(entries[0]).partial_densities;
 
-    LinkedHashMap<Integer, Double> new_densities = new LinkedHashMap<Integer, Double>();
-
-    /* We first put all the previous densities in the new hashmap */
-    
-    Iterator<Entry<Integer, Double>> density_iterator = previous_densities
-        .entrySet()
-        .iterator();
-    Entry<Integer, Double> entry;
-    while (density_iterator.hasNext()) {
-      entry = density_iterator.next();
-      new_densities.put(new Integer(entry.getKey().intValue()),
-          new Double(entry.getValue().doubleValue()));
-    }
+    /*
+     * The densities are the previous_profile densities to which we removed the
+     * out-flow
+     */
+    LinkedHashMap<Integer, Double> new_densities =
+        entries[0].getUpdatedDensity(previous_densities,
+            null,
+            previous_profile.get(entries[0].getUniqueId()).out_flows,
+            delta_t);
 
     /* Then we add the demand for every commodity */
     Iterator<Entry<Integer, Double>> split_iterator = splits
@@ -101,14 +97,12 @@ public class Origin {
         .iterator();
     Entry<Integer, Double> split_entry;
     Double previous_density;
-    double total_density = previous_profile.get(entries[0]).total_density;
     int commodity;
     while (split_iterator.hasNext()) {
       split_entry = split_iterator.next();
       commodity = split_entry.getKey();
 
       previous_density = new_densities.get(commodity);
-      total_density += demand * split_entry.getValue();
       if (previous_density == null) {
         new_densities.put(commodity, demand * split_entry.getValue());
       } else {
@@ -116,8 +110,12 @@ public class Origin {
             * split_entry.getValue());
       }
     }
-    p.get(entries[0]).total_density = total_density;
+    
     p.get(entries[0]).partial_densities = new_densities;
+    
+    /* We recompute the total_density */
+    p.get(entries[0]).recomputeTotalDensity();
+    
   }
 
   @Override
