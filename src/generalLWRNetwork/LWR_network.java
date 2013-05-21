@@ -18,7 +18,6 @@ public class LWR_network {
   private Destination[] sinks;
 
   private IntertemporalSplitRatios internal_split_ratios;
-  private int nb_commodities;
 
   /**
    * @brief Take a DiscretizedGraph and create the LWR_network compact
@@ -68,8 +67,6 @@ public class LWR_network {
     sinks = g.destinations.clone();
 
     internal_split_ratios = g.split_ratios;
-
-    nb_commodities = g.nb_paths;
 
     check();
   }
