@@ -6,6 +6,7 @@ import generalNetwork.graph.Node;
 import generalNetwork.graph.Path;
 import generalNetwork.state.internalSplitRatios.IntertemporalSplitRatios;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -26,6 +27,9 @@ public class DiscretizedGraph {
   LinkPair[] link_to_cells;
   /* junctions[i] contains the junctions representing nodes[i] */
   Junction[] junctions;
+
+  /* Maps node_id -> Origin */
+  public HashMap<Integer, Origin> node_to_origin;
   /* Contains the sources */
   Origin[] sources;
   /* Contains the destinations */
@@ -38,6 +42,7 @@ public class DiscretizedGraph {
   public DiscretizedGraph(Graph g, double delta_t, int time_steps) {
     new_cells = new LinkedList<Cell>();
     new_junctions = new LinkedList<Junction>();
+    node_to_origin = new HashMap<Integer, Origin>();
 
     /* Reset the unique id generators for cells and junctions */
     NetworkUIDFactory.resetCell_id();
@@ -67,6 +72,7 @@ public class DiscretizedGraph {
       sources[o] = new Origin(junctions[g.getOrigins()[o].id],
           g.getOrigins()[o].type,
           new_cells, new_junctions);
+      node_to_origin.put(g.getOrigins()[o].id, sources[o]);
     }
 
     /*
@@ -81,14 +87,21 @@ public class DiscretizedGraph {
     }
 
     /*
-     * We add the non-compliant split_ratios and the split ratios corresponding
-     * to the path of some commodities
+     * We add the compliant split_ratios corresponding to the different paths
      */
     split_ratios = new IntertemporalSplitRatios(junctions, time_steps);
-
+    
+    /*
+     * We need to know the commodities leaving each origins to be able
+     * to initialize default split ratios. It is when creating the commodities
+     * according to paths that we create this mapping
+     */
+    HashMap<Junction, LinkedList<Integer>> commodities_at_origins =
+        new HashMap<Junction, LinkedList<Integer>>(sources.length);
+    
     Path[] paths = g.getPaths();
     for (int i = 0; i < paths.length; i++) {
-      createSplitRatios(g, paths[i]);
+      createSplitRatios(g, paths[i], commodities_at_origins);
     }
     nb_paths = paths.length;
 
@@ -175,21 +188,32 @@ public class DiscretizedGraph {
   }
 
   /**
-   * @brief Build the split ratios for the compliant and non compliant
-   *        commodities
+   * @brief Build the split ratios for the compliant commodities
    */
-  private void createSplitRatios(Graph g, Path p) {
+  private void createSplitRatios(Graph g, Path p, HashMap<Junction, LinkedList<Integer>> commodities_at_origins) {
 
     Iterator<Integer> iterator = p.iterator();
     Link[] links = g.getLinks();
     Junction j;
     int previous_link_id = -1, current_link_id = -1;
+    LinkedList<Integer> commodities;
     while (iterator.hasNext()) {
       current_link_id = iterator.next();
 
       j = junctions[links[current_link_id].from.getUnique_id()];
+      assert j != null;
+      
+      // We add one commodity at the junction
+      commodities = commodities_at_origins.get(j);
+      if (commodities == null) {
+        commodities = new LinkedList<Integer>();
+        commodities_at_origins.put(j, commodities);
+      }
+      commodities.add(current_link_id + 1);
 
-      // There is nothing to do for 1xn junctions
+      
+      
+      // There is nothing to do for nx1 junctions
       if (!j.isMergingJunction()) {
         // We add a split ratio for the first junction (origin)
         // We have to take the id of the buffer placed before the junction
@@ -210,6 +234,20 @@ public class DiscretizedGraph {
       previous_link_id = current_link_id;
 
     }
+
+    /*
+     * We say to each origins how many commodities will leave from them
+     */
+    LinkedList<Integer> tmp;
+    for (int o = 0; o < sources.length; o++) {
+      tmp = commodities_at_origins.get(sources[o].junction);
+      if (tmp != null) {
+        sources[o].compliant_commodities = tmp;
+      } else {
+        assert false;
+      }
+    }
+
     /*
      * There is nothing to do for the last node. However we check that the last
      * node is Nx1 junction

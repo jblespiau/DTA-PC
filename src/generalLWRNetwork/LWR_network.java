@@ -1,16 +1,14 @@
 package generalLWRNetwork;
 
+import generalNetwork.data.demand.Demands;
 import generalNetwork.state.CellInfo;
 import generalNetwork.state.Profile;
+import generalNetwork.state.externalSplitRatios.IntertemporalOriginsSplitRatios;
 import generalNetwork.state.internalSplitRatios.IntertemporalSplitRatios;
 import generalNetwork.state.internalSplitRatios.JunctionSplitRatios;
 
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.ListIterator;
-import java.util.Map.Entry;
-
-import dataStructures.HashMapPairDouble;
 
 public class LWR_network {
 
@@ -90,6 +88,9 @@ public class LWR_network {
 
     /* We check that the internal_split_ratios is defined */
     assert (internal_split_ratios != null);
+
+    assert sources != null;
+    assert sinks != null;
   }
 
   public void print() {
@@ -171,17 +172,20 @@ public class LWR_network {
    */
   /* Works for only one source, one destination */
   public Profile simulateProfileFrom(Profile previous_profile, Profile p,
-      double delta_t, Double origin_demand, HashMapPairDouble splits,
+      double delta_t, Demands origin_demand,
+      IntertemporalOriginsSplitRatios splits,
       int time_step) {
     assert p.size() == cells.length : "The profile size must correspond to the size of the network";
-    // assert demands.length == sources.length :
-    // " The demands should correspond to the number of entries";
+    assert origin_demand.size() == sources.length : " The demands should correspond to the number of entries";
 
     Profile next_profile = new Profile(cells.length);
 
     /* We inject the demand in the buffers of the profile p */
     for (int b = 0; b < sources.length; b++) {
-      sources[b].injectDemand(previous_profile, p, origin_demand, splits);
+      sources[b].injectDemand(previous_profile,
+          p,
+          origin_demand.get(sources[b], time_step),
+          splits.get(sources[b], time_step));
     }
 
     /* Computation of the demand and supply */
@@ -250,6 +254,10 @@ public class LWR_network {
       res[i] = 1.0 / (double) res.length;
     }
     return res;
+  }
+
+  public Origin[] getSources() {
+    return sources;
   }
 
 }

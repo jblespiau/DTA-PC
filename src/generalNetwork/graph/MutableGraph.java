@@ -10,7 +10,7 @@ import java.util.Vector;
 import generalNetwork.graph.Destination;
 import generalNetwork.graph.Link;
 import generalNetwork.graph.Node;
-import generalNetwork.graph.Origin;
+import generalNetwork.graph.Source;
 
 public class MutableGraph {
 
@@ -19,7 +19,7 @@ public class MutableGraph {
   Vector<Link> links;
 
   Vector<Path> paths;
-  Vector<Origin> origins;
+  Vector<Source> origins;
   Vector<Destination> destinations;
 
   /**
@@ -36,7 +36,7 @@ public class MutableGraph {
     paths = new Vector<Path>(g.paths.length);
     paths.addAll(Arrays.asList(g.paths));
 
-    origins = new Vector<Origin>(g.origins.length);
+    origins = new Vector<Source>(g.origins.length);
     origins.addAll(Arrays.asList(g.origins));
 
     destinations = new Vector<Destination>(g.destinations.length);
@@ -52,7 +52,7 @@ public class MutableGraph {
     Scanner scanner = null;
 
     paths = new Vector<Path>(1);
-    origins = new Vector<Origin>(1);
+    origins = new Vector<Source>(1);
     destinations = new Vector<Destination>(1);
     System.out.println("Opening " + name);
     try {
@@ -102,7 +102,7 @@ public class MutableGraph {
     int nb_sources = scanner.nextInt();
     scanner.nextLine();
     for (int i = 0; i < nb_sources; i++) {
-      origins.add(new Origin(nodes.get(scanner.nextInt()).unique_id, "Origin"));
+      origins.add(new Source(nodes.get(scanner.nextInt()).unique_id, "Origin"));
     }
 
     // Destinations
@@ -117,11 +117,11 @@ public class MutableGraph {
   }
 
   public void addSingleBufferSource(Node s) {
-    origins.add(new Origin(s.unique_id, "SingleBuffer"));
+    origins.add(new Source(s.unique_id, "SingleBuffer"));
   }
 
   public void addMultipleBufferSource(Node s) {
-    origins.add(new Origin(s.unique_id, "MultipleBuffer"));
+    origins.add(new Source(s.unique_id, "MultipleBuffer"));
   }
 
   public void addSingleBufferDestination(Node d) {

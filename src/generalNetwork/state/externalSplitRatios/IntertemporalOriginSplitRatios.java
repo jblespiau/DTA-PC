@@ -1,47 +1,73 @@
 package generalNetwork.state.externalSplitRatios;
 
-
+import generalLWRNetwork.Origin;
 
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
 
-import dataStructures.HashMapPairDouble;
-import dataStructures.PairBufferCommodity;
+import dataStructures.HashMapIntegerDouble;
 
+/**
+ * @brief Describe the split ratios at an origin
+ */
 public class IntertemporalOriginSplitRatios {
 
   /*
    * split_ratios[k] are the split ratios for the origin at time step k
-   * HashMapPairDouble.get(Pair(buffer_id, commodity)) is the split ratio of commodity 
-   * into the buffer which id is buffer_id
+   * HashMapPairDouble.get(c) is the split ratio of commodity @a c into the
+   * buffer which id is buffer_id
    */
-  HashMapPairDouble[] split_ratios;
+  HashMapIntegerDouble[] split_ratios;
 
   public IntertemporalOriginSplitRatios(int total_time_step) {
-    split_ratios = new HashMapPairDouble[total_time_step];
+    split_ratios = new HashMapIntegerDouble[total_time_step];
     for (int i = 0; i < total_time_step; i++) {
-      split_ratios[i] = new HashMapPairDouble();
+      split_ratios[i] = new HashMapIntegerDouble();
     }
   }
 
-  public HashMapPairDouble get(int time_step) {
+  public HashMapIntegerDouble get(int time_step) {
     return split_ratios[time_step];
   }
 
-  public void add(int time_step, int buffer, int commodity, double split) {
-    split_ratios[time_step].put(new PairBufferCommodity(buffer, commodity), split);
+  public void add(int time_step, int commodity, double split) {
+    split_ratios[time_step].put(new Integer(commodity), split);
   }
 
-  public void automatic_uniform_distribution(int commodity_1, int commodity_n,
-      int time_step, int nb_buffers) {
-    double share = 1.0 / ((double) (commodity_n - commodity_1 + 1));
+  /**
+   * @brief Gives a possible default split_ratios for all time steps
+   * @param commodity_1
+   *          The id of the first compliant commodity
+   * @param commodity_n
+   *          The id of the last compliant commodity
+   * @param time_step
+   *          The total number of time steps
+   * @param nb_buffers
+   *          The number of buffer in the origin
+   * @param alpha
+   */
+  public void automatic_uniform_distribution(Origin o, double alpha) {
+
+    int time_step = split_ratios.length;
+    // Adding the non-compliant split ratios
+    if (alpha != 0)
+      for (int k = 0; k < time_step; k++)
+        add(k, 0, 1.0 - alpha);
+
+    // Adding the compliant split ratios
+    LinkedList<Integer> compliant = o.getCompliant_commodities();
+    
+    Iterator<Integer> it ;
+    double share = alpha / ((double) (compliant.size()));
+    Integer c;
     for (int k = 0; k < time_step; k++) {
-      for (int c = commodity_1; c <= commodity_n; c++) {
-        for (int b = 0; b < nb_buffers; b++) {
-          add(k, b, c, share);
-        }
+      it = compliant.iterator();
+      while (it.hasNext()) {
+        c = it.next();
+        add(k, c, share);
       }
     }
-
   }
 
   @Override

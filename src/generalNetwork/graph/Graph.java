@@ -5,7 +5,7 @@ import com.google.gson.annotations.Expose;
 import generalNetwork.graph.Destination;
 import generalNetwork.graph.Link;
 import generalNetwork.graph.Node;
-import generalNetwork.graph.Origin;
+import generalNetwork.graph.Source;
 import generalNetwork.graph.json.JsonFactory;
 
 public class Graph {
@@ -36,7 +36,7 @@ public class Graph {
   @Expose
   Path[] paths;
   @Expose
-  Origin[] origins;
+  Source[] origins;
   @Expose
   Destination[] destinations;
 
@@ -57,7 +57,7 @@ public class Graph {
     nb_paths = mg.paths.size();
     paths = mg.paths.toArray(new Path[nb_paths]);
     nb_origins = mg.origins.size();
-    origins = mg.origins.toArray(new Origin[nb_origins]);
+    origins = mg.origins.toArray(new Source[nb_origins]);
     nb_destinations = mg.destinations.size();
     destinations = mg.destinations.toArray(new Destination[nb_destinations]);
 
@@ -132,7 +132,7 @@ public class Graph {
     return paths;
   }
 
-  public Origin[] getOrigins() {
+  public Source[] getOrigins() {
     return origins;
   }
 

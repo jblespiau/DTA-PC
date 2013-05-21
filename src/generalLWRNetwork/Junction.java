@@ -89,6 +89,13 @@ public class Junction {
     System.out.println(toString());
   }
 
+  /**
+   * @brief Solve the flows at the junction
+   * @param p
+   * @param time_step
+   * @param junction_sr
+   * @param cells
+   */
   public void solveJunction(Profile p, int time_step,
       JunctionSplitRatios junction_sr, Cell[] cells) {
 
@@ -98,13 +105,16 @@ public class Junction {
       CellInfo previous_info = p.get(prev[0]);
       CellInfo next_info = p.get(next[0]);
       flow = Math.min(next_info.supply, previous_info.demand);
-      if (unique_id == 0) {
-        System.out.println("Flow in Junction 0 at time step " + time_step
-            + ": " + flow);
-        previous_info.updateOutFlows(flow);
-        System.out.println("Previous cellInfo ");
-        previous_info.print();
-      }
+      /*
+       * For debug
+       * 
+       * System.out.println("Flow in Junction 1 at time step " + time_step
+       * + ": " + flow);
+       * System.out.println("Previous cellInfo ");
+       * previous_info.print();
+       * }
+       */
+      previous_info.updateOutFlows(flow);
       next_info.updateInFlows(previous_info.out_flows, next[0].isSink());
     } else if (prev.length == 1) {
 

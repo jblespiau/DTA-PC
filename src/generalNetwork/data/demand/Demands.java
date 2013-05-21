@@ -1,50 +1,70 @@
 package generalNetwork.data.demand;
 
+import generalLWRNetwork.Origin;
 import generalNetwork.data.JsonDemand;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
 /**
- * @brief Discretized demands for all time step and origins
+ * @brief Discreet demands for all time step and origins
  */
 public class Demands {
 
-  HashMap<Integer, double[]> demands;
+  HashMap<Origin, double[]> demands;
 
   public Demands(int nb_origins) {
-    demands = new HashMap<Integer, double[]>(nb_origins);
+    demands = new HashMap<Origin, double[]>(nb_origins);
   }
 
-  public void put(int origin_id, double[] demand) {
-    demands.put(origin_id, demand);
+  public int size() {
+    return demands.size();
   }
 
-  public double[] get(int origin_id) {
-    return demands.get(origin_id);
+  public void put(Origin orig, double[] demand) {
+    demands.put(orig, demand);
   }
 
-  public double get(int time_step, int origin_id) {
-    return demands.get(origin_id)[time_step];
+  public double[] get(Origin orig) {
+    return demands.get(orig);
+  }
+
+  public double get(Origin orig, int time_step) {
+    return demands.get(orig)[time_step];
   }
 
   /**
    * @return The jsonDemand encoding the demands
    */
-  public JsonDemand[] buildJsonDemand() {
+  public JsonDemand[] buildJsonDemand(int orig_id) {
     JsonDemand[] result = new JsonDemand[demands.size()];
 
-    Iterator<Entry<Integer, double[]>> iterator =
+    Iterator<Entry<Origin, double[]>> iterator =
         demands.entrySet().iterator();
-    Entry<Integer, double[]> entry;
+    Entry<Origin, double[]> entry;
     int i = 0;
     while (iterator.hasNext()) {
       entry = iterator.next();
-      result[i] = new JsonDemand(entry.getKey(), entry.getValue());
+      result[i] = new JsonDemand(orig_id, entry.getValue());
       i++;
     }
 
     return result;
+  }
+
+  @Override
+  public String toString() {
+    String s = "Demands: ";
+    Iterator<Entry<Origin, double[]>> it = demands.entrySet().iterator();
+    Entry<Origin, double[]> entry;
+    while (it.hasNext()) {
+      entry = it.next();
+      s += entry.getKey().toString() + " -> "
+          + Arrays.toString(entry.getValue());
+    }
+
+    return s;
   }
 }

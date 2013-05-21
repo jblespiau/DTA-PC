@@ -7,26 +7,31 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 
-import dataStructures.HashMapPairDouble;
-import dataStructures.PairBufferCommodity;
+import dataStructures.HashMapIntegerDouble;
 
-class Origin {
+/**
+ * @brief The origin is for now a buffer
+ */
+public class Origin {
 
   protected Buffer[] entries;
   protected Junction junction;
+  protected LinkedList<Integer> compliant_commodities;
 
   protected Origin() {
+    entries = null;
+    junction = null;
   }
 
   public Origin(Junction j, String type, LinkedList<Cell> new_cells,
       LinkedList<Junction> new_junctions) {
     assert j != null;
     assert type != null;
+    assert new_cells != null;
+    assert new_junctions != null;
     assert j.getPrev() == null : "An origin junction should have no incoming links";
 
     if (type.equals("SingleBuffer")) {
-      // System.out.println("[Origin.java]Creation of a SingleBuffer origin");
-
       entries = new Buffer[1];
       Buffer b = new Buffer();
       entries[0] = b;
@@ -35,26 +40,43 @@ class Origin {
       j.setPrev(new Cell[] { b });
       junction = j;
 
-      // new OriginSingleBuffer(j, type, new_cells, new_junctions);
-    } else if (type.equals("MultipleBuffer")) {
-      System.out.println("[Origin.java]Creation of a " + type
-          + " origin. This type does not exist");
-      System.exit(1);
-
-      // new OriginMultipleBuffer(j, type, new_cells, new_junctions);
     } else {
       System.out.println("[Origin.java]Creation of a " + type
           + " origin. This type does not exist");
+      entries = null;
+      junction = null;
       System.exit(1);
     }
+    assert entries.length == 1;
   }
 
+  /**
+   * @return The number of buffers
+   */
   public int size() {
     return entries.length;
   }
 
+  /**
+   * @return The linked list containing the compliant commodities
+   */
+  public LinkedList<Integer> getCompliant_commodities() {
+    return compliant_commodities;
+  }
+
+  /**
+   * @brief Inject the demand in the current profile
+   * @param previous_profile
+   *          This is NOT modified
+   * @param p
+   *          Only the densities of the buffers are modified
+   * @param demand
+   *          Total amount of demand
+   * @param splits
+   *          The split ratios to divide up the demand
+   */
   public void injectDemand(Profile previous_profile, Profile p, Double demand,
-      HashMapPairDouble splits) {
+      HashMapIntegerDouble splits) {
 
     LinkedHashMap<Integer, Double> previous_densities;
     previous_densities = previous_profile.get(entries[0]).partial_densities;
@@ -62,6 +84,7 @@ class Origin {
     LinkedHashMap<Integer, Double> new_densities = new LinkedHashMap<Integer, Double>();
 
     /* We first put all the previous densities in the new hashmap */
+    
     Iterator<Entry<Integer, Double>> density_iterator = previous_densities
         .entrySet()
         .iterator();
@@ -73,30 +96,32 @@ class Origin {
     }
 
     /* Then we add the demand for every commodity */
-    Iterator<Entry<PairBufferCommodity, Double>> split_iterator = splits
+    Iterator<Entry<Integer, Double>> split_iterator = splits
         .entrySet()
         .iterator();
-    Entry<PairBufferCommodity, Double> split_entry;
+    Entry<Integer, Double> split_entry;
     Double previous_density;
-    double total_density = 0;
+    double total_density = previous_profile.get(entries[0]).total_density;
     int commodity;
     while (split_iterator.hasNext()) {
       split_entry = split_iterator.next();
-      commodity = split_entry.getKey().commodity;
+      commodity = split_entry.getKey();
 
       previous_density = new_densities.get(commodity);
+      total_density += demand * split_entry.getValue();
       if (previous_density == null) {
-        total_density += demand * split_entry.getValue();
         new_densities.put(commodity, demand * split_entry.getValue());
       } else {
-        total_density += previous_density + demand * split_entry.getValue();
         new_densities.put(commodity, previous_density + demand
             * split_entry.getValue());
       }
     }
-
     p.get(entries[0]).total_density = total_density;
     p.get(entries[0]).partial_densities = new_densities;
+  }
 
+  @Override
+  public String toString() {
+    return "Origin [junction=" + junction.getUniqueId() + "]";
   }
 }
