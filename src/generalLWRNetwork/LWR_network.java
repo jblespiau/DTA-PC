@@ -63,9 +63,12 @@ public class LWR_network {
       junctions[g.junctions[i].getUniqueId()] = g.junctions[i];
     }
 
+    /* We register all the origins */
     sources = g.sources.clone();
+    /* We register all the destinations */
     sinks = g.destinations.clone();
 
+    /* We register all the internal_split_ratios */
     internal_split_ratios = g.split_ratios;
 
     check();

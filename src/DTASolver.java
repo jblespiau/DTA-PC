@@ -30,7 +30,7 @@ public class DTASolver {
    */
   public static void main(String[] args) {
 
-    boolean debug = false;
+    boolean debug = true;
 
     int nb_steps = 10;
     double delta_t = 1;
@@ -49,6 +49,35 @@ public class DTASolver {
         time_discretization.getDelta_t(), time_discretization.getNb_steps());
     System.out.println("Done");
 
+    /* We load the data from the json file */
+    System.out.print("Loading demands from JSON...");
+    Json_data data = json.dataFromFile("graphs/parallelPathData.json");
+    Demands origin_demands = new DemandsFactory(time_discretization,
+        data.delta_t, data.demands, discretized_graph.node_to_origin)
+        .buildDemands();
+    System.out.println("Done");
+
+    if (debug)
+      System.out.println(origin_demands.toString());
+
+    json.toFile(data, "graphs/test.json");
+
+    System.out.println("Loading non-compliant internal split-ratios...");
+    discretized_graph.split_ratios.addNonCompliantSplitRatios(
+        discretized_graph,
+        data.non_compliant_split_ratios,
+        discretized_graph.node_to_origin);
+
+    System.out.print("Initializing split-ratios at the origins...");
+    IntertemporalOriginsSplitRatios splits =
+        IntertemporalOriginsSplitRatios.defaultSplitRatios(
+            time_discretization.getNb_steps(),
+            discretized_graph.sources, alpha);
+    System.out.println("Done");
+
+    if (debug)
+      System.out.println(splits.toString());
+
     System.out.print("Creating the compact representation...");
     LWR_network lwr_network = new LWR_network(discretized_graph);
     System.out.println("Done");
@@ -58,29 +87,6 @@ public class DTASolver {
       lwr_network.print();
       lwr_network.printInternalSplitRatios();
     }
-
-    /* We load the data from the json file */
-    System.out.print("Loading demands from JSON...");
-    Json_data demands = json.dataFromFile("graphs/parallelPathData.json");
-    Demands origin_demands = new DemandsFactory(time_discretization,
-        demands.delta_t, demands.demands, discretized_graph.node_to_origin)
-        .buildDemands();
-    System.out.println("Done");
-
-    if (debug)
-      System.out.println(origin_demands.toString());
-
-    System.out.println("Loading non-compliant internal split-ratios...TODO");
-
-    System.out.print("Initializing split-ratios at the origins...");
-    IntertemporalOriginsSplitRatios splits =
-        IntertemporalOriginsSplitRatios.defaultSplitRatios(
-            time_discretization.getNb_steps(),
-            lwr_network.getSources(), alpha);
-    System.out.println("Done");
-
-    if (debug)
-      System.out.println(splits.toString());
 
     Profile[] profiles = new Profile[time_discretization.getNb_steps()];
 

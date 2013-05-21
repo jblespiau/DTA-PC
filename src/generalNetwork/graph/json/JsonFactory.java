@@ -2,7 +2,6 @@ package generalNetwork.graph.json;
 
 import generalNetwork.data.Json_data;
 import generalNetwork.graph.Graph;
-import generalNetwork.graph.Node;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -23,8 +22,6 @@ public class JsonFactory {
         .serializeNulls()
         .excludeFieldsWithoutExposeAnnotation();
     // .registerTypeAdapter(Node.class, new NodeSerilizer());
-    // .registerTypeAdapter(Graph.class, new GraphSerializer(this));
-    // .registerTypeAdapter(Graph.class, new GraphDeserializer(this));
     if (debug_mode) {
       builder.setPrettyPrinting();
     }
@@ -36,8 +33,6 @@ public class JsonFactory {
         .serializeNulls()
         .excludeFieldsWithoutExposeAnnotation()
         // .registerTypeAdapter(Node.class, new NodeSerilizer())
-        // .registerTypeAdapter(Graph.class, new GraphSerializer(this))
-        // .registerTypeAdapter(Graph.class, new GraphDeserializer(this))
         .create();
   }
 

@@ -31,12 +31,12 @@ public class DiscretizedGraph {
   /* Maps node_id -> Origin */
   public HashMap<Integer, Origin> node_to_origin;
   /* Contains the sources */
-  Origin[] sources;
+  public Origin[] sources;
   /* Contains the destinations */
   Destination[] destinations;
   int total_nb_junctions = 0, total_nb_cells = 0;
 
-  IntertemporalSplitRatios split_ratios;
+  public IntertemporalSplitRatios split_ratios;
   int nb_paths;
 
   public DiscretizedGraph(Graph g, double delta_t, int time_steps) {

@@ -31,10 +31,10 @@ public class Json_data {
    * Converted in @ref IntertemporalSplitRatios.java
    */
   @Expose
-  public JsonJunctionSplitRatios[] compliant_split_ratios;
+  public JsonSplitRatios[] non_compliant_split_ratios;
 
-  public Json_data(JsonDemand[] d, JsonJunctionSplitRatios[] sr) {
+  public Json_data(JsonDemand[] d, JsonSplitRatios[] sr) {
     demands = d;
-    compliant_split_ratios = sr;
+    non_compliant_split_ratios = sr;
   }
 }

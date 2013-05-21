@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import generalLWRNetwork.DiscretizedGraph;
 import generalLWRNetwork.Junction;
+import generalLWRNetwork.Origin;
 import generalNetwork.data.JsonJunctionSplitRatios;
 import generalNetwork.data.JsonSplitRatios;
 
@@ -39,13 +40,18 @@ public class IntertemporalSplitRatios {
 
   /**
    * @brief Set all the internal split ratios for the non-compliant flow
-   * @param junctions
    */
   public void addNonCompliantSplitRatios(DiscretizedGraph g,
-      JsonSplitRatios[] non_compliant_split_ratios) {
+      JsonSplitRatios[] non_compliant_split_ratios,
+      HashMap<Integer, Origin> node_to_origin) {
+    assert g != null;
+    if (non_compliant_split_ratios == null)
+      return;
+    assert node_to_origin != null;
+
     JsonJunctionSplitRatios[] tmp;
     int node_id;
-    
+    Origin orig;
     // For all the junctions
     for (int j = 0; j < non_compliant_split_ratios.length; j++) {
       node_id = non_compliant_split_ratios[j].node_id;
@@ -53,14 +59,24 @@ public class IntertemporalSplitRatios {
           get(g.nodeToJunction(node_id).getUniqueId());
 
       tmp = non_compliant_split_ratios[j].split_ratios;
-      // For all the time steps
+      // For all the entries
       for (int k = 0; k < tmp.length; k++) {
-        ijsr.addNonCompliantSplitRatio(
-            k,
-            g.lastCellofLink(tmp[k].in_id).getUniqueId(),
-            g.firstCellofLink(tmp[k].out_id).getUniqueId(),
-            tmp[k].c,
-            tmp[k].beta);
+        // We check is the split ratio is from an origin
+        orig = node_to_origin.get(node_id);
+        if (orig != null) {
+          ijsr.addNonCompliantSplitRatio(
+              tmp[k].k,
+              orig.getEntries()[0].getUniqueId(),
+              g.firstCellofLink(tmp[k].out_id).getUniqueId(),
+              tmp[k].c,
+              tmp[k].beta);
+        } else
+          ijsr.addNonCompliantSplitRatio(
+              tmp[k].k,
+              g.lastCellofLink(tmp[k].in_id).getUniqueId(),
+              g.firstCellofLink(tmp[k].out_id).getUniqueId(),
+              tmp[k].c,
+              tmp[k].beta);
       }
     }
   }

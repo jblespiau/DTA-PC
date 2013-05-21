@@ -122,4 +122,8 @@ public class Origin {
   public String toString() {
     return "Origin [junction=" + junction.getUniqueId() + "]";
   }
+
+  public Buffer[] getEntries() {
+    return entries;
+  }
 }

@@ -56,7 +56,7 @@ public class IntertemporalJunctionSplitRatios {
 
   @Override
   public String toString() {
-    return "IntertemporalJunctionSplitRatios [non_compliant_split_ratios="
+    return "IntertemporalJunctionSplitRatios [non_compliant="
         + Arrays.toString(non_compliant_split_ratios)
         + ",\n compliant_split_ratios=" + compliant_split_ratios + "]";
   }

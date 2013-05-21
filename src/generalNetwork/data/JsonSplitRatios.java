@@ -6,5 +6,6 @@ public class JsonSplitRatios {
 
   @Expose
   public int node_id;
+  @Expose
   public JsonJunctionSplitRatios[] split_ratios;
 }
