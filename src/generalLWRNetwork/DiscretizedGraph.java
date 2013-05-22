@@ -9,6 +9,7 @@ import generalNetwork.state.internalSplitRatios.IntertemporalSplitRatios;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 
 public class DiscretizedGraph {
 
@@ -21,10 +22,10 @@ public class DiscretizedGraph {
   /* Contains all the cells created */
   LinkedList<Cell> new_cells;
   /*
-   * link_to_cells[i] contains the head and tail cell of the discretized version
+   * link_to_cells[i] contains the head and tail cell of the discrete version
    * of a given link
    */
-  LinkPair[] link_to_cells;
+  private LinkPair[] link_to_cells;
   /* junctions[i] contains the junctions representing nodes[i] */
   Junction[] junctions;
 
@@ -173,10 +174,10 @@ public class DiscretizedGraph {
     Cell[] incoming = new Cell[nb_incoming];
     Cell[] outgoing = new Cell[nb_outgoing];
     for (int i = 0; i < nb_incoming; i++) {
-      incoming[i] = link_to_cells[i].end;
+      incoming[i] = lastCellofLink(node.incoming[i]);
     }
     for (int i = 0; i < nb_outgoing; i++) {
-      outgoing[i] = link_to_cells[i].begin;
+      outgoing[i] = firstCellofLink(node.outgoing[i]);
     }
 
     if (nb_incoming != 0)

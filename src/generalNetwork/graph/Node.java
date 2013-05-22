@@ -1,6 +1,8 @@
 package generalNetwork.graph;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
@@ -15,9 +17,12 @@ public class Node {
   @Expose
   protected int unique_id;
   /* int[] incoming, outgoing should NEVER be used except for serialization */
-  @Expose(serialize = false)
-  private int[] incoming, outgoing;
+  @Expose
+  public int[] incoming, outgoing;
+  @Expose
+  private double[] incoming_priorities;
   public Vector<Link> incoming_links, outgoing_links;
+  public HashMap<Integer, Double> priorities;
 
   public Node(int id) {
     incoming_links = new Vector<Link>(1);
