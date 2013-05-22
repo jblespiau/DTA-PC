@@ -186,10 +186,10 @@ public class DiscretizedGraph {
     Cell[] incoming = new Cell[nb_incoming];
     Cell[] outgoing = new Cell[nb_outgoing];
     for (int i = 0; i < nb_incoming; i++) {
-      incoming[i] = lastCellofLink(node.incoming[i]);
+      incoming[i] = lastCellofLink(node.incoming_links.get(i).getUnique_id());
     }
     for (int i = 0; i < nb_outgoing; i++) {
-      outgoing[i] = firstCellofLink(node.outgoing[i]);
+      outgoing[i] = firstCellofLink(node.outgoing_links.get(i).getUnique_id());
     }
 
     if (nb_incoming != 0)
@@ -312,6 +312,9 @@ public class DiscretizedGraph {
     return link_to_cells[link_id].begin;
   }
 
+  public Cell firstCellofLink(Link l) {
+    return firstCellofLink(l.getUnique_id());
+  }
   /**
    * @brief Returns the last cell of the equivalent representation of the link
    *        of the given id
@@ -321,5 +324,9 @@ public class DiscretizedGraph {
    */
   public Cell lastCellofLink(int link_id) {
     return link_to_cells[link_id].end;
+  }
+  
+  public Cell lastCellofLink(Link l) {
+    return lastCellofLink(l.getUnique_id());
   }
 }

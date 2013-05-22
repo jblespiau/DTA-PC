@@ -18,7 +18,7 @@ public class Node {
   protected int unique_id;
   /* int[] incoming, outgoing should NEVER be used except for serialization */
   @Expose
-  public int[] incoming, outgoing;
+  private int[] incoming, outgoing;
   @Expose
   private double[] incoming_priorities;
   public Vector<Link> incoming_links, outgoing_links;
