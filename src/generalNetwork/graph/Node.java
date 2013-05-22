@@ -69,11 +69,31 @@ public class Node {
    *        To be used only after a json loading.
    */
   public void buildFromJson(Link[] links) {
+
+    /*
+     * You have to define priorities for NxM nodes where N > M and this is not a
+     * destination
+     */
+    boolean priority_needed = (outgoing.length != 0)
+        && (incoming.length > outgoing.length);
+    assert !priority_needed
+        || incoming_priorities.length == incoming.length : "[Node" + unique_id
+        + "]In a junction " + incoming.length + "x" + outgoing.length
+        + ", you need to specify N priorities";
+
     List<Link> incoming_l = new ArrayList<Link>(incoming.length);
     List<Link> outgoing_l = new ArrayList<Link>(outgoing.length);
-
+    if (priority_needed) {
+    priorities = new HashMap<Integer, Double>(incoming.length);
+    } else {
+      priorities = null;
+    }
+    
     for (int i = 0; i < incoming.length; i++) {
       incoming_l.add(links[incoming[i]]);
+      if (priority_needed) {
+        priorities.put(links[incoming[i]].unique_id, incoming_priorities[i]);
+      }
     }
 
     for (int i = 0; i < outgoing.length; i++) {
@@ -88,6 +108,7 @@ public class Node {
     incoming_links.addAll(incoming_l);
     outgoing_links.addAll(outgoing_l);
 
+    
     /* Updates the @a from and @a to fields in the links */
     updateConnectedlinks();
 
@@ -124,4 +145,11 @@ public class Node {
     }
   }
 
+  @Override
+  public String toString() {
+    return "Node [unique_id=" + unique_id + ", incoming="
+        + Arrays.toString(incoming) + ", outgoing=" + Arrays.toString(outgoing)
+        + ", incoming_priorities=" + Arrays.toString(incoming_priorities)
+        + ", priorities=" + priorities + "]";
+  }
 }

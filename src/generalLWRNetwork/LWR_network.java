@@ -94,12 +94,10 @@ public class LWR_network {
   }
 
   public void print() {
-
     for (int c = 0; c < cells.length; c++)
       cells[c].print();
     for (int j = 0; j < junctions.length; j++)
       junctions[j].print();
-
   }
 
   public void printInternalSplitRatios() {
@@ -151,8 +149,8 @@ public class LWR_network {
     for (int c = 0; c < cells.length; c++)
       cells[c].checkConstraints(delta_t);
 
-    for (int j = 0; j < junctions.length; j++)
-      junctions[j].checkConstraints();
+   // for (int j = 0; j < junctions.length; j++)
+   //   junctions[j].checkConstraints();
   }
 
   /**
@@ -185,7 +183,7 @@ public class LWR_network {
       sources[b].injectDemand(previous_profile,
           p,
           origin_demand.get(sources[b], time_step),
-          splits.get(sources[b], time_step), 
+          splits.get(sources[b], time_step),
           delta_t);
     }
 

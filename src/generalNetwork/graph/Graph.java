@@ -65,14 +65,22 @@ public class Graph {
   }
 
   public void check() {
-    for (int i = 0; i < nodes.length; i++)
+    for (int i = 0; i < nodes.length; i++) {
       assert nodes[i].unique_id == i : "links[i] should have id i";
+      assert nodes[i] != null : "Node " + i + "is null";
+    }
 
-    for (int i = 0; i < links.length; i++)
+    for (int i = 0; i < links.length; i++) {
       assert links[i].unique_id == i : "nodes[i] should have id i";
+      assert links[i] != null : "Link " + i + "is null";
+    }
 
-    for (int i = 0; i < paths.length; i++)
+    for (int i = 0; i < paths.length; i++) {
       assert paths[i].unique_id == i : "paths[i] should have id i";
+      assert paths[i] != null : "Path " + i + "is null";
+    }
+    
+    
   }
 
   /**

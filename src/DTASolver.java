@@ -18,9 +18,6 @@ public class DTASolver {
    */
   public static void main(String[] args) {
 
-    
-
-    
     boolean debug = true;
 
     int nb_steps = 10;

@@ -1,7 +1,7 @@
 {
-  "nb_nodes": 2,
+  "nb_nodes": 3,
   "nb_links": 3,
-  "nb_paths": 3,
+  "nb_paths": 2,
   "nb_origins": 1,
   "nb_destinations": 1,
   "nodes": [
@@ -10,25 +10,38 @@
       "incoming": [],
       "outgoing": [
         0,
-        1,
-        2
-      ]
+        1
+      ],
+      "incoming_priorities": null
     },
     {
       "unique_id": 1,
       "incoming": [
         0,
-        1,
+        1
+      ],
+      "outgoing": [
         2
       ],
-      "outgoing": []
+      "incoming_priorities": [
+        0.3,
+        0.6
+      ]
+    },
+    {
+      "unique_id": 2,
+      "incoming": [
+        2
+      ],
+      "outgoing": [],
+      "incoming_priorities": []
     }
   ],
   "links": [
     {
       "unique_id": 0,
-      "l": 2.7,
-      "v": 0.9,
+      "l": 3.0,
+      "v": 3.0,
       "w": 0.4,
       "F_max": 2.0,
       "jam_density": 8.0
@@ -36,7 +49,7 @@
     {
       "unique_id": 1,
       "l": 3.0,
-      "v": 0.9,
+      "v": 3.0,
       "w": 0.4,
       "F_max": 2.0,
       "jam_density": 8.0
@@ -54,18 +67,14 @@
     {
       "unique_id": 0,
       "path": [
-        0
+        0,
+        2
       ]
     },
     {
       "unique_id": 1,
       "path": [
-        1
-      ]
-    },
-    {
-      "unique_id": 2,
-      "path": [
+        1,
         2
       ]
     }
@@ -73,12 +82,12 @@
   "origins": [
     {
       "id": 0,
-      "type": "MultipleBuffer"
+      "type": "SingleBuffer"
     }
   ],
   "destinations": [
     {
-      "id": 1,
+      "id": 2,
       "type": "SingleJunction"
     }
   ]

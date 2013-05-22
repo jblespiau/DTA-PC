@@ -58,6 +58,7 @@ public class DiscretizedGraph {
 
     /* Transform Nodes into Junctions */
     Node[] nodes = g.getNodes();
+    g.check();
     junctions = new Junction[nodes.length];
     for (int i = 0; i < nodes.length; i++) {
       junctions[i] = discretizeJunction(nodes[i], delta_t);
@@ -88,10 +89,21 @@ public class DiscretizedGraph {
     }
 
     /*
+     * We check that all junctions are valid junctions
+     */
+    for (int i = 0; i < junctions.length; i++) {
+      assert junctions[i].getPrev() != null : "Junction "
+          + junctions[i].getUniqueId()
+          + " has a null prev array. Your network is likely to be wrong.";
+      assert junctions[i].getNext() != null : "Junction "
+          + junctions[i].getUniqueId()
+          + " has a null next array. Your network is likely to be wrong.";
+    }
+    /*
      * We add the compliant split_ratios corresponding to the different paths
      */
     split_ratios = new IntertemporalSplitRatios(junctions, time_steps);
-    
+
     /*
      * We need to know the commodities leaving each origins to be able
      * to initialize default split ratios. It is when creating the commodities
@@ -99,7 +111,7 @@ public class DiscretizedGraph {
      */
     HashMap<Junction, LinkedList<Integer>> commodities_at_origins =
         new HashMap<Junction, LinkedList<Integer>>(sources.length);
-    
+
     Path[] paths = g.getPaths();
     for (int i = 0; i < paths.length; i++) {
       createSplitRatios(g, paths[i], commodities_at_origins);
@@ -185,13 +197,37 @@ public class DiscretizedGraph {
     if (nb_outgoing != 0)
       result.setNext(outgoing);
 
+    /*
+     * If we have a NxM node with N > M > 0, we have to take into account the
+     * priorities
+     */
+    if (nb_outgoing != 0 && (nb_incoming > nb_outgoing)) {
+      HashMap<Integer, Double> priorities = new HashMap<Integer, Double>(
+          nb_incoming);
+
+      Iterator<Entry<Integer, Double>> it =
+          node.priorities.entrySet().iterator();
+      Entry<Integer, Double> entry;
+
+      while (it.hasNext()) {
+        entry = it.next();
+        priorities.put(lastCellofLink(entry.getKey()).getUniqueId(),
+            entry.getValue());
+      }
+
+      result.setPriorities(priorities);
+    }
+    System.out.println("Node " + node.toString() + " transformed into "
+        + result.toString());
+
     return result;
   }
 
   /**
    * @brief Build the split ratios for the compliant commodities
    */
-  private void createSplitRatios(Graph g, Path p, HashMap<Junction, LinkedList<Integer>> commodities_at_origins) {
+  private void createSplitRatios(Graph g, Path p,
+      HashMap<Junction, LinkedList<Integer>> commodities_at_origins) {
 
     Iterator<Integer> iterator = p.iterator();
     Link[] links = g.getLinks();
@@ -203,7 +239,7 @@ public class DiscretizedGraph {
 
       j = junctions[links[current_link_id].from.getUnique_id()];
       assert j != null;
-      
+
       // We add one commodity at the junction
       commodities = commodities_at_origins.get(j);
       if (commodities == null) {
@@ -212,8 +248,6 @@ public class DiscretizedGraph {
       }
       commodities.add(current_link_id + 1);
 
-      
-      
       // There is nothing to do for nx1 junctions
       if (!j.isMergingJunction()) {
         // We add a split ratio for the first junction (origin)

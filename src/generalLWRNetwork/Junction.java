@@ -4,6 +4,7 @@ import generalNetwork.state.CellInfo;
 import generalNetwork.state.Profile;
 import generalNetwork.state.internalSplitRatios.JunctionSplitRatios;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
@@ -20,6 +21,7 @@ public class Junction {
   private int unique_id;
   private Cell[] prev;
   private Cell[] next;
+  private HashMap<Integer, Double> priorities;
 
   public Junction() {
     unique_id = NetworkUIDFactory.getId_junctions();
@@ -27,6 +29,11 @@ public class Junction {
     next = null;
   }
 
+  /**
+   * @brief Create a junction that does NOT need any priority vector
+   * @param predecessor
+   * @param successor
+   */
   Junction(Cell[] predecessor, Cell[] successor) {
     unique_id = NetworkUIDFactory.getId_junctions();
     this.prev = predecessor.clone();
@@ -57,6 +64,11 @@ public class Junction {
     this.next = next.clone();
   }
 
+  public void setPriorities(HashMap<Integer, Double> priorities) {
+    this.priorities = priorities;
+    // TODO: Check priorities of sum 1
+  }
+
   public void addPrev(Cell c) {
     int i = 0;
     while (prev[i] != null)
@@ -67,22 +79,35 @@ public class Junction {
   @Override
   public String toString() {
     String incells = "";
-    for (int i = 0; i < prev.length; i++) {
-      incells += prev[i].getUniqueId() + ",";
+    if (prev == null) {
+      incells = "null";
+    } else {
+      for (int i = 0; i < prev.length; i++) {
+        incells += prev[i].getUniqueId() + ",";
+      }
     }
     incells = "[" + incells + "]";
 
     String outcells = "";
-    for (int i = 0; i < next.length; i++) {
-      outcells += next[i].getUniqueId() + ",";
+    if (next == null) {
+      outcells = "null";
+    } else {
+      for (int i = 0; i < next.length; i++) {
+        outcells += next[i].getUniqueId() + ",";
+      }
     }
     outcells = "[" + outcells + "]";
-    return "[(" + unique_id + ")" + incells + "->" + outcells + "]";
+
+    if (priorities == null)
+      return "[(" + unique_id + ")" + incells + "->" + outcells + "]";
+    else
+      return "[(" + unique_id + ")" + incells + "->" + outcells + "("
+          + priorities.toString() + "]";
   }
 
-  public void checkConstraints() {
-    assert (prev.length <= 1) : "Only junctions with less than 1 incoming link is working";
-    assert (next.length <= 1) : "Only junctions with less than 1 outgoing link is working";
+  private void checkConstraints() {
+    assert (prev.length <= 1) : "Only junctions with less than 1 incoming link are working";
+    assert (next.length <= 1) : "Only junctions with less than 1 outgoing link are working";
   }
 
   public void print() {
@@ -222,5 +247,4 @@ public class Junction {
       System.exit(1);
     }
   }
-
 }
