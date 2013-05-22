@@ -32,12 +32,10 @@ public class DTASolver {
     JsonFactory json = new JsonFactory(true);
 
     System.out.print("Loading of the graph from JSON...");
-    Graph json_graph = json.graphFromFile("graphs/PathWithPriorities.json");
+    Graph json_graph = json.graphFromFile("graphs/parallelPath.json");
     System.out.println("Done");
 
-    json.toFile(json_graph, "graphs/test_netork.json");
-    
-    System.exit(1);
+
     
     System.out.print("Discretization of the graph...");
     DiscretizedGraph discretized_graph = new DiscretizedGraph(json_graph,
