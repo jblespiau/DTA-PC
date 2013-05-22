@@ -8,21 +8,9 @@ import generalNetwork.graph.json.JsonFactory;
 import generalNetwork.state.Profile;
 
 import generalNetwork.state.externalSplitRatios.IntertemporalOriginsSplitRatios;
-import model.networkFactory.NormalRoad;
-import model.networkFactory.Path;
 
 import dta_solver.*;
 
-/**
- * @package module
- * @page intro Introduction
- * 
- *       The usual way to build a simulation is: - build a demand function (see
- *       Demand) - fix your time step size and number of steps of the problem
- *       (see Environment) - design your network - do just a simulation with an
- *       Origin in which you put your demand (get with buildDemand) or try to
- *       get the UE with adding a distributor and putting your buildDemand in it
- */
 public class DTASolver {
 
   /**
@@ -30,6 +18,9 @@ public class DTASolver {
    */
   public static void main(String[] args) {
 
+    
+
+    
     boolean debug = true;
 
     int nb_steps = 10;
@@ -41,9 +32,13 @@ public class DTASolver {
     JsonFactory json = new JsonFactory(true);
 
     System.out.print("Loading of the graph from JSON...");
-    Graph json_graph = json.graphFromFile("graphs/parallelPath.json");
+    Graph json_graph = json.graphFromFile("graphs/PathWithPriorities.json");
     System.out.println("Done");
 
+    json.toFile(json_graph, "graphs/test_netork.json");
+    
+    System.exit(1);
+    
     System.out.print("Discretization of the graph...");
     DiscretizedGraph discretized_graph = new DiscretizedGraph(json_graph,
         time_discretization.getDelta_t(), time_discretization.getNb_steps());
