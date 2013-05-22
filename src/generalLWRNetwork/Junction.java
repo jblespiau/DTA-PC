@@ -141,6 +141,10 @@ public class Junction {
        */
       previous_info.updateOutFlows(flow);
       next_info.updateInFlows(previous_info.out_flows, next[0].isSink());
+      // 2x1 junctions
+    } else if (prev.length == 2 && next.length == 1) {
+
+      // Nx1 junctions
     } else if (prev.length == 1) {
 
       /*

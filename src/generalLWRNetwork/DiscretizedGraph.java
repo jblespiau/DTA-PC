@@ -217,8 +217,6 @@ public class DiscretizedGraph {
 
       result.setPriorities(priorities);
     }
-    System.out.println("Node " + node.toString() + " transformed into "
-        + result.toString());
 
     return result;
   }
