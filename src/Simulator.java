@@ -87,7 +87,7 @@ public class Simulator {
     }
   }
   
-  public void run(boolean debug) {
+  public void run() {
     Profile[] profiles = new Profile[time_discretization.getNb_steps()];
 
     for (int k = 0; k < time_discretization.getNb_steps(); k++) {
@@ -113,7 +113,7 @@ public class Simulator {
       }
 
       
-      if (k > 0  && debug) {
+      if (k > 0) {
         System.out.println("****** Printing profile at time step " + (k - 1)
             + "********");
         profiles[k - 1].print();
