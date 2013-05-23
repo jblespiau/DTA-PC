@@ -1,0 +1,32 @@
+{
+  "profile": [
+    {
+      "supply": 3.0,
+      "demand": 1.5,
+      "total_density": 0.5,
+      "partial_densities": {
+        "1": 0.5
+      },
+      "in_flows": {},
+      "out_flows": {}
+    },
+    {
+      "supply": 2.0,
+      "demand": 1.0,
+      "total_density": 0.5,
+      "partial_densities": {
+        "1": 0.5
+      },
+      "in_flows": {},
+      "out_flows": {}
+    },
+    {
+      "supply": 2.5,
+      "demand": 0.0,
+      "total_density": 0.0,
+      "partial_densities": {},
+      "in_flows": {},
+      "out_flows": {}
+    }
+  ]
+}

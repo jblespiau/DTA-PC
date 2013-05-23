@@ -3,7 +3,7 @@ package generalLWRNetwork;
 /**
  * @brief Unique ID factory for cells and junctions
  */
-final class NetworkUIDFactory {
+public final class NetworkUIDFactory {
 
   static int id_cell = -1, id_junctions = -1;
 
@@ -20,11 +20,11 @@ final class NetworkUIDFactory {
     return id_junctions;
   }
 
-  static void resetCell_id() {
+  public static void resetCell_id() {
     id_cell = -1;
   }
 
-  static void resetJunction_id() {
+  public static void resetJunction_id() {
     id_junctions = -1;
   }
 

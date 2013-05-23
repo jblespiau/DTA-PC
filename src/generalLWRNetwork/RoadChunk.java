@@ -10,7 +10,7 @@ import java.util.Map.Entry;
  *        fundamental triangular diagram. Be aware that the maximum in-low and
  *        out-flow must be the same
  */
-class RoadChunk extends Cell {
+public class RoadChunk extends Cell {
 
   /* Constants */
   public double length, v, w, F_max, jam_density;
@@ -50,6 +50,18 @@ class RoadChunk extends Cell {
         initial_densities);
   }
 
+  /**
+   * @brief Build a triangular diagram from only 3 data and the discretization
+   * @param v
+   * @param f_max
+   * @param jam_capacity
+   * @param delta_t
+   */
+  public RoadChunk(double v, double f_max, double jam_capacity, double delta_t) {
+    build(v * delta_t, v, v * f_max / (v * jam_capacity - f_max), f_max, jam_capacity);
+    this.initial_densities = new LinkedHashMap<Integer, Double>();
+  }
+  
   public String detailstoString() {
     return "Cell: " + getUniqueId() + "\n" + "F_in=" + F_max + "\n"
         + "F_max=" + F_max + "\n" + "v=" + v + "\n" + "w=" + w + "\n"

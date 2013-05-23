@@ -34,7 +34,7 @@ public class Junction {
    * @param predecessor
    * @param successor
    */
-  Junction(Cell[] predecessor, Cell[] successor) {
+  public Junction(Cell[] predecessor, Cell[] successor) {
     unique_id = NetworkUIDFactory.getId_junctions();
     this.prev = predecessor.clone();
     this.next = successor.clone();
@@ -115,6 +115,7 @@ public class Junction {
    * @param time_step
    * @param junction_sr
    * @param cells
+   * TODO: Remove time_step
    */
   public void solveJunction(Profile p, int time_step,
       JunctionSplitRatios junction_sr, Cell[] cells) {
@@ -154,7 +155,7 @@ public class Junction {
       assert P1 != null && P2 != null : "In 2x1 solving, we didn't found the priority for both roads";
 
       Double flow_1, flow_2;
-      if (P1 * (flow - demand1) < P2 * demand1) {
+      if (P1 * (flow - demand1) > P2 * demand1) {
         flow_1 = demand1;
       } else if (P1 * demand2 < P2 * (flow - demand2)) {
         flow_1 = flow - demand2;
@@ -163,6 +164,8 @@ public class Junction {
       }
       flow_2 = flow - flow_1;
 
+      assert flow_1 <= demand1;
+      assert flow_2 <= demand2;
       /* Computing the partial out-flow for the first incoming link */
       if (flow_1 != 0) {
         Iterator<Entry<Integer, Double>> iterator_partial_densities =
