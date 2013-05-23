@@ -1,7 +1,6 @@
 package jUnit;
 
 import static org.junit.Assert.*;
-import generalNetwork.data.Json_data;
 import generalNetwork.state.Profile;
 
 import java.io.FileNotFoundException;
@@ -10,10 +9,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Set;
-import java.util.Map.Entry;
 
 import org.junit.Test;
 

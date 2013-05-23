@@ -149,8 +149,8 @@ public class LWR_network {
     for (int c = 0; c < cells.length; c++)
       cells[c].checkConstraints(delta_t);
 
-   // for (int j = 0; j < junctions.length; j++)
-   //   junctions[j].checkConstraints();
+    // for (int j = 0; j < junctions.length; j++)
+    // junctions[j].checkConstraints();
   }
 
   /**
