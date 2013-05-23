@@ -1,4 +1,5 @@
-import dta_solver.Discretization;
+package dta_solver;
+
 import generalLWRNetwork.DiscretizedGraph;
 import generalLWRNetwork.LWR_network;
 import generalNetwork.data.Json_data;
@@ -12,10 +13,11 @@ import generalNetwork.state.externalSplitRatios.IntertemporalOriginsSplitRatios;
 public class Simulator {
 
   DiscretizedGraph discretized_graph;
-  Discretization time_discretization;
+  public Discretization time_discretization;
   Demands origin_demands;
   IntertemporalOriginsSplitRatios splits;
   LWR_network lwr_network;
+  public Profile[] profiles;
 
   protected Simulator(int delta_t, int nb_steps) {
     time_discretization = new Discretization(delta_t, nb_steps);
@@ -86,9 +88,13 @@ public class Simulator {
       lwr_network.printInternalSplitRatios();
     }
   }
-  
+
   public void run() {
-    Profile[] profiles = new Profile[time_discretization.getNb_steps()];
+    run(true);
+  }
+
+  public void run(boolean print) {
+    profiles = new Profile[time_discretization.getNb_steps()];
 
     for (int k = 0; k < time_discretization.getNb_steps(); k++) {
       profiles[k] = lwr_network.emptyProfile();
@@ -100,20 +106,19 @@ public class Simulator {
       } else if (k == 1) {
         profiles[k] = lwr_network.simulateProfileFrom(
             lwr_network.emptyProfile(),
-            profiles[k - 1], 
+            profiles[k - 1],
             time_discretization.getDelta_t(),
             origin_demands, splits,
             k - 1);
       } else {
         profiles[k] = lwr_network.simulateProfileFrom(profiles[k - 2],
-            profiles[k - 1], 
+            profiles[k - 1],
             time_discretization.getDelta_t(),
             origin_demands, splits,
             k - 1);
       }
 
-      
-      if (k > 0) {
+      if (k > 0 && print) {
         System.out.println("****** Printing profile at time step " + (k - 1)
             + "********");
         profiles[k - 1].print();

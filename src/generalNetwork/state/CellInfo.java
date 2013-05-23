@@ -3,6 +3,7 @@ package generalNetwork.state;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+import dataStructures.Numerical;
 
 /**
  * @brief Full description of state a cell at a given time step.
@@ -140,4 +141,40 @@ public class CellInfo {
     }
     this.total_density = total_density;
   }
+
+  public boolean equals(Object obj, double epsilon) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    CellInfo other = (CellInfo) obj;
+    if (!Numerical.equals(demand, other.demand, epsilon))
+      return false;
+    if (!Numerical.equals(supply, other.supply, epsilon))
+      return false;
+    if (!Numerical.equals(total_density, other.total_density, epsilon))
+      return false;
+    
+    if (in_flows == null) {
+      if (other.in_flows != null)
+        return false;
+    } else if (!Numerical.equals(in_flows, other.in_flows, epsilon))
+      return false;
+    if (out_flows == null) {
+      if (other.out_flows != null)
+        return false;
+    } else if (!Numerical.equals(out_flows, other.out_flows, epsilon))
+      return false;
+    if (partial_densities == null) {
+      if (other.partial_densities != null)
+        return false;
+    } else if (!Numerical.equals(partial_densities, other.partial_densities,
+        epsilon))
+      return false;
+
+    return true;
+  }
+
 }
