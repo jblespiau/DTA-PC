@@ -18,7 +18,7 @@ public class LWR_network {
   private Destination[] sinks;
 
   private IntertemporalSplitRatios internal_split_ratios;
-  private int nb_commodities;
+  private int nb_compliant_commodities;
 
   /**
    * @brief Take a DiscretizedGraph and create the LWR_network compact
@@ -72,7 +72,7 @@ public class LWR_network {
     /* We register all the internal_split_ratios */
     internal_split_ratios = g.split_ratios;
 
-    nb_commodities = g.nb_paths;
+    nb_compliant_commodities = g.nb_paths;
 
     check();
   }
@@ -128,6 +128,10 @@ public class LWR_network {
     return sources;
   }
 
+  public Destination[] getSinks() {
+    return sinks;
+  }
+
   public Destination getSink(int path) {
     return sinks[path];
   }
@@ -156,8 +160,8 @@ public class LWR_network {
     return result;
   }
 
-  public int getNb_commodities() {
-    return nb_commodities;
+  public int getNb_compliantCommodities() {
+    return nb_compliant_commodities;
   }
 
   public void checkConstraints(double delta_t) {
@@ -262,11 +266,14 @@ public class LWR_network {
     return initial_profile;
   }
 
-  public double[] initialSplitRatios() {
-    double[] res = new double[sources.length];
-    for (int i = 0; i < res.length; i++) {
-      res[i] = 1.0 / (double) res.length;
-    }
-    return res;
-  }
+  // This is false now
+  /*
+   * private double[] initialSplitRatios() {
+   * double[] res = new double[sources.length];
+   * for (int i = 0; i < res.length; i++) {
+   * res[i] = 1.0 / (double) res.length;
+   * }
+   * return res;
+   * }
+   */
 }

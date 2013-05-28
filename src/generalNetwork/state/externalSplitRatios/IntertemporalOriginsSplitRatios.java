@@ -42,8 +42,8 @@ public class IntertemporalOriginsSplitRatios {
   }
 
   /**
-   * @brief Constructs default split-ratios with equally likely compliant flows
-   *        representing @a alpha % of the total flow
+   * @brief Constructs default split-ratios for all time steps with equally
+   *        likely compliant flows representing @a alpha % of the total flow
    */
   static public IntertemporalOriginsSplitRatios defaultSplitRatios(
       int total_time_step,
