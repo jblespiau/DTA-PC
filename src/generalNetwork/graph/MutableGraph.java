@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.Scanner;
 import java.util.Vector;
 
-import generalNetwork.graph.Destination;
+import generalNetwork.graph.GraphDestination;
 import generalNetwork.graph.Link;
 import generalNetwork.graph.Node;
 import generalNetwork.graph.Source;
@@ -20,7 +20,7 @@ public class MutableGraph {
 
   Vector<Path> paths;
   Vector<Source> origins;
-  Vector<Destination> destinations;
+  Vector<GraphDestination> destinations;
 
   /**
    * @brief Create a mutable graph from a Graph
@@ -39,7 +39,7 @@ public class MutableGraph {
     origins = new Vector<Source>(g.origins.length);
     origins.addAll(Arrays.asList(g.origins));
 
-    destinations = new Vector<Destination>(g.destinations.length);
+    destinations = new Vector<GraphDestination>(g.destinations.length);
     destinations.addAll(Arrays.asList(g.destinations));
 
     id_factory = new GraphUIDFactory(g.links.length, g.nodes.length, g.paths.length);
@@ -53,7 +53,7 @@ public class MutableGraph {
 
     paths = new Vector<Path>(1);
     origins = new Vector<Source>(1);
-    destinations = new Vector<Destination>(1);
+    destinations = new Vector<GraphDestination>(1);
     System.out.println("Opening " + name);
     try {
       scanner = new Scanner(new File(name));
@@ -110,7 +110,7 @@ public class MutableGraph {
     int nb_dest = scanner.nextInt();
     scanner.nextLine();
     for (int i = 0; i < nb_dest; i++) {
-      destinations.add(new Destination(nodes.get(scanner.nextInt()).unique_id,
+      destinations.add(new GraphDestination(nodes.get(scanner.nextInt()).unique_id,
           "Destination"));
     }
     scanner.close();
@@ -125,11 +125,11 @@ public class MutableGraph {
   }
 
   public void addSingleBufferDestination(Node d) {
-    destinations.add(new Destination(d.unique_id, "SingleJunction"));
+    destinations.add(new GraphDestination(d.unique_id, "SingleJunction"));
   }
 
   public void addMultipleBufferDestination(Node d) {
-    destinations.add(new Destination(d.unique_id, "MultipleBuffer"));
+    destinations.add(new GraphDestination(d.unique_id, "MultipleBuffer"));
   }
 
   public void addPath(Path p) {

@@ -2,14 +2,14 @@ package generalNetwork.graph;
 
 import com.google.gson.annotations.Expose;
 
-public class Destination {
+public class GraphDestination {
 
   @Expose
   public int id;
   @Expose
   public String type;
 
-  public Destination(int id, String type) {
+  public GraphDestination(int id, String type) {
     super();
     this.id = id;
     this.type = type;

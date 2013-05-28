@@ -18,6 +18,7 @@ public class LWR_network {
   private Destination[] sinks;
 
   private IntertemporalSplitRatios internal_split_ratios;
+  private int nb_commodities;
 
   /**
    * @brief Take a DiscretizedGraph and create the LWR_network compact
@@ -71,6 +72,8 @@ public class LWR_network {
     /* We register all the internal_split_ratios */
     internal_split_ratios = g.split_ratios;
 
+    nb_commodities = g.nb_paths;
+
     check();
   }
 
@@ -121,6 +124,10 @@ public class LWR_network {
     return cells[i];
   }
 
+  public Origin[] getSources() {
+    return sources;
+  }
+
   public Destination getSink(int path) {
     return sinks[path];
   }
@@ -133,16 +140,24 @@ public class LWR_network {
     return junctions[i];
   }
 
+  public Cell[] getCells() {
+    return cells;
+  }
+
   public Junction[] getJunctions() {
     return junctions;
   }
 
-  public int getNumber_paths() {
+  private int getNumber_paths() {
     int result = 0;
     for (int i = 0; i < sources.length; i++) {
       result += sources[i].size();
     }
     return result;
+  }
+
+  public int getNb_commodities() {
+    return nb_commodities;
   }
 
   public void checkConstraints(double delta_t) {
@@ -254,9 +269,4 @@ public class LWR_network {
     }
     return res;
   }
-
-  public Origin[] getSources() {
-    return sources;
-  }
-
 }

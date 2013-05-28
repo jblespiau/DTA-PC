@@ -2,7 +2,7 @@ package generalNetwork.graph;
 
 import com.google.gson.annotations.Expose;
 
-import generalNetwork.graph.Destination;
+import generalNetwork.graph.GraphDestination;
 import generalNetwork.graph.Link;
 import generalNetwork.graph.Node;
 import generalNetwork.graph.Source;
@@ -38,7 +38,7 @@ public class Graph {
   @Expose
   Source[] origins;
   @Expose
-  Destination[] destinations;
+  GraphDestination[] destinations;
 
   static public Graph fromFile(String file_name) {
     return new JsonFactory().graphFromFile(file_name);
@@ -59,7 +59,7 @@ public class Graph {
     nb_origins = mg.origins.size();
     origins = mg.origins.toArray(new Source[nb_origins]);
     nb_destinations = mg.destinations.size();
-    destinations = mg.destinations.toArray(new Destination[nb_destinations]);
+    destinations = mg.destinations.toArray(new GraphDestination[nb_destinations]);
 
     id_factory = new GraphUIDFactory(nb_links, nb_nodes, nb_paths);
   }
@@ -144,7 +144,7 @@ public class Graph {
     return origins;
   }
 
-  public Destination[] getDestinations() {
+  public GraphDestination[] getDestinations() {
     return destinations;
   }
 }
