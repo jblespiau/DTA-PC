@@ -43,5 +43,9 @@ public class Destination {
       System.exit(1);
     }
   }
+  
+  public int getUniqueId() {
+    return sink.getUniqueId();
+  }
 
 }

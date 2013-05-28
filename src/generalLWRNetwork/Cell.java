@@ -26,7 +26,7 @@ public abstract class Cell {
    */
 
   abstract public boolean isSink();
-  
+
   abstract public String toString();
 
   public abstract void print();
@@ -37,9 +37,15 @@ public abstract class Cell {
 
   abstract public LinkedHashMap<Integer, Double> getInitialDensity();
 
+  abstract public double getLength();
+
   abstract public double getDemand(double total_density);
 
+  abstract public double getDerivativeDemand(double total_density);;
+
   abstract public double getSupply(double total_density);
+
+  abstract public double getDerivativeSupply(double total_density);
 
   abstract public LinkedHashMap<Integer, Double> getUpdatedDensity(
       LinkedHashMap<Integer, Double> densities,

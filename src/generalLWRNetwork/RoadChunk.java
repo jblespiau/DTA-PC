@@ -58,10 +58,11 @@ public class RoadChunk extends Cell {
    * @param delta_t
    */
   public RoadChunk(double v, double f_max, double jam_capacity, double delta_t) {
-    build(v * delta_t, v, v * f_max / (v * jam_capacity - f_max), f_max, jam_capacity);
+    build(v * delta_t, v, v * f_max / (v * jam_capacity - f_max), f_max,
+        jam_capacity);
     this.initial_densities = new LinkedHashMap<Integer, Double>();
   }
-  
+
   public String detailstoString() {
     return "Cell: " + getUniqueId() + "\n" + "F_in=" + F_max + "\n"
         + "F_max=" + F_max + "\n" + "v=" + v + "\n" + "w=" + w + "\n"
@@ -140,13 +141,35 @@ public class RoadChunk extends Cell {
   }
 
   @Override
+  public double getDerivativeDemand(double total_density) {
+    if (v * total_density < F_max) {
+      return v;
+    } else {
+      return 0.0;
+    }
+  }
+
+  @Override
   public double getSupply(double density) {
     return Math.max(0, Math.min(F_max, w * (jam_density - density)));
   }
 
   @Override
+  public double getDerivativeSupply(double total_density) {
+    if (F_max < w * (jam_density - total_density))
+      return 0.0;
+    else
+      return -w;
+  }
+
+  @Override
   public LinkedHashMap<Integer, Double> getInitialDensity() {
     return initial_densities;
+  }
+
+  @Override
+  public double getLength() {
+    return length;
   }
 
   @Override
@@ -210,5 +233,4 @@ public class RoadChunk extends Cell {
   public boolean isSink() {
     return false;
   }
-
 }

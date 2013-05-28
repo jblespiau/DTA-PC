@@ -17,6 +17,7 @@ public class Origin {
   protected Buffer[] entries;
   protected Junction junction;
   protected LinkedList<Integer> compliant_commodities;
+  public double[] sum_split_ratios;
 
   protected Origin() {
     entries = null;
@@ -55,6 +56,10 @@ public class Origin {
    */
   public int size() {
     return entries.length;
+  }
+
+  public int getUniqueId() {
+    return entries[0].getUniqueId();
   }
 
   /**

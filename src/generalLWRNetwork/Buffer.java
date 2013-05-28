@@ -36,7 +36,17 @@ public class Buffer extends Cell {
   }
 
   @Override
+  public double getDerivativeDemand(double total_density) {
+    return 1;
+  }
+
+  @Override
   public double getSupply(double density) {
+    return 0;
+  }
+
+  @Override
+  public double getDerivativeSupply(double total_density) {
     return 0;
   }
 
@@ -67,7 +77,7 @@ public class Buffer extends Cell {
       LinkedHashMap<Integer, Double> out_flows, double delta_t) {
 
     LinkedHashMap<Integer, Double> result = new LinkedHashMap<Integer, Double>();
-    
+
     /* We first add all the densities */
     Iterator<Entry<Integer, Double>> densities_it = densities
         .entrySet()
@@ -115,4 +125,8 @@ public class Buffer extends Cell {
     return false;
   }
 
+  @Override
+  public double getLength() {
+    return 1.0;
+  }
 }

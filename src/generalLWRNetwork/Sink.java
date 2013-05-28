@@ -36,8 +36,18 @@ class Sink extends Cell {
   }
 
   @Override
+  public double getDerivativeDemand(double total_density) {
+    return 0;
+  }
+
+  @Override
   public double getSupply(double density) {
     return Double.MAX_VALUE;
+  }
+
+  @Override
+  public double getDerivativeSupply(double total_density) {
+    return 0;
   }
 
   @Override
@@ -49,7 +59,7 @@ class Sink extends Cell {
   public void print() {
     System.out.println(toString());
   }
-  
+
   @Override
   public LinkedHashMap<Integer, Double> getInitialDensity() {
     return new LinkedHashMap<Integer, Double>();
@@ -72,7 +82,7 @@ class Sink extends Cell {
       entry = densities_it.next();
       result.put(new Integer(entry.getKey()), new Double(entry.getValue()));
     }
-    
+
     /* Then we add the in_flows */
     Iterator<Entry<Integer, Double>> iterator_in_flows = in_flows
         .entrySet().iterator();
@@ -101,5 +111,10 @@ class Sink extends Cell {
   @Override
   public boolean isSink() {
     return true;
+  }
+
+  @Override
+  public double getLength() {
+    return 1.0;
   }
 }
