@@ -6,5 +6,18 @@
 *.ear
 
 # Eclipse files #
-#.project
-#.classpath
+.project
+.classpath
+bin/
+
+# Temporary files
+*~
+
+# IpOpt wrapper
+lib/libjipopt.so
+
+# Doxygen documentation
+Documentation/
+
+# Personals
+Tools/
