@@ -337,40 +337,12 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
 
     IntertemporalOriginsSplitRatios splits = simulator.splits;
 
-    /* For every time steps there are C compliant flows, and O non compliant */
     DoubleMatrix1D result =
         DoubleFactory1D.dense.make(T * temporal_control_block_size);
 
     int index_in_control = 0;
     Double split_ratio;
-    double[] sum_of_split_ratios = new double[T];
-    double partial_sum;
-
-    for (int orig = 0; orig < O; orig++) {
-      /*
-       * First we compute the sum of the split ratios for this origin for all
-       * time steps to be able to put the barrier \sum \beta_o(k) >= 1
-       */
-      for (int k = 0; k < T; k++) {
-        partial_sum = 0;
-
-        int nb_commodities = sources[orig]
-            .getCompliant_commodities()
-            .size() + 1;
-        for (int tmp = 0; tmp < nb_commodities; tmp++) {
-          /*
-           * k * (C+O) is the beginning of the block for time step k
-           * index_in_control gives the position of the sub-block for the given
-           * origin
-           * tmp iterates over 1 to (nb_commodities)
-           */
-          partial_sum +=
-              control[k * temporal_control_block_size
-                  + sources[orig].getUniqueId() * (C + 1) + tmp];
-        }
-        sum_of_split_ratios[k] = partial_sum;
-      }
-    }
+    double sum_of_split_ratios;
     for (int orig = 0; orig < O; orig++) {
 
       for (int k = 0; k < T; k++) {
@@ -393,21 +365,19 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
            * The condition \beta >= 0 is already put in the solver (in
            * AdjointJVM/org.wsj/Optimizers.scala)
            */
-          // derivative_term -= epsilon1 / control[k * (C + O)];
         }
-        System.out.println("NCF OK");
 
-        if (sum_of_split_ratios[k] == 0) {
+        sum_of_split_ratios = sources[orig].sum_split_ratios[k];
+        if (sum_of_split_ratios == 0) {
           System.out
               .println("!Warning! Sum of the split ratios for an origin is Zero !");
           assert false;
         } else {
           // TODO : For now we imposes \sum \beta > 0.999
-          assert sum_of_split_ratios[k] >= 0.999;
+          assert sum_of_split_ratios >= 0.999;
           // To skip one operation we do 1 / (a-b) instead of - 1 / (b-a)
-          derivative_term += epsilon / (0.999 - sum_of_split_ratios[k]);
+          derivative_term += epsilon / (0.999 - sum_of_split_ratios);
         }
-
         result.set(k * temporal_control_block_size, derivative_term);
       }
       index_in_control++;
@@ -435,15 +405,15 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
            * 
            * }
            */
-
-          if (sum_of_split_ratios[k] == 0) {
+          sum_of_split_ratios = sources[orig].sum_split_ratios[k];
+          if (sum_of_split_ratios == 0) {
             System.out
                 .println("!Warning! Sum of the split ratios for an origin is Zero !");
             assert false;
           } else {
             // TODO : For now we imposes \sum \beta > 0.999
-            assert sum_of_split_ratios[k] >= 0.999;
-            derivative_term += epsilon / (0.999 - sum_of_split_ratios[k]);
+            assert sum_of_split_ratios >= 0.999;
+            derivative_term += epsilon / (0.999 - sum_of_split_ratios);
           }
           result.set(k * temporal_control_block_size
               + index_in_control, derivative_term);
