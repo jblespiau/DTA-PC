@@ -62,6 +62,12 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
     temporal_control_block_size = (C + O);
   }
 
+  /**
+   * @brief Return the 1x(C+O) matrix representing the control where
+   *        C is the number of compliant commodities and O the number of origins
+   * @details There are T blocks of size (C+O). The i-th block contains the
+   *          control at time step i.
+   */
   public double[] getControl() {
 
     IntertemporalOriginsSplitRatios splits = simulation.splits;
@@ -80,7 +86,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
       for (int k = 0; k < T; k++) {
         /*
          * Mapping between
-         * splits.get(sources[orig], k).get(0) 
+         * splits.get(sources[orig], k).get(0)
          * and U[k*(C + sources.length + index_in_control)]
          */
         split_ratio = splits.get(sources[orig], k).get(0);
@@ -197,10 +203,130 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
   }
 
   @Override
-  public Option<SparseCCDoubleMatrix2D> dhdx(DTA_ParallelSimulator arg0,
-      double[] arg1) {
-    // TODO Auto-generated method stub
-    return null;
+  public Option<SparseCCDoubleMatrix2D> dhdx(Simulator simulator,
+      double[] control) {
+
+    // IntertemporalOriginsSplitRatios splits = simulator.splits;
+
+    /* Size of the description of a profile for a given time step */
+    int x_block_size = (3 * (C + 1) + 2) * cells.length;
+    /* Size of a block describing all the densities for a given time step */
+    int size_density_block = cells.length * (C + 1);
+    /* Size of a block describing all the supply/demand at one time step */
+    int size_demand_suply_block = 2 * cells.length;
+    /* Size of a block describing out-flows */
+    int size_f_out_block = size_density_block;
+
+    int f_out_position = size_density_block + size_demand_suply_block;
+    int f_in_position = f_out_position + size_f_out_block;
+
+    int mass_conservation_size = size_density_block;
+    int flow_propagation_size = size_demand_suply_block;
+    int block_size = mass_conservation_size + flow_propagation_size;
+
+    SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(block_size * T,
+        x_block_size * T);
+
+    /*********************************************************
+     * Derivative terms for the Mass Conservation constraints
+     *********************************************************/
+
+    /*
+     * Derivative of the initial conditions : \rho(i,c)(0) - \rho(i,c,0) = 0
+     * The derivative is always 1
+     */
+    for (int partial_density = 0; partial_density < mass_conservation_size; partial_density++) {
+      result.setQuick(partial_density,
+          partial_density,
+          1.0);
+    }
+
+    // Position of a block of constraints in H indexed by k
+    int block_upper_position;
+    // Position of a block in the Mass Conservation block indexed by the cell_id
+    int sub_block_position;
+    double delta_t_over_l;
+    int i, j;
+    for (int k = 1; k < T; k++) {
+      block_upper_position = k * block_size;
+      for (int cell_id = 0; cell_id < cells.length; cell_id++) {
+        sub_block_position = cell_id * (C + 1);
+        for (int c = 0; c < C + 1; c++) {
+
+          // Line of interest in the H matrix
+          i = block_upper_position + sub_block_position + c;
+          // Column of interest in the H matrix
+          j = x_block_size * (k - 1) + sub_block_position + c;
+
+          /*
+           * We put 1 for the derivative terms of the mass conversation
+           * equations (i,c,k) with respect to \beta(i,c,k) for k \in [1, T]
+           */
+          result.setQuick(i, j, 1.0);
+
+          /*
+           * Derivative terms with respect to flow-out(i,c,k-1) and
+           * flow-in(i,c,k-1)
+           */
+          delta_t_over_l = simulator.time_discretization.getDelta_t() /
+              simulator.lwr_network.getCell(cell_id).getLength();
+
+          // flow-out
+          result.setQuick(i, j + f_out_position, -delta_t_over_l);
+
+          // flow-in
+          result.setQuick(i, j + f_in_position, delta_t_over_l);
+        }
+      }
+      // For the buffers and sinks we have put a derivative term that should
+      // have been zero
+      for (int o = 0; o < O; o++) {
+        for (int c = 0; c < C + 1; c++) {
+          i = block_upper_position + sources[o].getUniqueId() * (C + 1) + c;
+          j = x_block_size * (k - 1) + sources[o].getUniqueId() * (C + 1) + c;
+          // flow-in
+          result.setQuick(i, j + f_in_position, 0.0);
+        }
+      }
+      for (int s = 0; s < S; s++) {
+        for (int c = 0; c < C + 1; c++) {
+          i = block_upper_position + destinations[s].getUniqueId() * (C + 1)
+              + c;
+          j = x_block_size * (k - 1) + destinations[s].getUniqueId() * (C + 1)
+              + c;
+          // flow-in
+          result.setQuick(i, j + f_out_position, 0.0);
+        }
+      }
+    }
+
+    /*********************************************************
+     * Derivative terms for the Flow propagation
+     *********************************************************/
+    double total_density;
+    for (int k = 0; k < T; k++) {
+      // Position of the first constraint in H dealing with supply/demand at
+      // time step k
+      block_upper_position = k * block_size + mass_conservation_size;
+      for (int cell_id = 0; cell_id < cells.length; cell_id++) {
+        sub_block_position = block_upper_position + cell_id * 2;
+        total_density = simulator.profiles[k].get(cell_id).total_density;
+
+        for (int c = 0; c < C + 1; c++) {
+          // Demand first
+          result.setQuick(sub_block_position,
+              x_block_size * k + cell_id * (C + 1) + c,
+              cells[cell_id].getDerivativeDemand(total_density));
+
+          // Then supply
+          result.setQuick(sub_block_position + 1,
+              x_block_size * k + cell_id * (C + 1) + c,
+              cells[cell_id].getDerivativeSupply(total_density));
+        }
+      }
+    }
+
+    return new Some<SparseCCDoubleMatrix2D>(result);
   }
 
   /**
