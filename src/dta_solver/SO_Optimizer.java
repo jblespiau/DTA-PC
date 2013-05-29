@@ -42,6 +42,27 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
   /* Size of a block for one time step of the control */
   private int temporal_control_block_size;
 
+  /* State Vector X */
+  /* Size of the description of a profile for a given time step */
+  private int x_block_size;
+  /* Size of a block describing all the densities for a given time step */
+  private int size_density_block;
+  /* Size of a block describing all the supply/demand at one time step */
+  private int size_demand_suply_block;
+  /* Size of a block describing out-flows */
+  private int size_f_out_block;
+
+  private int f_out_position;
+  private int f_in_position;
+
+  /* Constraints Vector H */
+  /* Size of a block describing the Mass Conversation constraints */
+  private int mass_conservation_size;
+  /* Size of a block describing the Flow Propagation constraints */
+  private int flow_propagation_size;
+  /* Total size of a block of constraints for a given time step */
+  private int H_block_size;
+
   public SO_Optimizer(DifferentiableMultivariateOptimizer op, int maxIter,
       Simulator simu) {
     super(op, maxIter);
@@ -53,13 +74,32 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
 
     sources = simulation.lwr_network.getSources();
     O = sources.length;
-    Destination[] destinations = simulation.lwr_network.getSinks();
+    destinations = simulation.lwr_network.getSinks();
     S = destinations.length;
 
-    /*
-     * For every time steps there are C compliant flows, and O non compliant
-     */
+    /* For every time steps there are C compliant flows, and O non compliant */
     temporal_control_block_size = (C + O);
+
+    /* State Vector X */
+    /* Size of the description of a profile for a given time step */
+    x_block_size = (3 * (C + 1) + 2) * cells.length;
+    /* Size of a block describing all the densities for a given time step */
+    size_density_block = cells.length * (C + 1);
+    /* Size of a block describing all the supply/demand at one time step */
+    size_demand_suply_block = 2 * cells.length;
+    /* Size of a block describing out-flows */
+    size_f_out_block = size_density_block;
+    f_out_position = size_density_block + size_demand_suply_block;
+    f_in_position = f_out_position + size_f_out_block;
+
+    /* Constraints Vector H */
+    /* Size of a block describing the Mass Conversation constraints */
+    mass_conservation_size = size_density_block;
+    /* Size of a block describing the Flow Propagation constraints */
+    flow_propagation_size = size_demand_suply_block;
+    /* Total size of a block of constraints for a given time step */
+    H_block_size = 3 * mass_conservation_size + flow_propagation_size;
+
   }
 
   /**
@@ -125,7 +165,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
     return control;
   }
 
-  public void parseStateVector(Profile p) {
+  private void parseStateVector(Profile p) {
 
     /* Size of the description of a profile for a given time step */
     int block_size = (3 * (C + 1) + 2) * cells.length;
@@ -198,15 +238,6 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
   public Option<SparseCCDoubleMatrix2D> dhdu(Simulator simulator,
       double[] control) {
 
-    /* Size of a block describing all the densities for a given time step */
-    int size_density_block = cells.length * (C + 1);
-    /* Size of a block describing all the supply/demand at one time step */
-    int size_demand_suply_block = 2 * cells.length;
-
-    int mass_conservation_size = size_density_block;
-    int flow_propagation_size = size_demand_suply_block;
-    int H_block_size = mass_conservation_size + flow_propagation_size;
-
     SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(
         H_block_size * T,
         temporal_control_block_size * T);
@@ -214,8 +245,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
     int size, i, j, index_in_control = 0;
     double[] origin_demands;
     for (int orig = 0; orig < O; orig++) {
-      size = sources[orig]
-          .getCompliant_commodities().size();
+      size = sources[orig].getCompliant_commodities().size();
       origin_demands = simulator.origin_demands.get(sources[orig]);
       for (int c = 0; c < size + 1; c++) {
         for (int k = 0; k < T; k++) {
@@ -236,22 +266,6 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
       double[] control) {
 
     // IntertemporalOriginsSplitRatios splits = simulator.splits;
-
-    /* Size of the description of a profile for a given time step */
-    int x_block_size = (3 * (C + 1) + 2) * cells.length;
-    /* Size of a block describing all the densities for a given time step */
-    int size_density_block = cells.length * (C + 1);
-    /* Size of a block describing all the supply/demand at one time step */
-    int size_demand_suply_block = 2 * cells.length;
-    /* Size of a block describing out-flows */
-    int size_f_out_block = size_density_block;
-
-    int f_out_position = size_density_block + size_demand_suply_block;
-    int f_in_position = f_out_position + size_f_out_block;
-
-    int mass_conservation_size = size_density_block;
-    int flow_propagation_size = size_demand_suply_block;
-    int H_block_size = mass_conservation_size + flow_propagation_size;
 
     SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(
         H_block_size * T,
@@ -408,6 +422,14 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
           // To skip one operation we do 1 / (a-b) instead of - 1 / (b-a)
           derivative_term += epsilon / (0.999 - sum_of_split_ratios);
         }
+        if (derivative_term == Double.POSITIVE_INFINITY || derivative_term == Double.NEGATIVE_INFINITY) {
+          System.out.println("Infinity detected in the dj/du function for non-compliant flow");
+          System.exit(1);
+        }
+        if (derivative_term  == Double.NaN) {
+          System.out.println("Nan detected in the dj/du function for compliant flow");
+          System.exit(1);
+        }
         result.set(k * temporal_control_block_size, derivative_term);
       }
       index_in_control++;
@@ -445,6 +467,16 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
             assert sum_of_split_ratios >= 0.999;
             derivative_term += epsilon / (0.999 - sum_of_split_ratios);
           }
+
+          if (derivative_term == Double.POSITIVE_INFINITY || derivative_term == Double.NEGATIVE_INFINITY) {
+            System.out.println("Infinity detected in the dj/du function for compliant flow");
+            System.exit(1);
+          }
+          if (derivative_term  == Double.NaN) {
+            System.out.println("Nan detected in the dj/du function for compliant flow");
+            System.exit(1);
+          }
+
           result.set(k * temporal_control_block_size
               + index_in_control, derivative_term);
         }
@@ -463,17 +495,13 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
   @Override
   public SparseDoubleMatrix1D djdx(Simulator simulator, double[] arg1) {
 
-    /* Size of the description of a profile for a given time step */
-    int block_size = (3 * (C + 1) + 2) * cells.length;
-    /* Size of a block describing all the densities for a given time step */
-    int size_density_block = cells.length * (C + 1);
+    SparseDoubleMatrix1D result = new SparseDoubleMatrix1D(T * x_block_size);
 
-    SparseDoubleMatrix1D result = new SparseDoubleMatrix1D(T * block_size);
 
     /* We put 1 when we derivate along a partial density */
     int block_position;
     for (int k = 0; k < T; k++) {
-      block_position = k * block_size;
+      block_position = k * x_block_size;
       for (int partial_density_id = 0; partial_density_id < size_density_block; partial_density_id++) {
         result.setQuick(block_position + partial_density_id, 1.0);
       }
@@ -557,6 +585,14 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
         objective -=
             epsilon * Math.log(sources[orig].sum_split_ratios[k] - 0.999);
 
+    if (objective == Double.POSITIVE_INFINITY || objective == Double.NEGATIVE_INFINITY) {
+      System.out.println("Infinity detected in the objective function");
+      System.exit(1);
+    }
+    if (objective == Double.NaN) {
+      System.out.println("Nan detected in the objective function");
+      System.exit(1);
+    }
     return objective;
   }
 }
