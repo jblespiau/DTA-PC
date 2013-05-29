@@ -195,11 +195,40 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
   }
 
   @Override
-  public Option<SparseCCDoubleMatrix2D> dhdu(Simulator arg0,
-      double[] arg1) {
-    // TODO Auto-generated method stub
-    // // Some<Double> d = new Some<Double>(Double.valueOf(1));
-    return null;
+  public Option<SparseCCDoubleMatrix2D> dhdu(Simulator simulator,
+      double[] control) {
+
+    /* Size of a block describing all the densities for a given time step */
+    int size_density_block = cells.length * (C + 1);
+    /* Size of a block describing all the supply/demand at one time step */
+    int size_demand_suply_block = 2 * cells.length;
+
+    int mass_conservation_size = size_density_block;
+    int flow_propagation_size = size_demand_suply_block;
+    int H_block_size = mass_conservation_size + flow_propagation_size;
+
+    SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(
+        H_block_size * T,
+        temporal_control_block_size * T);
+
+    int size, i, j, index_in_control = 0;
+    double[] origin_demands;
+    for (int orig = 0; orig < O; orig++) {
+      size = sources[orig]
+          .getCompliant_commodities().size();
+      origin_demands = simulator.origin_demands.get(sources[orig]);
+      for (int c = 0; c < size + 1; c++) {
+        for (int k = 0; k < T; k++) {
+          i = k * H_block_size + sources[orig].getUniqueId();
+          j = k * temporal_control_block_size + index_in_control;
+
+          result.setQuick(i, j, origin_demands[k]);
+        }
+        index_in_control++;
+      }
+    }
+
+    return new Some<SparseCCDoubleMatrix2D>(result);
   }
 
   @Override
@@ -222,9 +251,10 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
 
     int mass_conservation_size = size_density_block;
     int flow_propagation_size = size_demand_suply_block;
-    int block_size = mass_conservation_size + flow_propagation_size;
+    int H_block_size = mass_conservation_size + flow_propagation_size;
 
-    SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(block_size * T,
+    SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(
+        H_block_size * T,
         x_block_size * T);
 
     /*********************************************************
@@ -248,7 +278,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
     double delta_t_over_l;
     int i, j;
     for (int k = 1; k < T; k++) {
-      block_upper_position = k * block_size;
+      block_upper_position = k * H_block_size;
       for (int cell_id = 0; cell_id < cells.length; cell_id++) {
         sub_block_position = cell_id * (C + 1);
         for (int c = 0; c < C + 1; c++) {
@@ -307,7 +337,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
     for (int k = 0; k < T; k++) {
       // Position of the first constraint in H dealing with supply/demand at
       // time step k
-      block_upper_position = k * block_size + mass_conservation_size;
+      block_upper_position = k * H_block_size + mass_conservation_size;
       for (int cell_id = 0; cell_id < cells.length; cell_id++) {
         sub_block_position = block_upper_position + cell_id * 2;
         total_density = simulator.profiles[k].get(cell_id).total_density;
