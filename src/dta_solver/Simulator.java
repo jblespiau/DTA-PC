@@ -1,5 +1,7 @@
 package dta_solver;
 
+import org.wsj.SystemState;
+
 import generalLWRNetwork.DiscretizedGraph;
 import generalLWRNetwork.LWR_network;
 import generalNetwork.data.Json_data;
@@ -10,13 +12,13 @@ import generalNetwork.graph.json.JsonFactory;
 import generalNetwork.state.Profile;
 import generalNetwork.state.externalSplitRatios.IntertemporalOriginsSplitRatios;
 
-public class Simulator {
+public class Simulator implements SystemState {
 
   DiscretizedGraph discretized_graph;
   public Discretization time_discretization;
   Demands origin_demands;
-  IntertemporalOriginsSplitRatios splits;
-  LWR_network lwr_network;
+  public IntertemporalOriginsSplitRatios splits;
+  public LWR_network lwr_network;
   public Profile[] profiles;
 
   protected Simulator(int delta_t, int nb_steps) {
@@ -124,5 +126,14 @@ public class Simulator {
         profiles[k - 1].print();
       }
     }
+  }
+
+  /**
+   * @brief Return the state of the network (i.e. the full description of the
+   *        state of the cells for all time steps)
+   */
+  @Override
+  public Object getState() {
+    return profiles;
   }
 }
