@@ -421,7 +421,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
      * Derivative terms for the Aggregate Split Ratios
      *********************************************************/
     /*
-     * This part is very uneffective because we have to do
+     * This part is not effective because we have to do
      * Nb_Aggregate_SR * T * (C+1) computation of derivative terms
      */
     Junction junction;
@@ -462,9 +462,11 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
                 continue;
 
               partial_density = in_cell_info.partial_densities.get(c);
-              if (partial_density != null & partial_density != 0) {
-                result.setQuick(i, j, i_j_c_SR * partial_density
-                    / in_cell_info.total_density);
+              total_density = in_cell_info.total_density;
+              if (total_density != 0) {
+                result.setQuick(i, j,
+                    i_j_c_SR * (total_density - partial_density)
+                        / (total_density * total_density));
               }
 
             }
@@ -474,6 +476,15 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
 
       }
     }
+
+    /*********************************************************
+     * Derivative terms for the out-flows
+     *********************************************************/
+
+    /*********************************************************
+     * Derivative terms for the in-flows
+     *********************************************************/
+
     return new Some<SparseCCDoubleMatrix2D>(result);
   }
 
