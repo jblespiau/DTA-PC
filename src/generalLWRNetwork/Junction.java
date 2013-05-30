@@ -1,6 +1,7 @@
 package generalLWRNetwork;
 
 import generalNetwork.state.CellInfo;
+import generalNetwork.state.JunctionInfo;
 import generalNetwork.state.Profile;
 import generalNetwork.state.internalSplitRatios.JunctionSplitRatios;
 
@@ -9,6 +10,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
+import dataStructures.PairCells;
 import dataStructures.Triplet;
 
 /**
@@ -115,16 +117,23 @@ public class Junction {
    * @param time_step
    * @param junction_sr
    * @param cells
-   * TODO: Remove time_step
+   *          TODO: Remove time_step
    */
   public void solveJunction(Profile p, int time_step,
       JunctionSplitRatios junction_sr, Cell[] cells) {
+
+    /* We create the junction info */
+    JunctionInfo j_info = new JunctionInfo(prev.length, next.length);
+    p.putJunction(unique_id, j_info);
 
     double flow;
     // 1x1 Junctions
     if (prev.length == 1 && next.length == 1) {
       CellInfo previous_info = p.getCell(prev[0]);
       CellInfo next_info = p.getCell(next[0]);
+
+      j_info.putAggregateSR(prev[0], next[0], 1.0);
+
       flow = Math.min(next_info.supply, previous_info.demand);
       /*
        * For debug
@@ -137,12 +146,16 @@ public class Junction {
        */
       previous_info.updateOutFlows(flow);
       next_info.updateInFlows(previous_info.out_flows, next[0].isSink());
+
       // 2x1 junctions
     } else if (prev.length == 2 && next.length == 1) {
 
       CellInfo prev1 = p.getCell(prev[0]);
       CellInfo prev2 = p.getCell(prev[1]);
       CellInfo next_info = p.getCell(next[0]);
+
+      j_info.putAggregateSR(prev[0], next[0], 1.0);
+      j_info.putAggregateSR(prev[1], next[0], 1.0);
 
       double demand1 = prev1.demand;
       double demand2 = prev2.demand;
@@ -187,10 +200,11 @@ public class Junction {
           if (in_flow == null) {
             in_flow = 0.0;
           }
-          next_info.in_flows.put(entry_density.getKey(), in_flow + out_flow_for_commodity);
+          next_info.in_flows.put(entry_density.getKey(), in_flow
+              + out_flow_for_commodity);
         }
       }
-      
+
       /* Computing the partial out-flow for the second incoming link */
       if (flow_2 != 0) {
         Iterator<Entry<Integer, Double>> iterator_partial_densities =
@@ -212,35 +226,36 @@ public class Junction {
           if (in_flow == null) {
             in_flow = 0.0;
           }
-          next_info.in_flows.put(entry_density.getKey(), in_flow + out_flow_for_commodity);
+          next_info.in_flows.put(entry_density.getKey(), in_flow
+              + out_flow_for_commodity);
         }
       }
-      // Nx1 junctions
+      // 1xN junctions
     } else if (prev.length == 1) {
 
       /*
-       * i = prev[0] is the incoming cell and j an outgoing cell at
+       * in_id = prev[0] is the incoming cell and j an outgoing cell at
        * the studied junction
-       * We first compute for all flow_out_(i=0, k).
-       * Then we compute flow_out (i,c,k) and flow_out(j,c,k)
+       * We first compute for all flow_out_(in_id, k).
+       * Then we compute flow_out (in_id,c,k) and flow_in(j,c,k)
        * If it is not zero we save it in the corresponding cells
        */
-      /* We have: flow_out(i,j) = min (supply_j / beta(i,j), demand(i) */
+      /*
+       * We have: flow_out(in_id,j) = min (supply_j / beta(in_id,j),
+       * demand(in_id)
+       */
 
-      /* This saves the beta(i, j, c) */
-      LinkedHashMap<Integer, Double> beta_i_j =
-          new LinkedHashMap<Integer, Double>(next.length);
+      /* JunctionInfo j_info is used to saves the beta(in_id, j, c) */
+      int in_id = prev[0].getUniqueId();
 
       CellInfo cell_i = p.getCell(prev[0]);
 
       double flow_out = cell_i.demand;
 
-      /* If there is no no demand, there is no flow_in and out */
+      /* If there is no no demand, there is no flow-out and in */
       if (flow_out == 0)
         return;
 
-      // JunctionSplitRatios junction_sr =
-      // internal_split_ratios.get(time_step, unique_id);
       Iterator<Entry<Triplet, Double>> iterator =
           junction_sr.compliant_split_ratios
               .entrySet()
@@ -250,7 +265,7 @@ public class Junction {
       Double beta_ijc, previous_beta;
       Double density_ic;
       Integer out_id;
-      /* Calculation of the beta(i, j) */
+      /* Calculation of the beta(i, j) * density(i,k) */
       while (iterator.hasNext()) {
         entry = iterator.next();
         triplet = entry.getKey();
@@ -261,31 +276,41 @@ public class Junction {
           continue;
 
         out_id = new Integer(triplet.outgoing);
-        previous_beta = beta_i_j.get(out_id);
+        assert out_id != null;
+        assert triplet.incoming == in_id;
+
+        previous_beta = j_info.getAggregateSR(in_id, out_id.intValue());
         if (previous_beta == null)
-          beta_i_j.put(out_id, density_ic * beta_ijc);
+          j_info
+              .putAggregateSR(in_id, out_id.intValue(), density_ic * beta_ijc);
         else
-          beta_i_j.put(out_id, previous_beta + density_ic * beta_ijc);
+          j_info.putAggregateSR(in_id, out_id.intValue(), previous_beta
+              + density_ic * beta_ijc);
       }
 
-      Iterator<Entry<Integer, Double>> iterator_beta = beta_i_j
-          .entrySet()
-          .iterator();
-      Entry<Integer, Double> beta_entry;
+      Iterator<Entry<PairCells, Double>> iterator_beta = j_info.entryIterator();
+
+      Entry<PairCells, Double> beta_entry;
+      PairCells i_j;
       double density_i = cell_i.total_density;
       assert density_i > 0;
       double beta_ij_dividedby_density;
 
-      /* We compute flow_out(i,k) */
+      /* We compute flow_out(in_id,k) */
       while (iterator_beta.hasNext()) {
         beta_entry = iterator_beta.next();
         beta_ij_dividedby_density = beta_entry.getValue() / density_i;
+        i_j = beta_entry.getKey();
+
+        /* Computation of beta(i, j) by dividing by density(i,k) */
+        j_info.put(i_j, beta_ij_dividedby_density);
+
+        assert i_j.incoming == in_id;
         assert beta_entry.getValue() > 0;
-        beta_i_j.put(beta_entry.getKey(), beta_ij_dividedby_density);
         assert beta_ij_dividedby_density > 0;
 
         flow_out = Math.min(flow_out,
-            p.getCell(cells[beta_entry.getKey()]).supply
+            p.getCell(cells[i_j.outgoing]).supply
                 / beta_ij_dividedby_density);
       }
 

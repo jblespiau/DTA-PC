@@ -2,6 +2,7 @@ package generalLWRNetwork;
 
 import generalNetwork.data.demand.Demands;
 import generalNetwork.state.CellInfo;
+import generalNetwork.state.JunctionInfo;
 import generalNetwork.state.Profile;
 import generalNetwork.state.externalSplitRatios.IntertemporalOriginsSplitRatios;
 import generalNetwork.state.internalSplitRatios.IntertemporalSplitRatios;
@@ -230,9 +231,8 @@ public class LWR_network {
      * Computation of the flows. The flows should have been cleared BEFORE doing
      * this operation
      */
-    // TODO: Check this is ok
     for (int j_id = 0; j_id < junctions.length; j_id++) {
-      // j = junctions[j_id];
+      /* The JunctionInfo is created in the solveJunction */
       /* We get the split-ratios for this junction at this time-step */
       JunctionSplitRatios junction_sr =
           internal_split_ratios.get(time_step, j_id);
