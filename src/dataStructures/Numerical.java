@@ -12,7 +12,16 @@ public class Numerical {
     return Math.abs(a - b) < e;
   }
 
+  /**
+   * @brief Compare the two Double with a precision of epsilon.
+   *        If a value is null, it is considered to be zero
+   */
   static public boolean equals(Double a, Double b, double e) {
+    if (a == null)
+      a = 0.0;
+    if (b == null)
+      b = 0.0;
+
     return Math.abs(a - b) < e;
   }
 
@@ -30,9 +39,11 @@ public class Numerical {
   static public boolean equals(LinkedHashMap<Integer, Double> m1,
       LinkedHashMap<Integer, Double> m2, double epsilon) {
 
-    // We check that both map have the same keyset
-    if (!m1.keySet().equals(m2.keySet()))
-      return false;
+    /*
+     * We check that both map contains the other.
+     * Be aware that a null Double or a zero Double is considered to be the same
+     */
+
     Iterator<Entry<Integer, Double>> it = m1.entrySet().iterator();
     Entry<Integer, Double> entry;
     while (it.hasNext()) {
@@ -41,6 +52,15 @@ public class Numerical {
         return false;
       }
     }
+
+    it = m2.entrySet().iterator();
+    while (it.hasNext()) {
+      entry = it.next();
+      if (!equals(entry.getValue(), m1.get(entry.getKey()), epsilon)) {
+        return false;
+      }
+    }
+
     return true;
   }
 
