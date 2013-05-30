@@ -60,7 +60,7 @@ public class Test2x1JunctionSolver {
   private static void computeDemandSupply(Profile p) {
     double density, demand, supply;
     for (int cell_id = 0; cell_id < cells.length; cell_id++) {
-      density = p.get(cell_id).total_density;
+      density = p.getCell(cell_id).total_density;
 
       /*
        * The demand and the supply depend on the network and the density
@@ -70,11 +70,11 @@ public class Test2x1JunctionSolver {
       assert demand >= 0 : "Demand should be positive";
       assert supply >= 0 : "Supply should be positive";
 
-      p.get(cell_id).demand = demand;
-      p.get(cell_id).supply = supply;
+      p.getCell(cell_id).demand = demand;
+      p.getCell(cell_id).supply = supply;
 
       // We clear the old flows
-      p.get(cell_id).clearFlow();
+      p.getCell(cell_id).clearFlow();
     }
   }
 
