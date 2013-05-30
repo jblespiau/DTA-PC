@@ -72,8 +72,8 @@ public class TestSimulation {
 
       simu.profiles[k].junction_info = null;
 
-      // System.out.println(gson.toJson(simu.profiles[k], Profile.class));
-      // System.out.println(gson.toJson(p, Profile.class));
+      System.out.println(gson.toJson(simu.profiles[k], Profile.class));
+      System.out.println(gson.toJson(p, Profile.class));
 
       assertTrue("The result for time step " + k
           + " is not the same as the registered solution",

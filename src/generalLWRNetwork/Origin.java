@@ -93,7 +93,7 @@ public class Origin {
     LinkedHashMap<Integer, Double> new_densities =
         entries[0].getUpdatedDensity(previous_densities,
             null,
-            previous_profile.get(entries[0].getUniqueId()).out_flows,
+            previous_profile.getCell(entries[0].getUniqueId()).out_flows,
             delta_t);
 
     /* Then we add the demand for every commodity */

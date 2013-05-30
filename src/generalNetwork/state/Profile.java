@@ -16,7 +16,7 @@ public class Profile {
     junction_info = new JunctionInfo[nb_junctions];
   }
 
-  public CellInfo get(int i) {
+  public CellInfo getCell(int i) {
     return profile[i];
   }
 

@@ -217,7 +217,9 @@ public class Test2x1JunctionSolver {
 
       junction2x1.solveJunction(initial, 0, null, cells);
       initial.junction_info = null;
-      
+
+      System.out.println(gson.toJson(initial, Profile.class));
+      System.out.println(gson.toJson(result, Profile.class));
       assertTrue("2x1junction-result_profile" + i + "T"
           + delta_t + "failed",
           result.equals(initial, 1e-6));

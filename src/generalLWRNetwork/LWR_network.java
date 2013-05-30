@@ -2,7 +2,6 @@ package generalLWRNetwork;
 
 import generalNetwork.data.demand.Demands;
 import generalNetwork.state.CellInfo;
-import generalNetwork.state.JunctionInfo;
 import generalNetwork.state.Profile;
 import generalNetwork.state.externalSplitRatios.IntertemporalOriginsSplitRatios;
 import generalNetwork.state.internalSplitRatios.IntertemporalSplitRatios;
@@ -137,6 +136,10 @@ public class LWR_network {
     return sinks[path];
   }
 
+  public IntertemporalSplitRatios getInternal_split_ratios() {
+    return internal_split_ratios;
+  }
+
   public void addJunction(Junction j) {
     junctions[j.getUniqueId()] = j;
   }
@@ -210,7 +213,7 @@ public class LWR_network {
     /* Computation of the demand and supply */
     double density, demand, supply;
     for (int cell_id = 0; cell_id < cells.length; cell_id++) {
-      density = p.get(cell_id).total_density;
+      density = p.getCell(cell_id).total_density;
 
       /*
        * The demand and the supply depend on the network and the density
@@ -220,11 +223,11 @@ public class LWR_network {
       assert demand >= 0 : "Demand should be positive";
       assert supply >= 0 : "Supply should be positive";
 
-      p.get(cell_id).demand = demand;
-      p.get(cell_id).supply = supply;
+      p.getCell(cell_id).demand = demand;
+      p.getCell(cell_id).supply = supply;
 
       // We clear the old flows
-      p.get(cell_id).clearFlow();
+      p.getCell(cell_id).clearFlow();
     }
 
     /*
@@ -243,7 +246,7 @@ public class LWR_network {
     LinkedHashMap<Integer, Double> new_densities, densities, in_flows, out_flows;
     CellInfo cell_info;
     for (int cell_id = 0; cell_id < cells.length; cell_id++) {
-      cell_info = p.get(cell_id);
+      cell_info = p.getCell(cell_id);
       densities = cell_info.partial_densities;
 
       in_flows = cell_info.in_flows;
