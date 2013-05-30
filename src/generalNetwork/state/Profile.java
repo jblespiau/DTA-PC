@@ -7,7 +7,7 @@ public class Profile {
 
   private CellInfo[] profile;
   /* Used to keep the aggregate split ratios */
-  private JunctionInfo[] junction_info;
+  public JunctionInfo[] junction_info;
 
 
   public Profile(int nb_cells, int nb_junctions) {

@@ -6,6 +6,7 @@ import generalLWRNetwork.Junction;
 import generalLWRNetwork.NetworkUIDFactory;
 import generalLWRNetwork.RoadChunk;
 import generalNetwork.state.CellInfo;
+import generalNetwork.state.JunctionInfo;
 import generalNetwork.state.Profile;
 
 import java.io.FileNotFoundException;
@@ -209,11 +210,14 @@ public class Test2x1JunctionSolver {
         e.printStackTrace();
       }
 
+      /* We only check the state of the cells and not the aggregate split ratios */
       initial = gson.fromJson(reader1, Profile.class);
+      initial.junction_info = new JunctionInfo[1];
       result = gson.fromJson(reader2, Profile.class);
 
       junction2x1.solveJunction(initial, 0, null, cells);
-
+      initial.junction_info = null;
+      
       assertTrue("2x1junction-result_profile" + i + "T"
           + delta_t + "failed",
           result.equals(initial, 1e-6));
