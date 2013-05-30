@@ -5,13 +5,20 @@ import java.util.Map.Entry;
 
 import generalLWRNetwork.Cell;
 import generalLWRNetwork.Destination;
+import generalLWRNetwork.Junction;
 import generalLWRNetwork.Origin;
 import generalNetwork.state.CellInfo;
+import generalNetwork.state.JunctionInfo;
 import generalNetwork.state.Profile;
 import generalNetwork.state.externalSplitRatios.IntertemporalOriginsSplitRatios;
+import generalNetwork.state.internalSplitRatios.IntertemporalJunctionSplitRatios;
+import generalNetwork.state.internalSplitRatios.IntertemporalSplitRatios;
+import generalNetwork.state.internalSplitRatios.JunctionSplitRatios;
 
 import org.apache.commons.math3.optimization.DifferentiableMultivariateOptimizer;
 import org.wsj.AdjointForJava;
+
+import com.sun.org.apache.xml.internal.security.encryption.AgreementMethod;
 
 import scala.Option;
 import scala.Some;
@@ -20,6 +27,8 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.impl.SparseCCDoubleMatrix2D;
 import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
+import dataStructures.HashMapTripletDouble;
+import dataStructures.Triplet;
 
 public class SO_Optimizer extends AdjointForJava<Simulator> {
 
@@ -32,25 +41,29 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
   /* Number of compliant commodities */
   private int C;
   private Cell[] cells;
+  private Junction[] junctions;
   private Origin[] sources;
+  private Destination[] destinations;
   /* Number of origins */
   private int O;
-  private Destination[] destinations;
   /* Number of destinations */
   private int S;
 
-  /* Size of a block for one time step of the control */
+  /* Control Vector U */
+  /* Total size of a block for one time step of the control */
   private int temporal_control_block_size;
 
   /* State Vector X */
-  /* Size of the description of a profile for a given time step */
-  private int x_block_size;
   /* Size of a block describing all the densities for a given time step */
   private int size_density_block;
   /* Size of a block describing all the supply/demand at one time step */
   private int size_demand_suply_block;
+  /* Size of the block describing all the Aggregate SR at one time sate */
+  private int size_aggregate_split_ratios;
   /* Size of a block describing out-flows */
   private int size_f_out_block;
+  /* Total size of the description of a profile for a given time step */
+  private int x_block_size;
 
   private int f_out_position;
   private int f_in_position;
@@ -60,6 +73,12 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
   private int mass_conservation_size;
   /* Size of a block describing the Flow Propagation constraints */
   private int flow_propagation_size;
+  /* Size of the block describing the Aggregate SR constraints */
+  private int aggregate_SR_size;
+  /* Size of the block describing the out-flows constraints : */
+  // mass_conservation_size
+  /* Size of the block describing the in-flows constraints : */
+  // mass_conservation_size
   /* Total size of a block of constraints for a given time step */
   private int H_block_size;
 
@@ -77,19 +96,33 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
     destinations = simulation.lwr_network.getSinks();
     S = destinations.length;
 
+    junctions = simulation.lwr_network.getJunctions();
+
     /* For every time steps there are C compliant flows, and O non compliant */
     temporal_control_block_size = (C + O);
 
     /* State Vector X */
-    /* Size of the description of a profile for a given time step */
-    x_block_size = (3 * (C + 1) + 2) * cells.length;
     /* Size of a block describing all the densities for a given time step */
     size_density_block = cells.length * (C + 1);
     /* Size of a block describing all the supply/demand at one time step */
     size_demand_suply_block = 2 * cells.length;
-    /* Size of a block describing out-flows */
+    /* Size of the block describing all the Aggregate SR at one time sate */
+    Junction junction;
+    int tmp_nb_aggregate_split_ratios = 0;
+    for (int j = 0; j < junctions.length; j++) {
+      junction = junctions[j];
+      tmp_nb_aggregate_split_ratios +=
+          junction.getPrev().length * junction.getNext().length;
+    }
+    size_aggregate_split_ratios = tmp_nb_aggregate_split_ratios;
+    /* Size of a block describing out-flows or in-flows */
     size_f_out_block = size_density_block;
-    f_out_position = size_density_block + size_demand_suply_block;
+    /* Total size of the description of a profile for a given time step */
+    x_block_size = (3 * (C + 1) + 2) * cells.length
+        + size_aggregate_split_ratios;
+
+    f_out_position = size_density_block + size_demand_suply_block
+        + size_aggregate_split_ratios;
     f_in_position = f_out_position + size_f_out_block;
 
     /* Constraints Vector H */
@@ -97,9 +130,15 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
     mass_conservation_size = size_density_block;
     /* Size of a block describing the Flow Propagation constraints */
     flow_propagation_size = size_demand_suply_block;
+    /* Size of the block describing the Aggregate SR constraints */
+    aggregate_SR_size = size_aggregate_split_ratios;
+    /* Size of the block describing the out-flows constraints : */
+    // mass_conservation_size
+    /* Size of the block describing the in-flows constraints : */
+    // mass_conservation_size
     /* Total size of a block of constraints for a given time step */
-    H_block_size = 3 * mass_conservation_size + flow_propagation_size;
-
+    H_block_size = 3 * mass_conservation_size + flow_propagation_size
+        + size_aggregate_split_ratios;
   }
 
   /**
@@ -167,15 +206,6 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
 
   private void parseStateVector(Profile p) {
 
-    /* Size of the description of a profile for a given time step */
-    int block_size = (3 * (C + 1) + 2) * cells.length;
-    /* Size of a block describing all the densities for a given time step */
-    int size_density_block = cells.length * (C + 1);
-    /* Size of a block describing all the supply/demand at one time step */
-    int size_demand_suply_block = 2 * cells.length;
-    /* Size of a block describing out-flows */
-    int size_f_out_block = size_density_block;
-
     int block_id, sub_block_id;
     int commodity;
     int index_in_state = 0;
@@ -183,11 +213,11 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
     CellInfo cell_info;
     for (int k = 0; k < T; k++) {
       /* Id of the first data of time step k */
-      block_id = k * block_size;
+      block_id = k * x_block_size;
 
       for (int cell_id = 0; cell_id < cells.length; cell_id++) {
 
-        cell_info = p.get(cells[cell_id]);
+        cell_info = p.getCell(cells[cell_id]);
         /* Id of the first index containing data from cells[cell_id] */
         sub_block_id = block_id + cell_id * C;
 
@@ -209,8 +239,23 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
         index_in_state++;
         value = cell_info.supply;
 
+        // Operations on aggregate split ratios
+        index_in_state += size_demand_suply_block;
+        JunctionInfo junction_info;
+        Junction junction;
+        for (int j = 0; j < junctions.length; j++) {
+          junction = junctions[j];
+          junction_info = p.getJunction(j);
+          for (int in = 0; in < junction.getPrev().length; in++) {
+            for (int out = 0; out < junction.getNext().length; out++) {
+              // Mapping between junctions_info.get(new PairCell(in, out));
+              index_in_state++;
+            }
+          }
+        }
+
         // Operation on out-flows
-        sub_block_id += size_demand_suply_block;
+        sub_block_id += size_aggregate_split_ratios;
         it = cell_info.out_flows.entrySet().iterator();
         while (it.hasNext()) {
           entry = it.next();
@@ -266,6 +311,8 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
       double[] control) {
 
     // IntertemporalOriginsSplitRatios splits = simulator.splits;
+    IntertemporalSplitRatios internal_SR =
+        simulator.lwr_network.getInternal_split_ratios();
 
     SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(
         H_block_size * T,
@@ -315,10 +362,10 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
           delta_t_over_l = simulator.time_discretization.getDelta_t() /
               simulator.lwr_network.getCell(cell_id).getLength();
 
-          // flow-out
+          // d \density(i, k) / d f_out(i,k-1) = - delta_t / l
           result.setQuick(i, j + f_out_position, -delta_t_over_l);
 
-          // flow-in
+          // d \density(i, k) / d f_in(i,k-1) = delta_t / l
           result.setQuick(i, j + f_in_position, delta_t_over_l);
         }
       }
@@ -354,7 +401,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
       block_upper_position = k * H_block_size + mass_conservation_size;
       for (int cell_id = 0; cell_id < cells.length; cell_id++) {
         sub_block_position = block_upper_position + cell_id * 2;
-        total_density = simulator.profiles[k].get(cell_id).total_density;
+        total_density = simulator.profiles[k].getCell(cell_id).total_density;
 
         for (int c = 0; c < C + 1; c++) {
           // Demand first
@@ -370,6 +417,63 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
       }
     }
 
+    /*********************************************************
+     * Derivative terms for the Aggregate Split Ratios
+     *********************************************************/
+    /*
+     * This part is very uneffective because we have to do
+     * Nb_Aggregate_SR * T * (C+1) computation of derivative terms
+     */
+    Junction junction;
+    int aggregate_SR_index = 0;
+    Double partial_density;
+    Double i_j_c_SR;
+    CellInfo in_cell_info;
+    int prev_length, next_length;
+
+    for (int j_id = 0; j_id < junctions.length; j_id++) {
+      junction = junctions[j_id];
+      IntertemporalJunctionSplitRatios intert_junction_SR =
+          internal_SR.get(j_id);
+
+      prev_length = junction.getPrev().length;
+      for (int in = 0; in < prev_length; in++) {
+
+        next_length = junction.getNext().length;
+        for (int out = 0; out < next_length; out++) {
+          for (int k = 0; k < T; k++) {
+            block_upper_position = k * H_block_size
+                + mass_conservation_size + flow_propagation_size;
+
+            JunctionSplitRatios junction_SR = intert_junction_SR.get(k);
+            in_cell_info = simulator.profiles[k].getCell(in);
+
+            i = block_upper_position + aggregate_SR_index;
+            j = k * x_block_size + (C + 1) * in;
+
+            for (int c = 0; c < C + 1; c++) {
+              i_j_c_SR = junction_SR.get(in, out, c);
+
+              /*
+               * If the split ratio for this commodity is zero, then the
+               * aggregate split ratio is independent of this split ratio
+               */
+              if (i_j_c_SR == null || i_j_c_SR == 0)
+                continue;
+
+              partial_density = in_cell_info.partial_densities.get(c);
+              if (partial_density != null & partial_density != 0) {
+                result.setQuick(i, j, i_j_c_SR * partial_density
+                    / in_cell_info.total_density);
+              }
+
+            }
+            aggregate_SR_index++;
+          }
+        }
+
+      }
+    }
     return new Some<SparseCCDoubleMatrix2D>(result);
   }
 
@@ -422,12 +526,15 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
           // To skip one operation we do 1 / (a-b) instead of - 1 / (b-a)
           derivative_term += epsilon / (0.999 - sum_of_split_ratios);
         }
-        if (derivative_term == Double.POSITIVE_INFINITY || derivative_term == Double.NEGATIVE_INFINITY) {
-          System.out.println("Infinity detected in the dj/du function for non-compliant flow");
+        if (derivative_term == Double.POSITIVE_INFINITY
+            || derivative_term == Double.NEGATIVE_INFINITY) {
+          System.out
+              .println("Infinity detected in the dj/du function for non-compliant flow");
           System.exit(1);
         }
-        if (derivative_term  == Double.NaN) {
-          System.out.println("Nan detected in the dj/du function for compliant flow");
+        if (derivative_term == Double.NaN) {
+          System.out
+              .println("Nan detected in the dj/du function for compliant flow");
           System.exit(1);
         }
         result.set(k * temporal_control_block_size, derivative_term);
@@ -468,12 +575,15 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
             derivative_term += epsilon / (0.999 - sum_of_split_ratios);
           }
 
-          if (derivative_term == Double.POSITIVE_INFINITY || derivative_term == Double.NEGATIVE_INFINITY) {
-            System.out.println("Infinity detected in the dj/du function for compliant flow");
+          if (derivative_term == Double.POSITIVE_INFINITY
+              || derivative_term == Double.NEGATIVE_INFINITY) {
+            System.out
+                .println("Infinity detected in the dj/du function for compliant flow");
             System.exit(1);
           }
-          if (derivative_term  == Double.NaN) {
-            System.out.println("Nan detected in the dj/du function for compliant flow");
+          if (derivative_term == Double.NaN) {
+            System.out
+                .println("Nan detected in the dj/du function for compliant flow");
             System.exit(1);
           }
 
@@ -496,7 +606,6 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
   public SparseDoubleMatrix1D djdx(Simulator simulator, double[] arg1) {
 
     SparseDoubleMatrix1D result = new SparseDoubleMatrix1D(T * x_block_size);
-
 
     /* We put 1 when we derivate along a partial density */
     int block_position;
@@ -578,14 +687,15 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
 
     for (int k = 0; k < T; k++)
       for (int cell_id = 0; cell_id < cells.length; cell_id++)
-        objective += simulator.profiles[k].get(cell_id).total_density;
+        objective += simulator.profiles[k].getCell(cell_id).total_density;
 
     for (int orig = 0; orig < O; orig++)
       for (int k = 0; k < T; k++)
         objective -=
             epsilon * Math.log(sources[orig].sum_split_ratios[k] - 0.999);
 
-    if (objective == Double.POSITIVE_INFINITY || objective == Double.NEGATIVE_INFINITY) {
+    if (objective == Double.POSITIVE_INFINITY
+        || objective == Double.NEGATIVE_INFINITY) {
       System.out.println("Infinity detected in the objective function");
       System.exit(1);
     }
