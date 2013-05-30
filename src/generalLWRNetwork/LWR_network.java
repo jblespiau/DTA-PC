@@ -192,10 +192,10 @@ public class LWR_network {
       double delta_t, Demands origin_demand,
       IntertemporalOriginsSplitRatios splits,
       int time_step) {
-    assert p.size() == cells.length : "The profile size must correspond to the size of the network";
+    assert p.CellInfoSize() == cells.length : "The profile size must correspond to the size of the network";
     assert origin_demand.size() == sources.length : " The demands should correspond to the number of entries";
 
-    Profile next_profile = new Profile(cells.length);
+    Profile next_profile = new Profile(cells.length, junctions.length);
 
     /* We inject the demand in the buffers of the profile p */
     for (int b = 0; b < sources.length; b++) {
@@ -252,16 +252,16 @@ public class LWR_network {
       new_densities = getCell(cell_id).getUpdatedDensity(densities,
           in_flows, out_flows, delta_t);
 
-      next_profile.put(cell_id, new CellInfo(new_densities));
+      next_profile.putCell(cell_id, new CellInfo(new_densities));
     }
 
     return next_profile;
   }
 
   public Profile emptyProfile() {
-    Profile initial_profile = new Profile(cells.length);
+    Profile initial_profile = new Profile(cells.length, junctions.length);
     for (int cell_id = 0; cell_id < cells.length; cell_id++) {
-      initial_profile.put(cell_id, new CellInfo());
+      initial_profile.putCell(cell_id, new CellInfo());
     }
     return initial_profile;
   }

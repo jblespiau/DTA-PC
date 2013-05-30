@@ -1,33 +1,54 @@
 package generalNetwork.state;
 
 import generalLWRNetwork.Cell;
+import generalLWRNetwork.Junction;
 
 public class Profile {
 
   private CellInfo[] profile;
+  /* Used to keep the aggregate split ratios */
+  private JunctionInfo[] junction_info;
 
-  public Profile(int nb_cells) {
+
+  public Profile(int nb_cells, int nb_junctions) {
     super();
     profile = new CellInfo[nb_cells];
+    junction_info = new JunctionInfo[nb_junctions];
   }
 
   public CellInfo get(int i) {
     return profile[i];
   }
 
-  public CellInfo get(Cell c) {
+  public CellInfo getCell(Cell c) {
     return profile[c.getUniqueId()];
   }
 
-  public void put(int cell_id, CellInfo info) {
+  public JunctionInfo getJunction(int i) {
+    return junction_info[i];
+  }
+
+  public JunctionInfo getJunction(Junction j) {
+    return junction_info[j.getUniqueId()];
+  }
+
+  public void putCell(int cell_id, CellInfo info) {
     profile[cell_id] = info;
   }
 
-  public int size() {
+  public void putJunction(int j_id, JunctionInfo info) {
+    junction_info[j_id] = info;
+  }
+
+  public int CellInfoSize() {
     return profile.length;
   }
 
-  CellInfo[] getProfile() {
+  public int JunctionsInfoSize() {
+    return junction_info.length;
+  }
+
+  CellInfo[] getCellInfos() {
     return profile;
   }
 

@@ -84,7 +84,7 @@ public class Origin {
       HashMapIntegerDouble splits, double delta_t) {
 
     LinkedHashMap<Integer, Double> previous_densities;
-    previous_densities = previous_profile.get(entries[0]).partial_densities;
+    previous_densities = previous_profile.getCell(entries[0]).partial_densities;
 
     /*
      * The densities are the previous_profile densities to which we removed the
@@ -116,10 +116,10 @@ public class Origin {
       }
     }
     
-    p.get(entries[0]).partial_densities = new_densities;
+    p.getCell(entries[0]).partial_densities = new_densities;
     
     /* We recompute the total_density */
-    p.get(entries[0]).recomputeTotalDensity();
+    p.getCell(entries[0]).recomputeTotalDensity();
     
   }
 

@@ -123,8 +123,8 @@ public class Junction {
     double flow;
     // 1x1 Junctions
     if (prev.length == 1 && next.length == 1) {
-      CellInfo previous_info = p.get(prev[0]);
-      CellInfo next_info = p.get(next[0]);
+      CellInfo previous_info = p.getCell(prev[0]);
+      CellInfo next_info = p.getCell(next[0]);
       flow = Math.min(next_info.supply, previous_info.demand);
       /*
        * For debug
@@ -140,9 +140,9 @@ public class Junction {
       // 2x1 junctions
     } else if (prev.length == 2 && next.length == 1) {
 
-      CellInfo prev1 = p.get(prev[0]);
-      CellInfo prev2 = p.get(prev[1]);
-      CellInfo next_info = p.get(next[0]);
+      CellInfo prev1 = p.getCell(prev[0]);
+      CellInfo prev2 = p.getCell(prev[1]);
+      CellInfo next_info = p.getCell(next[0]);
 
       double demand1 = prev1.demand;
       double demand2 = prev2.demand;
@@ -231,7 +231,7 @@ public class Junction {
       LinkedHashMap<Integer, Double> beta_i_j =
           new LinkedHashMap<Integer, Double>(next.length);
 
-      CellInfo cell_i = p.get(prev[0]);
+      CellInfo cell_i = p.getCell(prev[0]);
 
       double flow_out = cell_i.demand;
 
@@ -285,7 +285,7 @@ public class Junction {
         assert beta_ij_dividedby_density > 0;
 
         flow_out = Math.min(flow_out,
-            p.get(cells[beta_entry.getKey()]).supply
+            p.getCell(cells[beta_entry.getKey()]).supply
                 / beta_ij_dividedby_density);
       }
 
@@ -310,7 +310,7 @@ public class Junction {
           if (beta_ijc == null)
             continue;
           else {
-            p.get(next[out]).in_flows.put(entry_density.getKey(),
+            p.getCell(next[out]).in_flows.put(entry_density.getKey(),
                 beta_ijc * out_flow_for_commodity);
           }
         }

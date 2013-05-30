@@ -101,7 +101,7 @@ public class Test2x1JunctionSolver {
         e.printStackTrace();
       }
 
-      p = new Profile(3);
+      p = new Profile(cells.length, 1);
       LinkedHashMap<Integer, Double> densities_1 = new LinkedHashMap<Integer, Double>();
       LinkedHashMap<Integer, Double> densities_2 = new LinkedHashMap<Integer, Double>();
       if (i == 0) {
@@ -113,9 +113,9 @@ public class Test2x1JunctionSolver {
         densities_2.put(1, 2.0);
         densities_2.put(2, 0.7);
       }
-      p.put(0, new CellInfo(densities_1));
-      p.put(1, new CellInfo(densities_2));
-      p.put(2, new CellInfo());
+      p.putCell(0, new CellInfo(densities_1));
+      p.putCell(1, new CellInfo(densities_2));
+      p.putCell(2, new CellInfo());
 
       computeDemandSupply(p);
 
