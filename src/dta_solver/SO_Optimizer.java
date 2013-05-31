@@ -18,8 +18,6 @@ import generalNetwork.state.internalSplitRatios.JunctionSplitRatios;
 import org.apache.commons.math3.optimization.DifferentiableMultivariateOptimizer;
 import org.wsj.AdjointForJava;
 
-import com.sun.org.apache.xml.internal.security.encryption.AgreementMethod;
-
 import scala.Option;
 import scala.Some;
 
@@ -484,7 +482,31 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
     /*********************************************************
      * Derivative terms for the in-flows
      *********************************************************/
+    JunctionSplitRatios junction_SR;
+    int commodity, in_id, out_id;
+    for (int j_id = 0; j_id < junctions.length; j_id++) {
+      for (int k = 0; k < T; k++) {
+        junction_SR = internal_SR.get(k, j_id);
+        Iterator<Entry<Triplet, Double>> iterator =
+            junction_SR.non_compliant_split_ratios
+                .entrySet()
+                .iterator();
+        Entry<Triplet, Double> entry;
+        while (iterator.hasNext()) {
+          entry = iterator.next();
+          in_id = entry.getKey().incoming;
+          out_id = entry.getKey().outgoing;
+          commodity = entry.getKey().commodity;
 
+          i = H_block_size * k + 2 * mass_conservation_size
+              + flow_propagation_size + aggregate_SR_index + out_id * (C + 1)
+              + commodity;
+          j = x_block_size * k + f_out_position + i * (C + 1) + commodity;
+
+          result.setQuick(i, j, entry.getValue());
+        }
+      }
+    }
     return new Some<SparseCCDoubleMatrix2D>(result);
   }
 
