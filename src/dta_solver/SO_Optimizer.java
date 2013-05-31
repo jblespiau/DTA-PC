@@ -10,6 +10,7 @@ import generalLWRNetwork.Origin;
 import generalNetwork.state.CellInfo;
 import generalNetwork.state.JunctionInfo;
 import generalNetwork.state.Profile;
+import generalNetwork.state.State;
 import generalNetwork.state.externalSplitRatios.IntertemporalOriginsSplitRatios;
 import generalNetwork.state.internalSplitRatios.IntertemporalJunctionSplitRatios;
 import generalNetwork.state.internalSplitRatios.IntertemporalSplitRatios;
@@ -30,7 +31,7 @@ import cern.colt.matrix.tdouble.DoubleFactory1D;
 import dataStructures.Numerical;
 import dataStructures.Triplet;
 
-public class SO_Optimizer extends AdjointForJava<Simulator> {
+public class SO_Optimizer extends AdjointForJava<State> {
 
   private Simulator simulation;
 
@@ -280,8 +281,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
   }
 
   @Override
-  public Option<SparseCCDoubleMatrix2D> dhdu(Simulator simulator,
-      double[] control) {
+  public Option<SparseCCDoubleMatrix2D> dhdu(State state, double[] control) {
 
     SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(
         H_block_size * T,
@@ -291,7 +291,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
     double[] origin_demands;
     for (int orig = 0; orig < O; orig++) {
       size = sources[orig].getCompliant_commodities().size();
-      origin_demands = simulator.origin_demands.get(sources[orig]);
+      origin_demands = simulation.origin_demands.get(sources[orig]);
       for (int c = 0; c < size + 1; c++) {
         for (int k = 0; k < T; k++) {
           i = k * H_block_size + sources[orig].getUniqueId();
@@ -307,12 +307,10 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
   }
 
   @Override
-  public Option<SparseCCDoubleMatrix2D> dhdx(Simulator simulator,
-      double[] control) {
+  public Option<SparseCCDoubleMatrix2D> dhdx(State state, double[] control) {
 
-    // IntertemporalOriginsSplitRatios splits = simulator.splits;
     IntertemporalSplitRatios internal_SR =
-        simulator.lwr_network.getInternal_split_ratios();
+        simulation.lwr_network.getInternal_split_ratios();
 
     SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(
         H_block_size * T,
@@ -359,8 +357,8 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
            * Derivative terms with respect to flow-out(i,c,k-1) and
            * flow-in(i,c,k-1)
            */
-          delta_t_over_l = simulator.time_discretization.getDelta_t() /
-              simulator.lwr_network.getCell(cell_id).getLength();
+          delta_t_over_l = simulation.time_discretization.getDelta_t() /
+              simulation.lwr_network.getCell(cell_id).getLength();
 
           assert Numerical.validNumber(delta_t_over_l);
 
@@ -403,7 +401,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
       block_upper_position = k * H_block_size + mass_conservation_size;
       for (int cell_id = 0; cell_id < cells.length; cell_id++) {
         sub_block_position = block_upper_position + cell_id * 2;
-        total_density = simulator.profiles[k].getCell(cell_id).total_density;
+        total_density = state.profiles[k].getCell(cell_id).total_density;
 
         for (int c = 0; c < C + 1; c++) {
           // Demand first
@@ -456,7 +454,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
               junction_SR = intert_junction_SR.get(k);
               assert junction_SR != null;
             }
-            in_cell_info = simulator.profiles[k].getCell(in);
+            in_cell_info = state.profiles[k].getCell(in);
 
             i = block_upper_position + aggregate_SR_index;
             j = k * x_block_size + (C + 1) * in;
@@ -504,7 +502,6 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
      * Derivative terms for the out-flows
      *********************************************************/
 
-    JunctionInfo junction_info;
     int nb_prev, nb_next;
     double value;
     for (int j_id = 0; j_id < junctions.length; j_id++) {
@@ -514,23 +511,22 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
 
       // Derivative terms for 1x1 junctions
       if (nb_prev == 1 && nb_next == 1) {
-        double demand, supply, f_out, Ddemand, Dsupply;
+        double demand, supply, f_out;
         CellInfo cell_info;
         int prev_id = junction.getPrev()[0].getUniqueId();
         int next_id = junction.getPrev()[0].getUniqueId();
         for (int k = 0; k < T; k++) {
-          cell_info = simulator.profiles[k].getCell(prev_id);
+          cell_info = state.profiles[k].getCell(prev_id);
           total_density = cell_info.total_density;
 
           if (total_density == 0)
             continue;
 
           demand = cell_info.demand;
-          supply = simulator.profiles[k].getCell(next_id).supply;
+          supply = state.profiles[k].getCell(next_id).supply;
 
           f_out = Math.min(demand, supply);
           /* Derivative terms with respect to the partial densities */
-          double coefficient;
           for (int c = 0; c < C + 1; c++) {
             partial_density = cell_info.partial_densities.get(c);
             if (partial_density == null)
@@ -571,13 +567,13 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
 
         double demand1, demand2, supply, f_in;
         for (int k = 0; k < T; k++) {
-          demand1 = simulator.profiles[k].getCell(in_1).demand;
-          demand2 = simulator.profiles[k].getCell(in_2).demand;
-          supply = simulator.profiles[k].getCell(out).supply;
+          demand1 = state.profiles[k].getCell(in_1).demand;
+          demand2 = state.profiles[k].getCell(in_2).demand;
+          supply = state.profiles[k].getCell(out).supply;
           f_in = Math.min(demand1 + demand2, supply);
 
-          double total_density1 = simulator.profiles[k].getCell(in_1).total_density;
-          double total_density2 = simulator.profiles[k].getCell(in_2).total_density;
+          double total_density1 = state.profiles[k].getCell(in_1).total_density;
+          double total_density2 = state.profiles[k].getCell(in_2).total_density;
 
           for (int c = 0; c < C + 1; c++) {
 
@@ -592,7 +588,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
 
             /* For the first incoming road in_1 */
             /* Derivative terms with respect to the partial densities */
-            partial_density = simulator.profiles[k].getCell(in_1).partial_densities
+            partial_density = state.profiles[k].getCell(in_1).partial_densities
                 .get(c);
             if (partial_density == null)
               partial_density = 0.0;
@@ -647,7 +643,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
 
             /* For the second incoming road in_2 */
             /* Derivative terms with respect to the partial densities */
-            partial_density = simulator.profiles[k].getCell(in_2).partial_densities
+            partial_density = state.profiles[k].getCell(in_2).partial_densities
                 .get(c);
             if (partial_density == null)
               partial_density = 0.0;
@@ -708,7 +704,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
         CellInfo cell_info;
         for (int k = 0; k < T; k++) {
           int in_id = junction.getPrev()[0].getUniqueId();
-          cell_info = simulator.profiles[k].getCell(in_id);
+          cell_info = state.profiles[k].getCell(in_id);
           Cell[] next_cells = junction.getNext();
           total_density = cell_info.total_density;
           double demand = cell_info.demand;
@@ -722,11 +718,11 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
             int minimum_id_cell = 0;
             double min_supply = -1, beta, supply, beta_at_minimum = 0;
             for (int out = 0; out < next_cells.length; out++) {
-              beta = simulator.profiles[k]
+              beta = state.profiles[k]
                   .getJunction(junction)
                   .getAggregateSR(in_id, next_cells[out].getUniqueId());
               if (beta != 0) {
-                supply = simulator.profiles[k].getCell(next_cells[out]).supply;
+                supply = state.profiles[k].getCell(next_cells[out]).supply;
                 if (supply / beta < minimum) {
                   min_supply = supply / beta;
                   minimum_id_cell = next_cells[out].getUniqueId();
@@ -866,15 +862,13 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
    * @brief Computes the derivative dJ/dU
    */
   @Override
-  public DoubleMatrix1D djdu(Simulator simulator, double[] control) {
-
-    IntertemporalOriginsSplitRatios splits = simulator.splits;
+  public DoubleMatrix1D djdu(State state, double[] control) {
 
     DoubleMatrix1D result =
         DoubleFactory1D.dense.make(T * temporal_control_block_size);
 
     int index_in_control = 0;
-    Double split_ratio;
+    double split_ratio;
     double sum_of_split_ratios;
     for (int orig = 0; orig < O; orig++) {
 
@@ -884,8 +878,8 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
          * splits.get(sources[orig], k).get(0) and U[k*(C + sources.length)]
          */
         /* In case of full System Optimal computation we skip the NC flows */
-        split_ratio = splits.get(sources[orig], k).get(0);
-        if (split_ratio == null || split_ratio == 0) {
+        split_ratio = control[k*(C + sources.length)];
+        if (split_ratio == 0) {
           continue;
         }
 
@@ -970,7 +964,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
    *          a partial density
    */
   @Override
-  public SparseDoubleMatrix1D djdx(Simulator simulator, double[] arg1) {
+  public SparseDoubleMatrix1D djdx(State state, double[] control) {
 
     SparseDoubleMatrix1D result = new SparseDoubleMatrix1D(T * x_block_size);
 
@@ -992,7 +986,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
    *          the split ratios
    */
   @Override
-  public Simulator forwardSimulate(double[] control) {
+  public State forwardSimulate(double[] control) {
 
     IntertemporalOriginsSplitRatios splits = simulation.splits;
 
@@ -1039,8 +1033,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
         sources[orig].sum_split_ratios = sum_of_split_ratios;
     }
 
-    simulation.run(false);
-    return simulation;
+    return simulation.run(false);
   }
 
   /**
@@ -1049,12 +1042,12 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
    *        - \sum_{origin o} epsilon2 * ln(\sum \rho(o,c,k) - 1)
    */
   @Override
-  public double objective(Simulator simulator, double[] control) {
+  public double objective(State state, double[] control) {
     double objective = 0;
 
     for (int k = 0; k < T; k++)
       for (int cell_id = 0; cell_id < cells.length; cell_id++)
-        objective += simulator.profiles[k].getCell(cell_id).total_density;
+        objective += state.profiles[k].getCell(cell_id).total_density;
 
     for (int orig = 0; orig < O; orig++)
       for (int k = 0; k < T; k++)

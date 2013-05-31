@@ -1,7 +1,5 @@
 package dta_solver;
 
-import org.wsj.SystemState;
-
 import generalLWRNetwork.DiscretizedGraph;
 import generalLWRNetwork.LWR_network;
 import generalNetwork.data.Json_data;
@@ -10,16 +8,16 @@ import generalNetwork.data.demand.DemandsFactory;
 import generalNetwork.graph.Graph;
 import generalNetwork.graph.json.JsonFactory;
 import generalNetwork.state.Profile;
+import generalNetwork.state.State;
 import generalNetwork.state.externalSplitRatios.IntertemporalOriginsSplitRatios;
 
-public class Simulator implements SystemState {
+public class Simulator {
 
   DiscretizedGraph discretized_graph;
   public Discretization time_discretization;
   Demands origin_demands;
   public IntertemporalOriginsSplitRatios splits;
   public LWR_network lwr_network;
-  public Profile[] profiles;
 
   protected Simulator(int delta_t, int nb_steps) {
     time_discretization = new Discretization(delta_t, nb_steps);
@@ -91,12 +89,12 @@ public class Simulator implements SystemState {
     }
   }
 
-  public void run() {
-    run(true);
+  public State run() {
+    return run(true);
   }
 
-  public void run(boolean print) {
-    profiles = new Profile[time_discretization.getNb_steps()];
+  public State run(boolean print) {
+    Profile[] profiles = new Profile[time_discretization.getNb_steps()];
 
     for (int k = 0; k < time_discretization.getNb_steps(); k++) {
       profiles[k] = lwr_network.emptyProfile();
@@ -126,14 +124,6 @@ public class Simulator implements SystemState {
         profiles[k - 1].print();
       }
     }
-  }
-
-  /**
-   * @brief Return the state of the network (i.e. the full description of the
-   *        state of the cells for all time steps)
-   */
-  @Override
-  public Object getState() {
-    return profiles;
+    return new State(profiles);
   }
 }

@@ -1,5 +1,6 @@
+import generalNetwork.state.State;
+
 import java.util.Arrays;
-import java.util.Iterator;
 
 import org.wsj.IpOptAdjointOptimizer;
 
@@ -21,57 +22,58 @@ public class DTASolver {
     // String data_file = "graphs/PathWithPrioritiesData.json";
 
     Simulator simulator = new Simulator(network_file, data_file, debug);
-    simulator.run();
+    State state = simulator.run();
 
     // TestSimulation.registerParallelPath();
     // Test2x1JunctionSolver.createProfile();
     // Test2x1JunctionSolver.register2x1Junction();
 
+    
     int maxIter = 10;
     SO_Optimizer optimizer = new SO_Optimizer(new IpOptAdjointOptimizer(),
         maxIter, simulator);
     System.out.println(Arrays.toString(optimizer.getControl()));
     System.out.println(
-        optimizer.djdx(simulator, optimizer.getControl()).toString());
+        optimizer.djdx(state, optimizer.getControl()).toString());
 
-    System.out.println(Arrays.toString(optimizer.djdu(simulator,
+    System.out.println(Arrays.toString(optimizer.djdu(state,
         optimizer.getControl()).toArray()));
     
-    double[] tmp = optimizer.djdu(simulator,
+    double[] tmp = optimizer.djdu(state,
         optimizer.getControl()).toArray();
     for (int i = 0; i < tmp.length; i++)
       assert Numerical.validNumber(tmp[i]);
     
     System.out.println(optimizer
-        .dhdx(simulator, optimizer.getControl())
+        .dhdx(state, optimizer.getControl())
         .toString());
     
     /* Checking of J */
-    assert Numerical.validNumber(optimizer.objective(simulator, optimizer.getControl()));
+    assert Numerical.validNumber(optimizer.objective(state, optimizer.getControl()));
     
     /* Checking of dH/dX */
     double[][] tmp2 = optimizer
-        .dhdx(simulator, optimizer.getControl()).get().toArray();
+        .dhdx(state, optimizer.getControl()).get().toArray();
     for (int i = 0; i < tmp2.length; i++)
       for (int j = 0; j < tmp2[0].length; j++)
       assert Numerical.validNumber(tmp2[i][j]);
     
     /* Checking of dH/dU */
     tmp2 = optimizer
-        .dhdu(simulator, optimizer.getControl()).get().toArray();
+        .dhdu(state, optimizer.getControl()).get().toArray();
     for (int i = 0; i < tmp2.length; i++)
       for (int j = 0; j < tmp2[0].length; j++)
       assert Numerical.validNumber(tmp2[i][j]);
     
     /* Checking of dJ/dU */
     tmp = optimizer
-        .djdu(simulator, optimizer.getControl()).toArray();
+        .djdu(state, optimizer.getControl()).toArray();
     for (int i = 0; i < tmp.length; i++)
       assert Numerical.validNumber(tmp[i]);
     
     /* Checking of dJ/dX */
     tmp = optimizer
-        .djdx(simulator, optimizer.getControl()).toArray();
+        .djdx(state, optimizer.getControl()).toArray();
     for (int i = 0; i < tmp.length; i++)
       assert Numerical.validNumber(tmp[i]);
     

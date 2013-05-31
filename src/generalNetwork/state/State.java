@@ -1,25 +1,31 @@
 package generalNetwork.state;
 
+import org.wsj.SystemState;
+
 import generalNetwork.state.Profile;
 
-public class State {
+public class State implements SystemState {
 
-    private Profile[] state;
+  public Profile[] profiles;
 
-    public State(int nb_steps) {
-        super();
-        state = new Profile[nb_steps];
-    }
+  public State(Profile[] s) {
+    profiles = s;
+  }
 
-    public void put(int k, Profile p) {
-        state[k] = p;
-    }
+  public void put(int k, Profile p) {
+    profiles[k] = p;
+  }
 
-    public Profile get(int k) {
-        return state[k];
-    }
+  public Profile get(int k) {
+    return profiles[k];
+  }
 
-    public int size() {
-        return state.length;
-    }
+  public int size() {
+    return profiles.length;
+  }
+
+  @Override
+  public Object getState() {
+    return this;
+  }
 }
