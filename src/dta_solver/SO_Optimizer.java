@@ -18,6 +18,8 @@ import generalNetwork.state.internalSplitRatios.JunctionSplitRatios;
 import org.apache.commons.math3.optimization.DifferentiableMultivariateOptimizer;
 import org.wsj.AdjointForJava;
 
+import com.sun.org.apache.xml.internal.security.encryption.AgreementMethod;
+
 import scala.Option;
 import scala.Some;
 
@@ -25,7 +27,7 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.impl.SparseCCDoubleMatrix2D;
 import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
-import dataStructures.HashMapTripletDouble;
+import dataStructures.Numerical;
 import dataStructures.Triplet;
 
 public class SO_Optimizer extends AdjointForJava<Simulator> {
@@ -72,7 +74,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
   /* Size of a block describing the Flow Propagation constraints */
   private int flow_propagation_size;
   /* Size of the block describing the Aggregate SR constraints */
-  private int aggregate_SR_size;
+  // size_aggregate_split_ratios;
   /* Size of the block describing the out-flows constraints : */
   // mass_conservation_size
   /* Size of the block describing the in-flows constraints : */
@@ -129,7 +131,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
     /* Size of a block describing the Flow Propagation constraints */
     flow_propagation_size = size_demand_suply_block;
     /* Size of the block describing the Aggregate SR constraints */
-    aggregate_SR_size = size_aggregate_split_ratios;
+    // size_aggregate_split_ratios;
     /* Size of the block describing the out-flows constraints : */
     // mass_conservation_size
     /* Size of the block describing the in-flows constraints : */
@@ -360,6 +362,8 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
           delta_t_over_l = simulator.time_discretization.getDelta_t() /
               simulator.lwr_network.getCell(cell_id).getLength();
 
+          assert Numerical.validNumber(delta_t_over_l);
+
           // d \density(i, k) / d f_out(i,k-1) = - delta_t / l
           result.setQuick(i, j + f_out_position, -delta_t_over_l);
 
@@ -481,9 +485,11 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
               total_density = in_cell_info.total_density;
 
               if (total_density != 0) {
-                result.setQuick(i, j,
-                    i_j_c_SR * (total_density - partial_density)
-                        / (total_density * total_density));
+                double derivative_term = i_j_c_SR
+                    * (total_density - partial_density)
+                    / (total_density * total_density);
+                assert Numerical.validNumber(derivative_term);
+                result.setQuick(i, j, derivative_term);
               }
 
             }
@@ -498,6 +504,312 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
      * Derivative terms for the out-flows
      *********************************************************/
 
+    JunctionInfo junction_info;
+    int nb_prev, nb_next;
+    double value;
+    for (int j_id = 0; j_id < junctions.length; j_id++) {
+      junction = junctions[j_id];
+      nb_prev = junction.getPrev().length;
+      nb_next = junction.getNext().length;
+
+      // Derivative terms for 1x1 junctions
+      if (nb_prev == 1 && nb_next == 1) {
+        double demand, supply, f_out, Ddemand, Dsupply;
+        CellInfo cell_info;
+        int prev_id = junction.getPrev()[0].getUniqueId();
+        int next_id = junction.getPrev()[0].getUniqueId();
+        for (int k = 0; k < T; k++) {
+          cell_info = simulator.profiles[k].getCell(prev_id);
+          total_density = cell_info.total_density;
+
+          if (total_density == 0)
+            continue;
+
+          demand = cell_info.demand;
+          supply = simulator.profiles[k].getCell(next_id).supply;
+
+          f_out = Math.min(demand, supply);
+          /* Derivative terms with respect to the partial densities */
+          double coefficient;
+          for (int c = 0; c < C + 1; c++) {
+            partial_density = cell_info.partial_densities.get(c);
+            if (partial_density == null)
+              partial_density = 0.0;
+
+            i = H_block_size * k + mass_conservation_size
+                + flow_propagation_size + size_aggregate_split_ratios + prev_id
+                * (C + 1) + c;
+            j = x_block_size * k + prev_id * (C + 1) + c;
+            value = f_out * (total_density - partial_density)
+                / (total_density * total_density);
+            assert Numerical.validNumber(value);
+            result.setQuick(i, j, value);
+
+            /* Derivative terms with respect to supply/demand */
+            if (partial_density == 0)
+              continue;
+
+            value = partial_density / total_density;
+            assert Numerical.validNumber(value);
+            if (demand < supply) {
+              j = x_block_size * k + size_density_block + 2 * prev_id;
+              result.setQuick(i, j, value);
+            } else if (supply < demand) {
+              value = partial_density / total_density;
+              j = x_block_size * k + size_density_block + 2 * prev_id + 1;
+              result.setQuick(i, j, value);
+            }
+          }
+        }
+        // Derivative terms for 1x2 junctions
+      } else if (nb_prev == 2 && nb_next == 1) {
+        int in_1 = junction.getPrev()[0].getUniqueId();
+        int in_2 = junction.getPrev()[1].getUniqueId();
+        int out = junction.getNext()[0].getUniqueId();
+        double P1 = junction.getPriority(in_1);
+        double P2 = junction.getPriority(in_2);
+
+        double demand1, demand2, supply, f_in;
+        for (int k = 0; k < T; k++) {
+          demand1 = simulator.profiles[k].getCell(in_1).demand;
+          demand2 = simulator.profiles[k].getCell(in_2).demand;
+          supply = simulator.profiles[k].getCell(out).supply;
+          f_in = Math.min(demand1 + demand2, supply);
+
+          double total_density1 = simulator.profiles[k].getCell(in_1).total_density;
+          double total_density2 = simulator.profiles[k].getCell(in_2).total_density;
+
+          for (int c = 0; c < C + 1; c++) {
+
+            double Df_inDdemand1 = 0, Df_inDdemand2 = 0, Df_inDsupply = 0;
+            if (demand1 + demand2 < supply) {
+              Df_inDdemand1 = 1;
+              Df_inDdemand2 = 1;
+            }
+            if (supply < demand1 + demand2) {
+              Df_inDsupply = 1;
+            }
+
+            /* For the first incoming road in_1 */
+            /* Derivative terms with respect to the partial densities */
+            partial_density = simulator.profiles[k].getCell(in_1).partial_densities
+                .get(c);
+            if (partial_density == null)
+              partial_density = 0.0;
+
+            if (total_density1 != 0) {
+
+              double f_in_1_out;
+              double DfDdemand1 = 0, DfDdemand2 = 0, DfDsupply = 0;
+              if (P1 * (f_in - demand1) > P2 * demand1) {
+                f_in_1_out = demand1;
+                DfDdemand1 = 1;
+              } else if (P1 * demand2 < P2 * (f_in - demand2)) {
+                f_in_1_out = f_in - demand2;
+                DfDdemand1 = Df_inDdemand1;
+                DfDdemand2 = Df_inDdemand2 - 1;
+                DfDsupply = Df_inDsupply;
+              } else {
+                f_in_1_out = P1 * f_in;
+                DfDdemand1 = P1 * Df_inDdemand1;
+                DfDdemand2 = P1 * Df_inDdemand2;
+                DfDsupply = P1 * Df_inDsupply;
+              }
+
+              i = H_block_size * k + mass_conservation_size
+                  + flow_propagation_size + size_aggregate_split_ratios + in_1
+                  * (C + 1) + c;
+              j = x_block_size * k + in_1 * (C + 1) + c;
+
+              value = f_in_1_out * (total_density1 - partial_density)
+                  / (total_density1 * total_density1);
+              result.setQuick(i, j, value);
+
+              /* Derivative terms with respect to supply/demand */
+              if (partial_density != 0) {
+                if (DfDdemand1 != 0) {
+                  j = x_block_size * k + size_demand_suply_block + in_1 * 2;
+                  assert Numerical.validNumber(DfDdemand1);
+                  result.setQuick(i, j, DfDdemand1);
+                }
+                if (DfDdemand2 != 0) {
+                  j = x_block_size * k + size_demand_suply_block + in_2 * 2;
+                  assert Numerical.validNumber(DfDdemand2);
+                  result.setQuick(i, j, DfDdemand2);
+                }
+                if (DfDsupply != 0) {
+                  j = x_block_size * k + size_demand_suply_block + out * 2 + 1;
+                  assert Numerical.validNumber(DfDsupply);
+                  result.setQuick(i, j, DfDsupply);
+                }
+              }
+            }
+
+            /* For the second incoming road in_2 */
+            /* Derivative terms with respect to the partial densities */
+            partial_density = simulator.profiles[k].getCell(in_2).partial_densities
+                .get(c);
+            if (partial_density == null)
+              partial_density = 0.0;
+
+            if (total_density2 != 0) {
+
+              double f_in_2_out;
+              double DfDdemand1 = 0, DfDdemand2 = 0, DfDsupply = 0;
+              if (P2 * (f_in - demand2) > P1 * demand2) {
+                f_in_2_out = demand1;
+                DfDdemand2 = 1;
+              } else if (P2 * demand2 < P1 * (f_in - demand1)) {
+                f_in_2_out = f_in - demand1;
+                DfDdemand2 = Df_inDdemand2;
+                DfDdemand1 = Df_inDdemand1 - 1;
+                DfDsupply = Df_inDsupply;
+              } else {
+                f_in_2_out = P2 * f_in;
+                DfDdemand2 = P2 * Df_inDdemand2;
+                DfDdemand1 = P2 * Df_inDdemand1;
+                DfDsupply = P2 * Df_inDsupply;
+              }
+
+              i = H_block_size * k + mass_conservation_size
+                  + flow_propagation_size + size_aggregate_split_ratios + in_2
+                  * (C + 1) + c;
+              j = x_block_size * k + in_2 * (C + 1) + c;
+
+              value = f_in_2_out * (total_density2 - partial_density)
+                  / (total_density2 * total_density2);
+              result.setQuick(i, j, value);
+
+              /* Derivative terms with respect to supply/demand */
+              if (partial_density != 0) {
+                if (DfDdemand1 != 0) {
+                  j = x_block_size * k + size_demand_suply_block + in_1 * 2;
+                  assert Numerical.validNumber(DfDdemand1);
+                  result.setQuick(i, j, DfDdemand1);
+                }
+                if (DfDdemand2 != 0) {
+                  j = x_block_size * k + size_demand_suply_block + in_2 * 2;
+                  assert Numerical.validNumber(DfDdemand2);
+                  result.setQuick(i, j, DfDdemand2);
+                }
+                if (DfDsupply != 0) {
+                  j = x_block_size * k + size_demand_suply_block + out * 2 + 1;
+                  assert Numerical.validNumber(DfDsupply);
+                  result.setQuick(i, j, DfDsupply);
+                }
+              }
+            }
+          }
+
+        }
+
+        // Derivative terms for 1xN junctions
+      } else if (nb_prev == 1) {
+        CellInfo cell_info;
+        for (int k = 0; k < T; k++) {
+          int in_id = junction.getPrev()[0].getUniqueId();
+          cell_info = simulator.profiles[k].getCell(in_id);
+          Cell[] next_cells = junction.getNext();
+          total_density = cell_info.total_density;
+          double demand = cell_info.demand;
+
+          if (total_density != 0) {
+            /*
+             * We find j such that f_(in_id)_out = min (supply_j /
+             * \beta_(in_id)_j)
+             */
+            double minimum = Double.MAX_VALUE;
+            int minimum_id_cell = 0;
+            double min_supply = -1, beta, supply, beta_at_minimum = 0;
+            for (int out = 0; out < next_cells.length; out++) {
+              beta = simulator.profiles[k]
+                  .getJunction(junction)
+                  .getAggregateSR(in_id, next_cells[out].getUniqueId());
+              if (beta != 0) {
+                supply = simulator.profiles[k].getCell(next_cells[out]).supply;
+                if (supply / beta < minimum) {
+                  min_supply = supply / beta;
+                  minimum_id_cell = next_cells[out].getUniqueId();
+                  beta_at_minimum = beta;
+                }
+              }
+            }
+            assert min_supply != -1;
+
+            double flow_out;
+            Double tmp;
+            if (demand < min_supply) {
+              flow_out = demand;
+              /* Derivative with respect to partial densities */
+              for (int c = 0; c < C + 1; c++) {
+                partial_density = cell_info.partial_densities.get(c);
+                if (partial_density == null)
+                  partial_density = 0.0;
+
+                i = H_block_size * k + mass_conservation_size
+                    + flow_propagation_size + size_aggregate_split_ratios
+                    + in_id * (C + 1) + c;
+                j = x_block_size * k + minimum_id_cell * (C + 1) + c;
+
+                tmp = internal_SR.get(k, j_id).get(in_id, minimum_id_cell, c);
+                if (tmp != null && tmp != 0) {
+                  value = tmp
+                      * flow_out *
+                      (total_density - partial_density)
+                      / (total_density * total_density);
+                  assert Numerical.validNumber(value);
+                  result.setQuick(i, j, value);
+
+                  /* Derivative with respect to supply and demand */
+                  j = x_block_size * k + size_demand_suply_block + in_id * 2;
+                  value = tmp
+                      * partial_density / total_density;
+                  assert Numerical.validNumber(value);
+                  result.setQuick(i, j, value);
+                }
+              }
+
+            } else if (min_supply < demand) {
+              flow_out = min_supply;
+
+              /* Derivative with respect to partial densities */
+              for (int c = 0; c < C + 1; c++) {
+                partial_density = cell_info.partial_densities.get(c);
+                if (partial_density == null)
+                  partial_density = 0.0;
+
+                i = H_block_size * k + mass_conservation_size
+                    + flow_propagation_size + size_aggregate_split_ratios
+                    + in_id * (C + 1) + c;
+                j = x_block_size * k + minimum_id_cell * (C + 1) + c;
+
+                tmp = internal_SR.get(k, j_id).get(in_id, minimum_id_cell, c);
+                if (tmp != null && tmp != 0) {
+                  value = tmp
+                      * flow_out *
+                      (total_density - partial_density)
+                      / (total_density * total_density);
+                  assert Numerical.validNumber(value);
+                  result.setQuick(i, j, value);
+
+                  /* Derivative with respect to supply and demand */
+                  j = x_block_size * k + size_demand_suply_block
+                      + minimum_id_cell * 2 + 1;
+                  value = tmp
+                      * partial_density / total_density / beta_at_minimum;
+                  assert Numerical.validNumber(value);
+                  result.setQuick(i, j, value);
+                }
+              }
+
+            }
+
+          }
+        }
+      } else {
+        assert false : "[dhdx] Only 1x1, 1x2, and Nx1 junctions are possible";
+      }
+    }
     /*********************************************************
      * Derivative terms for the in-flows
      *********************************************************/
@@ -539,6 +851,8 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
                 + flow_propagation_size + aggregate_SR_index + out_id * (C + 1)
                 + commodity;
             j = x_block_size * k + f_out_position + in_id * (C + 1) + commodity;
+
+            assert Numerical.validNumber(entry.getValue());
 
             result.setQuick(i, j, entry.getValue());
           }
@@ -597,17 +911,9 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
           // To skip one operation we do 1 / (a-b) instead of - 1 / (b-a)
           derivative_term += epsilon / (0.999 - sum_of_split_ratios);
         }
-        if (derivative_term == Double.POSITIVE_INFINITY
-            || derivative_term == Double.NEGATIVE_INFINITY) {
-          System.out
-              .println("Infinity detected in the dj/du function for non-compliant flow");
-          System.exit(1);
-        }
-        if (derivative_term == Double.NaN) {
-          System.out
-              .println("Nan detected in the dj/du function for compliant flow");
-          System.exit(1);
-        }
+
+        assert Numerical.validNumber(derivative_term);
+
         result.set(k * temporal_control_block_size, derivative_term);
       }
       index_in_control++;
@@ -646,17 +952,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
             derivative_term += epsilon / (0.999 - sum_of_split_ratios);
           }
 
-          if (derivative_term == Double.POSITIVE_INFINITY
-              || derivative_term == Double.NEGATIVE_INFINITY) {
-            System.out
-                .println("Infinity detected in the dj/du function for compliant flow");
-            System.exit(1);
-          }
-          if (derivative_term == Double.NaN) {
-            System.out
-                .println("Nan detected in the dj/du function for compliant flow");
-            System.exit(1);
-          }
+          assert Numerical.validNumber(derivative_term);
 
           result.set(k * temporal_control_block_size
               + index_in_control, derivative_term);
@@ -765,15 +1061,8 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
         objective -=
             epsilon * Math.log(sources[orig].sum_split_ratios[k] - 0.999);
 
-    if (objective == Double.POSITIVE_INFINITY
-        || objective == Double.NEGATIVE_INFINITY) {
-      System.out.println("Infinity detected in the objective function");
-      System.exit(1);
-    }
-    if (objective == Double.NaN) {
-      System.out.println("Nan detected in the objective function");
-      System.exit(1);
-    }
+    assert Numerical.validNumber(objective);
+
     return objective;
   }
 }
