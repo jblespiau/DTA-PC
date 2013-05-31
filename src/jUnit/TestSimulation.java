@@ -2,6 +2,7 @@ package jUnit;
 
 import static org.junit.Assert.*;
 import generalNetwork.state.Profile;
+import generalNetwork.state.State;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -27,7 +28,7 @@ public class TestSimulation {
   public static void registerParallelPath() {
     Simulator simu = new Simulator(parallel_path_network, parallel_path_data,
         false);
-    simu.run(false);
+    State state = simu.run(false);
 
     Gson gson = new Gson();
 
@@ -40,7 +41,7 @@ public class TestSimulation {
         e.printStackTrace();
       }
 
-      gson.toJson(simu.profiles[k], Profile.class, writer);
+      gson.toJson(state.profiles[k], Profile.class, writer);
 
       // Close the file
       try {
@@ -56,7 +57,7 @@ public class TestSimulation {
   public void testParallelPath() {
     Simulator simu = new Simulator(parallel_path_network, parallel_path_data,
         false);
-    simu.run(false);
+    State state = simu.run(false);
 
     Gson gson = new Gson();
     Profile p;
@@ -70,14 +71,14 @@ public class TestSimulation {
 
       p = gson.fromJson(reader, Profile.class);
 
-      simu.profiles[k].junction_info = null;
+      state.profiles[k].junction_info = null;
 
-      System.out.println(gson.toJson(simu.profiles[k], Profile.class));
+      System.out.println(gson.toJson(state.profiles[k], Profile.class));
       System.out.println(gson.toJson(p, Profile.class));
 
       assertTrue("The result for time step " + k
           + " is not the same as the registered solution",
-          p.equals(simu.profiles[k], 1e-6));
+          p.equals(state.profiles[k], 1e-6));
 
       try {
         if (reader != null)
