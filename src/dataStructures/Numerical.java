@@ -14,6 +14,27 @@ public class Numerical {
         && a != Double.NaN;
   }
 
+  static public boolean isLowerTrangular(double[][] matrix) {
+    for (int i = 0; i < matrix.length; i++)
+      for (int j = i + 1; j < matrix.length; j++)
+        if (matrix[i][j] != 0)
+          return false;
+
+    return true;
+  }
+
+  static public boolean NonSingularLowterTriangular(double[][] matrix) {
+    if (!isLowerTrangular(matrix))
+      return false;
+    if (matrix.length != matrix[0].length)
+      return false;
+    for (int i = 0; i < matrix.length; i++)
+      if (matrix[i][i] == 0)
+        return false;
+
+    return true;
+  }
+
   static public boolean equals(double a, double b, double e) {
     return Math.abs(a - b) < e;
   }

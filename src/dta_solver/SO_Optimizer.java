@@ -855,6 +855,9 @@ public class SO_Optimizer extends AdjointForJava<State> {
         }
       }
     }
+    for (int index = 0; index < H_block_size * T; index++)
+      result.setQuick(index, index, -1.0);
+
     return new Some<SparseCCDoubleMatrix2D>(result);
   }
 
@@ -878,7 +881,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
          * splits.get(sources[orig], k).get(0) and U[k*(C + sources.length)]
          */
         /* In case of full System Optimal computation we skip the NC flows */
-        split_ratio = control[k*(C + sources.length)];
+        split_ratio = control[k * (C + sources.length)];
         if (split_ratio == 0) {
           continue;
         }
