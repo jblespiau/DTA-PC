@@ -19,8 +19,6 @@ import generalNetwork.state.internalSplitRatios.JunctionSplitRatios;
 import org.apache.commons.math3.optimization.DifferentiableMultivariateOptimizer;
 import org.wsj.AdjointForJava;
 
-import com.sun.org.apache.xml.internal.security.encryption.AgreementMethod;
-
 import scala.Option;
 import scala.Some;
 
@@ -351,7 +349,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
            * We put 1 for the derivative terms of the mass conversation
            * equations (i,c,k) with respect to \beta(i,c,k) for k \in [1, T]
            */
-          result.setQuick(i, j, 1.0);
+          result.setQuick(i, j, -1.0);
 
           /*
            * Derivative terms with respect to flow-out(i,c,k-1) and
