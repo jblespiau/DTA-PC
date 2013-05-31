@@ -8,6 +8,12 @@ public class Numerical {
 
   private static double epsilon = 0.0001;
 
+  static public boolean validNumber(double a) {
+    return a != Double.POSITIVE_INFINITY
+        && a != Double.NEGATIVE_INFINITY
+        && a != Double.NaN;
+  }
+
   static public boolean equals(double a, double b, double e) {
     return Math.abs(a - b) < e;
   }
