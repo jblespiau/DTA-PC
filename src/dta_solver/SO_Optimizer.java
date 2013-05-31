@@ -426,6 +426,7 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
     int aggregate_SR_index = 0;
     Double partial_density;
     Double i_j_c_SR;
+    JunctionSplitRatios junction_SR;
     CellInfo in_cell_info;
     int prev_length, next_length;
 
@@ -443,14 +444,29 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
             block_upper_position = k * H_block_size
                 + mass_conservation_size + flow_propagation_size;
 
-            JunctionSplitRatios junction_SR = intert_junction_SR.get(k);
+            /* There is no intertemporal split ratios for Nx1 junctions */
+
+            if (intert_junction_SR == null)
+              junction_SR = null;
+            else {
+              junction_SR = intert_junction_SR.get(k);
+              assert junction_SR != null;
+            }
             in_cell_info = simulator.profiles[k].getCell(in);
 
             i = block_upper_position + aggregate_SR_index;
             j = k * x_block_size + (C + 1) * in;
 
             for (int c = 0; c < C + 1; c++) {
-              i_j_c_SR = junction_SR.get(in, out, c);
+              /*
+               * If there is no intertemporal_split ratios this means we are at
+               * a Nx1
+               * junction and we always have beta = 1
+               */
+              if (junction_SR == null)
+                i_j_c_SR = 1.0;
+              else
+                i_j_c_SR = junction_SR.get(in, out, c);
 
               /*
                * If the split ratio for this commodity is zero, then the
@@ -460,7 +476,10 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
                 continue;
 
               partial_density = in_cell_info.partial_densities.get(c);
+              if (partial_density == null)
+                partial_density = 0.0;
               total_density = in_cell_info.total_density;
+
               if (total_density != 0) {
                 result.setQuick(i, j,
                     i_j_c_SR * (total_density - partial_density)
@@ -482,28 +501,47 @@ public class SO_Optimizer extends AdjointForJava<Simulator> {
     /*********************************************************
      * Derivative terms for the in-flows
      *********************************************************/
-    JunctionSplitRatios junction_SR;
     int commodity, in_id, out_id;
     for (int j_id = 0; j_id < junctions.length; j_id++) {
       for (int k = 0; k < T; k++) {
         junction_SR = internal_SR.get(k, j_id);
-        Iterator<Entry<Triplet, Double>> iterator =
-            junction_SR.non_compliant_split_ratios
-                .entrySet()
-                .iterator();
-        Entry<Triplet, Double> entry;
-        while (iterator.hasNext()) {
-          entry = iterator.next();
-          in_id = entry.getKey().incoming;
-          out_id = entry.getKey().outgoing;
-          commodity = entry.getKey().commodity;
+        /* If there is no split ratios, it means it is a Nx1 junction */
 
-          i = H_block_size * k + 2 * mass_conservation_size
-              + flow_propagation_size + aggregate_SR_index + out_id * (C + 1)
-              + commodity;
-          j = x_block_size * k + f_out_position + i * (C + 1) + commodity;
+        if (junction_SR == null) {
+          for (in_id = junctions[j_id].getPrev()[0].getUniqueId(); in_id < junctions[j_id]
+              .getPrev().length; in_id++) {
+            // We don't know the split ratios so we suppose it is 1 for all
+            assert junctions[j_id].getNext().length <= 1;
+            for (int c = 0; c < C + 1; c++) {
+              i = H_block_size * k + 2 * mass_conservation_size
+                  + flow_propagation_size + aggregate_SR_index
+                  + junctions[j_id].getNext()[0].getUniqueId() * (C + 1)
+                  + c;
+              j = x_block_size * k + f_out_position + in_id * (C + 1) + c;
 
-          result.setQuick(i, j, entry.getValue());
+              result.setQuick(i, j, 1.0);
+            }
+          }
+
+        } else {
+          Iterator<Entry<Triplet, Double>> iterator =
+              junction_SR.non_compliant_split_ratios
+                  .entrySet()
+                  .iterator();
+          Entry<Triplet, Double> entry;
+          while (iterator.hasNext()) {
+            entry = iterator.next();
+            in_id = entry.getKey().incoming;
+            out_id = entry.getKey().outgoing;
+            commodity = entry.getKey().commodity;
+
+            i = H_block_size * k + 2 * mass_conservation_size
+                + flow_propagation_size + aggregate_SR_index + out_id * (C + 1)
+                + commodity;
+            j = x_block_size * k + f_out_position + in_id * (C + 1) + commodity;
+
+            result.setQuick(i, j, entry.getValue());
+          }
         }
       }
     }
