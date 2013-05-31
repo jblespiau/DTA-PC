@@ -70,6 +70,17 @@ public class Junction {
     // TODO: Check priorities of sum 1
   }
 
+  public double getPriority(int cell_id) {
+    Double res = priorities.get(cell_id);
+    if (res == null) {
+      System.out.println("[Junction] This case should NEVER happen. Error");
+      System.exit(1);
+      return 0.0;
+    }
+    else
+      return res.doubleValue();
+  }
+
   public void addPrev(Cell c) {
     int i = 0;
     while (prev[i] != null)
