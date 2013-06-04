@@ -96,6 +96,18 @@ public class Simulator {
     return run(true);
   }
 
+  /**
+   * @brief Run the simulation and returns a partial state not including the sum
+   *        of the split ratios at every origin for all time steps
+   */
+  public State partialRun(boolean print) {
+    return run(print);
+  }
+
+  public State partialRun() {
+    return run(false);
+  }
+
   protected State run(boolean print) {
     int T = time_discretization.getNb_steps();
     double delta_t = time_discretization.getDelta_t();

@@ -28,7 +28,7 @@ public class TestSimulation {
   public static void registerParallelPath() {
     Simulator simu = new Simulator(parallel_path_network, parallel_path_data,
         false);
-    State state = simu.run(false);
+    State state = simu.partialRun(false);
 
     Gson gson = new Gson();
 
@@ -41,6 +41,7 @@ public class TestSimulation {
         e.printStackTrace();
       }
 
+      state.profiles[k].junction_info = null;
       gson.toJson(state.profiles[k], Profile.class, writer);
 
       // Close the file
@@ -57,7 +58,7 @@ public class TestSimulation {
   public void testParallelPath() {
     Simulator simu = new Simulator(parallel_path_network, parallel_path_data,
         false);
-    State state = simu.run(false);
+    State state = simu.partialRun(false);
 
     Gson gson = new Gson();
     Profile p;

@@ -30,12 +30,14 @@ public class Test2x1JunctionSolver {
   /* 2x1 junction */
   static private Junction junction2x1;
   static private Cell[] cells;
+  static private double delta_t;
 
   /**
    * @brief Build a 2x1 junction
    */
   private static void build(double delta_t) {
 
+    Test2x1JunctionSolver.delta_t = delta_t;
     NetworkUIDFactory.resetCell_id();
     NetworkUIDFactory.resetJunction_id();
 
@@ -65,7 +67,7 @@ public class Test2x1JunctionSolver {
       /*
        * The demand and the supply depend on the network and the density
        */
-      demand = cells[cell_id].getDemand(density);
+      demand = cells[cell_id].getDemand(density, delta_t);
       supply = cells[cell_id].getSupply(density);
       assert demand >= 0 : "Demand should be positive";
       assert supply >= 0 : "Supply should be positive";
