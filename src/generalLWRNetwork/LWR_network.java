@@ -218,7 +218,7 @@ public class LWR_network {
       /*
        * The demand and the supply depend on the network and the density
        */
-      demand = getCell(cell_id).getDemand(density);
+      demand = getCell(cell_id).getDemand(density, delta_t);
       supply = getCell(cell_id).getSupply(density);
       assert demand >= 0 : "Demand should be positive";
       assert supply >= 0 : "Supply should be positive";

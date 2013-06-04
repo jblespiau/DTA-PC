@@ -31,8 +31,8 @@ public class Buffer extends Cell {
   }
 
   @Override
-  public double getDemand(double density) {
-    return density;
+  public double getDemand(double density, double delta_t) {
+    return density / delta_t;
   }
 
   @Override
@@ -104,7 +104,7 @@ public class Buffer extends Cell {
       assert density != null : "In the buffer, the density of an existing commodity should not be null";
 
       density = density - delta_t * out_flow;
-      assert density >= 0 : "Negative density in a buffer";
+      assert density >= 0 : "Negative density(" + density + ") in a buffer";
 
       if (density != 0) {
         result.put(commodity, density);

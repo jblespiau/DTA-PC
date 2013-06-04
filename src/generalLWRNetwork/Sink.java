@@ -31,7 +31,7 @@ class Sink extends Cell {
   }
 
   @Override
-  public double getDemand(double density) {
+  public double getDemand(double density, double delta_t) {
     return 0;
   }
 

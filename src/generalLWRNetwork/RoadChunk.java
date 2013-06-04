@@ -136,7 +136,7 @@ public class RoadChunk extends Cell {
   }
 
   @Override
-  public double getDemand(double density) {
+  public double getDemand(double density, double delta_t) {
     return Math.max(0, Math.min(F_max, v * density));
   }
 
