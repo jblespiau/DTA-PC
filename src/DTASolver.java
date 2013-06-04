@@ -1,7 +1,5 @@
 import generalNetwork.state.State;
 
-import java.util.Arrays;
-
 import org.wsj.IpOptAdjointOptimizer;
 
 import dataStructures.Numerical;
@@ -22,7 +20,6 @@ public class DTASolver {
     // String data_file = "graphs/PathWithPrioritiesData.json";
 
     Simulator simulator = new Simulator(network_file, data_file, debug);
-    State state = simulator.run();
 
     // TestSimulation.registerParallelPath();
     // Test2x1JunctionSolver.createProfile();
@@ -31,6 +28,8 @@ public class DTASolver {
     int maxIter = 10;
     SO_Optimizer optimizer = new SO_Optimizer(new IpOptAdjointOptimizer(),
         maxIter, simulator);
+    double[] intial_control = optimizer.getControl();
+    State state = optimizer.forwardSimulate(intial_control);
     // System.out.println(Arrays.toString(optimizer.getControl()));
     // System.out.println(
     // optimizer.djdx(state, optimizer.getControl()).toString());
@@ -38,8 +37,7 @@ public class DTASolver {
     // System.out.println(Arrays.toString(optimizer.djdu(state,
     // optimizer.getControl()).toArray()));
 
-    double[] tmp = optimizer.djdu(state,
-        optimizer.getControl()).toArray();
+    double[] tmp = optimizer.djdu(state, intial_control).toArray();
     for (int i = 0; i < tmp.length; i++)
       assert Numerical.validNumber(tmp[i]);
 
@@ -48,8 +46,7 @@ public class DTASolver {
     // .toString());
 
     /* Checking of dH/dX */
-    double[][] tmp2 = optimizer
-        .dhdx(state, optimizer.getControl()).get().toArray();
+    double[][] tmp2 = optimizer.dhdx(state, intial_control).get().toArray();
     for (int i = 0; i < tmp2.length; i++)
       for (int j = 0; j < tmp2[0].length; j++)
         assert Numerical.validNumber(tmp2[i][j]);
@@ -59,8 +56,6 @@ public class DTASolver {
         System.out.println(i);
     }
 
-    // if (a == Double.POSITIVE_INFINITY || a == Double.NEGATIVE_INFINITY)
-    // System.out.println("Infinity detected");
-    optimizer.solve(optimizer.getControl());
+    optimizer.solve(intial_control);
   }
 }

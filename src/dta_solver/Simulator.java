@@ -92,11 +92,11 @@ public class Simulator {
     }
   }
 
-  public State run() {
+  protected State run() {
     return run(true);
   }
 
-  public State run(boolean print) {
+  protected State run(boolean print) {
     int T = time_discretization.getNb_steps();
     double delta_t = time_discretization.getDelta_t();
     Profile[] profiles = new Profile[T];
