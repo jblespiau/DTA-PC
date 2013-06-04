@@ -18,6 +18,8 @@ public class Simulator {
   Demands origin_demands;
   public IntertemporalOriginsSplitRatios splits;
   public LWR_network lwr_network;
+  /* Share of the compliant flow */
+  private double alpha;
 
   protected Simulator(int delta_t, int nb_steps) {
     time_discretization = new Discretization(delta_t, nb_steps);
@@ -28,7 +30,7 @@ public class Simulator {
       String data_file,
       boolean debug) {
 
-    double alpha = 1.0;
+    alpha = 1.0;
 
     JsonFactory json = new JsonFactory(true);
 
@@ -148,5 +150,13 @@ public class Simulator {
             + k + ", junction " + j;
 
     return new State(profiles);
+  }
+
+  public double getAlpha() {
+    return alpha;
+  }
+
+  public boolean isFullSystemOptimal() {
+    return alpha == 1.0;
   }
 }

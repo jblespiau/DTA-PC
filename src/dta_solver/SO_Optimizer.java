@@ -33,7 +33,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
 
   private Simulator simulation;
 
-  private double epsilon = 0.02;
+  private double epsilon = 0.001;
 
   /* Total number of time steps */
   private int T;
@@ -80,22 +80,6 @@ public class SO_Optimizer extends AdjointForJava<State> {
   // mass_conservation_size
   /* Total size of a block of constraints for a given time step */
   private int H_block_size;
-
-  public void printSizes() {
-    System.out.println("Total size of X: " + T * x_block_size);
-    System.out.println("Details: " + T + " time steps, " +
-        "(density_block: " + size_density_block +
-        ", demand_supply: " + size_demand_suply_block +
-        ", aggregate SR: " + size_aggregate_split_ratios +
-        ", f_in and out: " + 2 * size_density_block);
-
-    System.out.println("Total size of H: " + T * H_block_size);
-    System.out.println("Details: " + T + " time steps, " +
-        "(Mass Cons: " + mass_conservation_size +
-        ", Flow prog: " + flow_propagation_size +
-        ", aggregate SR: " + size_aggregate_split_ratios +
-        ", f_in and out: " + 2 * size_density_block);
-  }
 
   public SO_Optimizer(DifferentiableMultivariateOptimizer op, int maxIter,
       Simulator simu) {
@@ -863,6 +847,10 @@ public class SO_Optimizer extends AdjointForJava<State> {
 
   /**
    * @brief Computes the derivative dJ/dU
+   * @details
+   *          The condition \beta >= 0 is already put in the solver (in
+   *          AdjointJVM/org.wsj/Optimizers.scala) do there is only one barrier
+   *          in J
    */
   @Override
   public DoubleMatrix1D djdu(State state, double[] control) {
@@ -871,47 +859,34 @@ public class SO_Optimizer extends AdjointForJava<State> {
         DoubleFactory1D.dense.make(T * temporal_control_block_size);
 
     int index_in_control = 0;
-    double split_ratio;
     double sum_of_split_ratios;
     for (int orig = 0; orig < O; orig++) {
 
-      for (int k = 0; k < T; k++) {
-        /*
-         * Mapping between
-         * splits.get(sources[orig], k).get(0) and U[k*(C + sources.length)]
-         */
-        /* In case of full System Optimal computation we skip the NC flows */
-        split_ratio = control[k * (C + sources.length)];
-        if (split_ratio == 0) {
-          continue;
-        }
-
-        double derivative_term = 0;
-        if (control[k * temporal_control_block_size] == 0) {
-          System.out.println("!FAILURE! A non compliant split ratio is ZERO !");
-          assert false;
-        } else {
+      /* In case of full System Optimal computation we skip the NC flows */
+      if (!simulation.isFullSystemOptimal()) {
+        for (int k = 0; k < T; k++) {
           /*
-           * The condition \beta >= 0 is already put in the solver (in
-           * AdjointJVM/org.wsj/Optimizers.scala)
+           * Mapping between
+           * splits.get(sources[orig], k).get(0) and U[k*(C + sources.length)]
            */
-        }
+          double derivative_term = 0;
+          if (control[k * temporal_control_block_size] == 0) {
+            System.out
+                .println("!FAILURE! A non compliant split ratio is ZERO !");
+            assert false;
+          }
 
-        sum_of_split_ratios = state.sum_of_split_ratios[orig][k];
-        if (sum_of_split_ratios == 0) {
-          System.out
-              .println("!Warning! Sum of the split ratios for an origin is Zero !");
-          assert false;
-        } else {
+          sum_of_split_ratios = state.sum_of_split_ratios[orig][k];
+
           // TODO : For now we imposes \sum \beta > 0.999
           assert sum_of_split_ratios >= 0.999;
           // To skip one operation we do 1 / (a-b) instead of - 1 / (b-a)
           derivative_term += epsilon / (0.999 - sum_of_split_ratios);
+
+          assert Numerical.validNumber(derivative_term);
+
+          result.set(k * temporal_control_block_size, derivative_term);
         }
-
-        assert Numerical.validNumber(derivative_term);
-
-        result.set(k * temporal_control_block_size, derivative_term);
       }
       index_in_control++;
 
@@ -921,33 +896,13 @@ public class SO_Optimizer extends AdjointForJava<State> {
       while (it.hasNext()) {
         it.next(); // Needed to empty the iterator
         for (int k = 0; k < T; k++) {
-          /*
-           * Mapping between
-           * splits.get(sources[orig], k).get(commodity) and
-           * U[k*(C +sources.length) + index_in_control]
-           */
+
           double derivative_term = 0;
 
-          // The >= 0 constraint is already in the solver
-          /*
-           * if (c == 0) {
-           * System.out.println("!FAILURE! A non compliant split ratio is ZERO !"
-           * );
-           * assert false;
-           * } else {
-           * 
-           * }
-           */
           sum_of_split_ratios = state.sum_of_split_ratios[orig][k];
-          if (sum_of_split_ratios == 0) {
-            System.out
-                .println("!Warning! Sum of the split ratios for an origin is Zero !");
-            assert false;
-          } else {
-            // TODO : For now we imposes \sum \beta > 0.999
-            assert sum_of_split_ratios >= 0.999;
-            derivative_term += epsilon / (0.999 - sum_of_split_ratios);
-          }
+          // TODO : For now we imposes \sum \beta > 0.999
+          assert sum_of_split_ratios >= 0.999;
+          derivative_term += epsilon / (0.999 - sum_of_split_ratios);
 
           assert Numerical.validNumber(derivative_term);
 
@@ -1045,6 +1000,10 @@ public class SO_Optimizer extends AdjointForJava<State> {
    * @brief Computes the objective function:
    *        \sum_(i,c,k) \rho(i,c,k)
    *        - \sum_{origin o} epsilon2 * ln(\sum \rho(o,c,k) - 1)
+   * @details
+   *          The condition \beta >= 0 is already put in the solver (in
+   *          AdjointJVM/org.wsj/Optimizers.scala) do there is only one barrier
+   *          in J
    */
   @Override
   public double objective(State state, double[] control) {
@@ -1064,7 +1023,24 @@ public class SO_Optimizer extends AdjointForJava<State> {
     return objective;
   }
 
+  public void printSizes() {
+    System.out.println("Total size of X: " + T * x_block_size);
+    System.out.println("Details: " + T + " time steps, " +
+        "(density_block: " + size_density_block +
+        ", demand_supply: " + size_demand_suply_block +
+        ", aggregate SR: " + size_aggregate_split_ratios +
+        ", f_in and out: " + 2 * size_density_block);
+
+    System.out.println("Total size of H: " + T * H_block_size);
+    System.out.println("Details: " + T + " time steps, " +
+        "(Mass Cons: " + mass_conservation_size +
+        ", Flow prog: " + flow_propagation_size +
+        ", aggregate SR: " + size_aggregate_split_ratios +
+        ", f_in and out: " + 2 * size_density_block);
+  }
+
   public void printProperties(State state) {
+    System.out.println("[Printing properties of the given state]");
     System.out.println("Total split ratios at the origins through time steps:");
     for (int o = 0; o < O; o++) {
       System.out.print("[Origin " + o + "]");
