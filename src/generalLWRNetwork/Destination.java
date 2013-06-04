@@ -47,5 +47,4 @@ public class Destination {
   public int getUniqueId() {
     return sink.getUniqueId();
   }
-
 }
