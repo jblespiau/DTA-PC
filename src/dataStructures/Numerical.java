@@ -23,7 +23,7 @@ public class Numerical {
     return true;
   }
 
-  static public boolean NonSingularLowterTriangular(double[][] matrix) {
+  static public boolean NonSingularLowerTriangular(double[][] matrix) {
     if (!isLowerTrangular(matrix))
       return false;
     if (matrix.length != matrix[0].length)

@@ -81,6 +81,22 @@ public class SO_Optimizer extends AdjointForJava<State> {
   /* Total size of a block of constraints for a given time step */
   private int H_block_size;
 
+  public void printSizes() {
+    System.out.println("Total size of X: " + T * x_block_size);
+    System.out.println("Details: " + T + " time steps, " +
+        "(density_block: " + size_density_block +
+        ", demand_supply: " + size_demand_suply_block +
+        ", aggregate SR: " + size_aggregate_split_ratios +
+        ", f_in and out: " + 2 * size_density_block);
+
+    System.out.println("Total size of H: " + T * H_block_size);
+    System.out.println("Details: " + T + " time steps, " +
+        "(Mass Cons: " + mass_conservation_size +
+        ", Flow prog: " + flow_propagation_size +
+        ", aggregate SR: " + size_aggregate_split_ratios +
+        ", f_in and out: " + 2 * size_density_block);
+  }
+
   public SO_Optimizer(DifferentiableMultivariateOptimizer op, int maxIter,
       Simulator simu) {
     super(op, maxIter);
@@ -314,20 +330,11 @@ public class SO_Optimizer extends AdjointForJava<State> {
         H_block_size * T,
         x_block_size * T);
 
+    /* The diagonal terms are done at the end */
+
     /*********************************************************
      * Derivative terms for the Mass Conservation constraints
      *********************************************************/
-
-    /*
-     * Derivative of the initial conditions : \rho(i,c)(0) - \rho(i,c,0) = 0
-     * The derivative is always 1
-     */
-    for (int partial_density = 0; partial_density < mass_conservation_size; partial_density++) {
-      result.setQuick(partial_density,
-          partial_density,
-          1.0);
-    }
-
     // Position of a block of constraints in H indexed by k
     int block_upper_position;
     // Position of a block in the Mass Conservation block indexed by the cell_id
@@ -347,9 +354,9 @@ public class SO_Optimizer extends AdjointForJava<State> {
 
           /*
            * We put 1 for the derivative terms of the mass conversation
-           * equations (i,c,k) with respect to \beta(i,c,k) for k \in [1, T]
+           * equations (i,c,k) with respect to density(i,c,k-1) for k \in [1, T]
            */
-          result.setQuick(i, j, -1.0);
+          result.setQuick(i, j, 1.0);
 
           /*
            * Derivative terms with respect to flow-out(i,c,k-1) and
@@ -398,17 +405,18 @@ public class SO_Optimizer extends AdjointForJava<State> {
       // time step k
       block_upper_position = k * H_block_size + mass_conservation_size;
       for (int cell_id = 0; cell_id < cells.length; cell_id++) {
-        sub_block_position = block_upper_position + cell_id * 2;
+        sub_block_position = cell_id * 2;
+        i = block_upper_position + sub_block_position;
         total_density = state.profiles[k].getCell(cell_id).total_density;
 
         for (int c = 0; c < C + 1; c++) {
           // Demand first
-          result.setQuick(sub_block_position,
+          result.setQuick(i,
               x_block_size * k + cell_id * (C + 1) + c,
               cells[cell_id].getDerivativeDemand(total_density));
 
           // Then supply
-          result.setQuick(sub_block_position + 1,
+          result.setQuick(i + 1,
               x_block_size * k + cell_id * (C + 1) + c,
               cells[cell_id].getDerivativeSupply(total_density));
         }
@@ -419,7 +427,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
      * Derivative terms for the Aggregate Split Ratios
      *********************************************************/
     /*
-     * This part is not effective because we have to do
+     * This part is not efficient because we have to do
      * Nb_Aggregate_SR * T * (C+1) computation of derivative terms
      */
     Junction junction;
