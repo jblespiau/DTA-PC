@@ -166,17 +166,13 @@ public class SO_Optimizer extends AdjointForJava<State> {
 
     IntertemporalOriginsSplitRatios splits = simulation.splits;
 
-    /*
-     * For every time steps there are C compliant flows, and O non compliant
-     * There is also the sum of the split ratios for every origins
-     */
+    /* For every time steps there are C compliant flows, and O non compliant */
     double[] control = new double[T * temporal_control_block_size];
 
     int index_in_control = 0;
     int commodity;
     Double split_ratio;
     for (int orig = 0; orig < O; orig++) {
-      double[] sum_of_split_ratios = new double[T];
       for (int k = 0; k < T; k++) {
         /*
          * Mapping between
@@ -186,7 +182,6 @@ public class SO_Optimizer extends AdjointForJava<State> {
         split_ratio = splits.get(sources[orig], k).get(0);
         if (split_ratio != null) {
           control[k * temporal_control_block_size + index_in_control] = split_ratio;
-          sum_of_split_ratios[k] += split_ratio;
         }
       }
       index_in_control++;
@@ -205,15 +200,12 @@ public class SO_Optimizer extends AdjointForJava<State> {
           split_ratio = splits.get(sources[orig], k).get(commodity);
           if (split_ratio != null) {
             control[k * temporal_control_block_size + index_in_control] = split_ratio;
-            sum_of_split_ratios[k] += split_ratio;
+
           }
         }
         index_in_control++;
 
       }
-      /* At the end we add the sum of the split ratios at that origin */
-      for (int k = 0; k < T; k++)
-        sources[orig].sum_split_ratios = sum_of_split_ratios;
     }
 
     return control;
@@ -724,6 +716,8 @@ public class SO_Optimizer extends AdjointForJava<State> {
             int minimum_id_cell = 0;
             double min_supply = -1, beta, supply, beta_at_minimum = 0;
             for (int out = 0; out < next_cells.length; out++) {
+              assert state.profiles[k]
+                  .getJunction(junction) != null;
               beta = state.profiles[k]
                   .getJunction(junction)
                   .getAggregateSR(in_id, next_cells[out].getUniqueId());
@@ -903,7 +897,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
            */
         }
 
-        sum_of_split_ratios = sources[orig].sum_split_ratios[k];
+        sum_of_split_ratios = state.sum_of_split_ratios[orig][k];
         if (sum_of_split_ratios == 0) {
           System.out
               .println("!Warning! Sum of the split ratios for an origin is Zero !");
@@ -944,7 +938,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
            * 
            * }
            */
-          sum_of_split_ratios = sources[orig].sum_split_ratios[k];
+          sum_of_split_ratios = state.sum_of_split_ratios[orig][k];
           if (sum_of_split_ratios == 0) {
             System.out
                 .println("!Warning! Sum of the split ratios for an origin is Zero !");
@@ -1001,8 +995,9 @@ public class SO_Optimizer extends AdjointForJava<State> {
 
     int index_in_control = 0;
     int commodity;
+    double[][] sum_of_split_ratios = new double[O][T];
     for (int orig = 0; orig < O; orig++) {
-      double[] sum_of_split_ratios = new double[T];
+
       for (int k = 0; k < T; k++) {
         /*
          * Mapping between
@@ -1012,7 +1007,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
         splits.get(sources[orig], k)
             .put(0,
                 control[k * temporal_control_block_size + index_in_control]);
-        sum_of_split_ratios[k] +=
+        sum_of_split_ratios[orig][k] +=
             control[k * temporal_control_block_size + index_in_control];
 
       }
@@ -1032,17 +1027,18 @@ public class SO_Optimizer extends AdjointForJava<State> {
           splits.get(sources[orig], k).
               put(commodity,
                   control[k * temporal_control_block_size + index_in_control]);
-          sum_of_split_ratios[k] +=
+          sum_of_split_ratios[orig][k] +=
               control[k * temporal_control_block_size + index_in_control];
         }
         index_in_control++;
       }
-      /* At the end we add the sum of the split ratios at that origin */
-      for (int k = 0; k < T; k++)
-        sources[orig].sum_split_ratios = sum_of_split_ratios;
-    }
 
-    return simulation.run(false);
+    }
+    State state = simulation.run(false);
+    /* At the end we add the sum of the split ratios at the state */
+    state.sum_of_split_ratios = sum_of_split_ratios;
+
+    return state;
   }
 
   /**
@@ -1061,10 +1057,21 @@ public class SO_Optimizer extends AdjointForJava<State> {
     for (int orig = 0; orig < O; orig++)
       for (int k = 0; k < T; k++)
         objective -=
-            epsilon * Math.log(sources[orig].sum_split_ratios[k] - 0.999);
+            epsilon * Math.log(state.sum_of_split_ratios[orig][k] - 0.999);
 
     assert Numerical.validNumber(objective);
 
     return objective;
+  }
+
+  public void printProperties(State state) {
+    System.out.println("Total split ratios at the origins through time steps:");
+    for (int o = 0; o < O; o++) {
+      System.out.print("[Origin " + o + "]");
+      for (int k = 0; k < T; k++)
+        System.out.print(" " + state.sum_of_split_ratios[o][k] + " ");
+      System.out.println();
+
+    }
   }
 }

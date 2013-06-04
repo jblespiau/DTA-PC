@@ -43,6 +43,7 @@ public class Simulator {
     System.out.println("Done");
 
     /* Time discretization from the data */
+    System.out.println("Max time: " + data.max_time_step);
     time_discretization = new Discretization(data.delta_t, data.max_time_step);
 
     /* Creation of the network */
@@ -94,26 +95,24 @@ public class Simulator {
   }
 
   public State run(boolean print) {
-    Profile[] profiles = new Profile[time_discretization.getNb_steps()];
+    int T = time_discretization.getNb_steps();
+    double delta_t = time_discretization.getDelta_t();
+    Profile[] profiles = new Profile[T];
 
-    for (int k = 0; k < time_discretization.getNb_steps(); k++) {
-      profiles[k] = lwr_network.emptyProfile();
-    }
-
-    for (int k = 0; k < time_discretization.getNb_steps(); k++) {
+    for (int k = 0; k < T; k++) {
       if (k == 0) {
         profiles[k] = lwr_network.emptyProfile();
       } else if (k == 1) {
         profiles[k] = lwr_network.simulateProfileFrom(
             lwr_network.emptyProfile(),
             profiles[k - 1],
-            time_discretization.getDelta_t(),
+            delta_t,
             origin_demands, splits,
             k - 1);
       } else {
         profiles[k] = lwr_network.simulateProfileFrom(profiles[k - 2],
             profiles[k - 1],
-            time_discretization.getDelta_t(),
+            delta_t,
             origin_demands, splits,
             k - 1);
       }
@@ -124,6 +123,30 @@ public class Simulator {
         profiles[k - 1].print();
       }
     }
+    /*
+     * We run the simulation for the last time step to update what is needed
+     * (junctionInfo)
+     */
+    assert T >= 2;
+    lwr_network.simulateProfileFrom(profiles[T - 2],
+        profiles[T - 1],
+        delta_t,
+        origin_demands, splits,
+        T - 1);
+
+    if (print) {
+      System.out.println("****** Printing profile at time step " + (T - 1)
+          + "********");
+      profiles[T - 1].print();
+    }
+
+    /* Check that all the JunctionInfo are not null */
+    int J = lwr_network.getNb_Junctions();
+    for (int k = 0; k < T; k++)
+      for (int j = 0; j < J; j++)
+        assert profiles[k].getJunction(j) != null : "Null JunctionInfo for time step "
+            + k + ", junction " + j;
+
     return new State(profiles);
   }
 }

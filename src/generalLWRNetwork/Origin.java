@@ -17,7 +17,6 @@ public class Origin {
   protected Buffer[] entries;
   protected Junction junction;
   protected LinkedList<Integer> compliant_commodities;
-  public double[] sum_split_ratios;
 
   protected Origin() {
     entries = null;

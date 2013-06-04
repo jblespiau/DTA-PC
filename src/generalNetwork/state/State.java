@@ -7,6 +7,8 @@ import generalNetwork.state.Profile;
 public class State implements SystemState {
 
   public Profile[] profiles;
+  /* sum[orig][k] saves the sum at the orig for time step k */
+  public double[][] sum_of_split_ratios;
 
   public State(Profile[] s) {
     profiles = s;

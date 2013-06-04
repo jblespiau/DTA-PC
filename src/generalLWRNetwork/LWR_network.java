@@ -191,11 +191,11 @@ public class LWR_network {
    *          in entries[i]
    * 
    */
-  /* Works for only one source, one destination */
   public Profile simulateProfileFrom(Profile previous_profile, Profile p,
       double delta_t, Demands origin_demand,
       IntertemporalOriginsSplitRatios splits,
       int time_step) {
+
     assert p.CellInfoSize() == cells.length : "The profile size must correspond to the size of the network";
     assert origin_demand.size() == sources.length : " The demands should correspond to the number of entries";
 
