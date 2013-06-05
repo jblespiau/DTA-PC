@@ -1,0 +1,69 @@
+{
+  "nb_nodes": 2,
+  "nb_links": 2,
+  "nb_paths": 2,
+  "nb_origins": 1,
+  "nb_destinations": 1,
+  "nodes": [
+    {
+      "unique_id": 0,
+      "incoming": [],
+      "outgoing": [
+        0,
+        1
+      ]
+    },
+    {
+      "unique_id": 1,
+      "incoming": [
+        0,
+        1
+      ],
+      "outgoing": []
+    }
+  ],
+  "links": [
+    {
+      "unique_id": 0,
+      "l": 0.9,
+      "v": 0.9,
+      "w": 0.4,
+      "F_max": 2.0,
+      "jam_density": 8.0
+    },
+    {
+      "unique_id": 1,
+      "l": 1.8,
+      "v": 0.9,
+      "w": 0.4,
+      "F_max": 2.0,
+      "jam_density": 8.0
+    }
+  ],
+  "paths": [
+    {
+      "unique_id": 0,
+      "path": [
+        0
+      ]
+    },
+    {
+      "unique_id": 1,
+      "path": [
+        1
+      ]
+    }
+  ],
+  "origins": [
+    {
+      "id": 0,
+      "type": "SingleBuffer"
+    }
+  ],
+  "destinations": [
+    {
+      "id": 1,
+      "type": "SingleJunction"
+    }
+  ]
+}

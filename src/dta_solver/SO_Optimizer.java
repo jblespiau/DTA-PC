@@ -885,7 +885,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
           // TODO : For now we imposes \sum \beta > 0.999
           assert sum_of_split_ratios >= 0.999;
           // To skip one operation we do 1 / (a-b) instead of - 1 / (b-a)
-          derivative_term += epsilon / (0.999 - sum_of_split_ratios);
+          derivative_term = epsilon / (0.999 - sum_of_split_ratios);
 
           assert Numerical.validNumber(derivative_term);
 
@@ -906,7 +906,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
           sum_of_split_ratios = state.sum_of_split_ratios[orig][k];
           // TODO : For now we imposes \sum \beta > 0.999
           assert sum_of_split_ratios >= 0.999;
-          derivative_term += epsilon / (0.999 - sum_of_split_ratios);
+          derivative_term = epsilon / (0.999 - sum_of_split_ratios);
 
           assert Numerical.validNumber(derivative_term);
 
