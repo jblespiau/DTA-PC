@@ -316,8 +316,8 @@ public class Junction {
         j_info.put(i_j, beta_ij_dividedby_density);
 
         assert i_j.incoming == in_id;
-        assert beta_entry.getValue() > 0;
-        assert beta_ij_dividedby_density > 0;
+        assert beta_entry.getValue() >= 0 : "Negative value in Junction (" + beta_entry.getValue() + ")";
+        assert beta_ij_dividedby_density >= 0;
 
         flow_out = Math.min(flow_out,
             p.getCell(cells[i_j.outgoing]).supply

@@ -949,6 +949,10 @@ public class SO_Optimizer extends AdjointForJava<State> {
    */
   @Override
   public State forwardSimulate(double[] control) {
+    return forwardSimulate(control, false);
+  }
+
+  public State forwardSimulate(double[] control, boolean debug) {
 
     IntertemporalOriginsSplitRatios splits = simulation.splits;
 
@@ -993,7 +997,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
       }
 
     }
-    State state = simulation.run(false);
+    State state = simulation.run(debug);
     /* At the end we add the sum of the split ratios at the state */
     state.sum_of_split_ratios = sum_of_split_ratios;
 

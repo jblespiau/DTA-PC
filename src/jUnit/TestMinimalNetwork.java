@@ -26,7 +26,7 @@ public class TestMinimalNetwork {
   @Test
   public void test() {
 
-    boolean debug = false;
+    boolean debug = true;
     String network_file = "JUnitTests/minimalNetwork.json";
     String data_file = "JUnitTests/minimalNetworkData.json";
     String dhdx_file = "JUnitTests/dHdX";
@@ -72,7 +72,7 @@ public class TestMinimalNetwork {
     double[] final_control = optimizer.solve(optimizer.getControl());
 
     /* Study of the last computed state */
-    State final_state = optimizer.forwardSimulate(final_control);
+    State final_state = optimizer.forwardSimulate(final_control, true);
     InputOutput.tableToFile(final_control, final_control_file);
     optimizer.printProperties(final_state);
   }

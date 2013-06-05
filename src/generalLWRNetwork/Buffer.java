@@ -4,6 +4,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
+import dataStructures.Numerical;
+
 /**
  * @class EntryCell
  * @brief An EntryCell contains a buffer and an OrdinaryCell. The buffer holds
@@ -104,6 +106,11 @@ public class Buffer extends Cell {
       assert density != null : "In the buffer, the density of an existing commodity should not be null";
 
       density = density - delta_t * out_flow;
+      //TODO: Check if negative densities are normals
+      if (density < 0 && Numerical.equals(density, 0, 10E-6)) {
+        System.out.println("Warning: Negative density in a buffer (" + density + "). Rouding up to 0");
+        density = 0.0;
+      }
       assert density >= 0 : "Negative density(" + density + ") in a buffer";
 
       if (density != 0) {
