@@ -28,7 +28,6 @@ public class Destination {
 
         tmp = new Junction(new Cell[] { cell }, new Cell[] { sink });
         new_junctions.add(tmp);
-
         cell.setNext(tmp);
       }
       // We transform the junction in a 1x1 junction for the last road

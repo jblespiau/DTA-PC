@@ -98,6 +98,9 @@ public class RoadChunk extends Cell {
   public void checkConstraints(double delta_t) {
     int u_id = this.getUniqueId();
 
+    assert next != null : "The roadChunck " + getUniqueId()
+        + " has no following cell.";
+
     Iterator<Double> densities = initial_densities.values().iterator();
     while (densities.hasNext()) {
       assert densities.next() >= 0 : "Cell " + u_id

@@ -36,6 +36,7 @@ public class Origin {
       Buffer b = new Buffer();
       entries[0] = b;
       new_cells.add(b);
+      b.setNext(j);
 
       j.setPrev(new Cell[] { b });
       junction = j;
@@ -114,12 +115,12 @@ public class Origin {
             * split_entry.getValue());
       }
     }
-    
+
     p.getCell(entries[0]).partial_densities = new_densities;
-    
+
     /* We recompute the total_density */
     p.getCell(entries[0]).recomputeTotalDensity();
-    
+
   }
 
   @Override

@@ -29,10 +29,10 @@ public class Simulator {
       String network_file,
       String data_file,
       boolean debug) {
-
+    /* For now we study full compliance. TODO: modify this */
     alpha = 1.0;
 
-    JsonFactory json = new JsonFactory(true);
+    JsonFactory json = new JsonFactory(debug);
 
     /* Loading the graph description */
     System.out.print("Loading the graph from JSON...");
@@ -48,15 +48,17 @@ public class Simulator {
     System.out.println("Max time: " + data.max_time_step);
     time_discretization = new Discretization(data.delta_t, data.max_time_step);
 
+    int nb_steps = time_discretization.getNb_steps();
+    double delta_t = time_discretization.getDelta_t();
     /* Creation of the network */
     System.out.print("Discretization of the graph...");
-    discretized_graph = new DiscretizedGraph(json_graph,
-        time_discretization.getDelta_t(), time_discretization.getNb_steps());
+    discretized_graph = new DiscretizedGraph(json_graph, delta_t, nb_steps);
     System.out.println("Done");
 
+    /* Creation of the demands */
     System.out.print("Loading demands from JSON...");
     origin_demands = new DemandsFactory(time_discretization,
-        data.delta_t, data.demands, discretized_graph.node_to_origin)
+        delta_t, data.demands, discretized_graph.node_to_origin)
         .buildDemands();
     System.out.println("Done");
 
@@ -71,18 +73,29 @@ public class Simulator {
         discretized_graph.node_to_origin);
     System.out.println("Done");
 
+    /*
+     * Initialization of a physical set for the control split-ratios at the
+     * origins
+     */
     System.out.print("Initializing split-ratios at the origins...");
     splits =
         IntertemporalOriginsSplitRatios.defaultSplitRatios(
-            time_discretization.getNb_steps(),
+            nb_steps,
             discretized_graph.sources, alpha);
     System.out.println("Done");
 
     if (debug)
       System.out.println(splits.toString());
 
+    /* Building compact form in LWR_network */
     System.out.print("Creating the compact representation...");
     lwr_network = new LWR_network(discretized_graph);
+    System.out.println("Done");
+
+    /* Checking the requirements on the network */
+    System.out
+        .print("Checking that the network respect needed requirements...");
+    lwr_network.checkConstraints(delta_t);
     System.out.println("Done");
 
     if (debug) {

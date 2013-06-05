@@ -157,6 +157,7 @@ public class DiscretizedGraph {
       new_junctions.add(current_j);
 
       current_j.setPrev(new Cell[] { cell });
+      cell.setNext(current_j);
       previous_j = current_j;
     }
 
