@@ -907,7 +907,9 @@ public class SO_Optimizer extends AdjointForJava<State> {
 
     int index_in_control = 0;
     double sum_of_split_ratios;
+    double[] origin_demands;
     for (int orig = 0; orig < O; orig++) {
+      origin_demands = simulator.origin_demands.get(sources[orig]);
 
       Iterator<Integer> it = sources[orig]
           .getCompliant_commodities()
@@ -918,16 +920,21 @@ public class SO_Optimizer extends AdjointForJava<State> {
 
           double derivative_term = 0;
 
-          sum_of_split_ratios = state.sum_of_split_ratios[orig][k];
-          // TODO : For now we imposes \sum \beta > 1
-          assert sum_of_split_ratios >= 1 : "The sum of the split ratios ("
-              + sum_of_split_ratios + ") should be >= 1";
-          derivative_term = epsilon / (1 - sum_of_split_ratios);
+          /*
+           * If the demand is null, the cost function is independent of all the
+           * split ratios
+           */
+          if (origin_demands[k] != 0) {
+            sum_of_split_ratios = state.sum_of_split_ratios[orig][k];
+            assert sum_of_split_ratios >= 1 : "The sum of the split ratios ("
+                + sum_of_split_ratios + ") should be >= 1";
+            derivative_term = epsilon / (1 - sum_of_split_ratios);
 
-          assert Numerical.validNumber(derivative_term);
+            assert Numerical.validNumber(derivative_term);
 
-          result.set(k * temporal_control_block_size
-              + index_in_control, derivative_term);
+            result.set(k * temporal_control_block_size
+                + index_in_control, derivative_term);
+          }
         }
         index_in_control++;
       }
@@ -1031,13 +1038,33 @@ public class SO_Optimizer extends AdjointForJava<State> {
         objective -= state.profiles[k].getCell(destinations[d].getUniqueId()).total_density;
     }
 
-    for (int orig = 0; orig < O; orig++)
+    double[] origin_demands;
+    for (int orig = 0; orig < O; orig++) {
+      origin_demands = simulator.origin_demands.get(sources[orig]);
       for (int k = 0; k < T; k++)
-        objective -=
-            epsilon * Math.log(state.sum_of_split_ratios[orig][k] - 1);
+        /* If the demand is null, there is no need to set up a barrier */
+        if (origin_demands[k] != 0) {
+          objective -=
+              epsilon * Math.log(state.sum_of_split_ratios[orig][k] - 1);
+          assert Numerical.validNumber(objective);
+        }
+    }
+    return objective;
+  }
 
-    assert Numerical.validNumber(objective);
+  public double totalTravelTime(State state, double[] control) {
+    double objective = 0;
+    /*
+     * To compute the sum of the densities ON the network, we add the density of
+     * all the cells and then remove the density of the sinks
+     */
+    for (int k = 0; k < T; k++) {
+      for (int cell_id = 0; cell_id < cells.length; cell_id++)
+        objective += state.profiles[k].getCell(cell_id).total_density;
 
+      for (int d = 0; d < destinations.length; d++)
+        objective -= state.profiles[k].getCell(destinations[d].getUniqueId()).total_density;
+    }
     return objective;
   }
 
