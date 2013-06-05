@@ -26,7 +26,7 @@ public class TestSimulation {
    * @brief Save the simulation for the parallelPath network into file
    */
   public static void registerParallelPath() {
-    Simulator simu = new Simulator(parallel_path_network, parallel_path_data,
+    Simulator simu = new Simulator(parallel_path_network, parallel_path_data, 1,
         false);
     State state = simu.partialRun(false);
 
@@ -56,7 +56,7 @@ public class TestSimulation {
 
   @Test
   public void testParallelPath() {
-    Simulator simu = new Simulator(parallel_path_network, parallel_path_data,
+    Simulator simu = new Simulator(parallel_path_network, parallel_path_data, 1,
         false);
     State state = simu.partialRun(false);
 

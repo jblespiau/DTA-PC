@@ -26,6 +26,7 @@ public class TestMinimalNetwork {
   @Test
   public void test() {
 
+    double alpha = 0.1;
     boolean debug = true;
     String network_file = "JUnitTests/minimalNetwork.json";
     String data_file = "JUnitTests/minimalNetworkData.json";
@@ -35,7 +36,7 @@ public class TestMinimalNetwork {
 
     Gson gson = new Gson();
 
-    Simulator simulator = new Simulator(network_file, data_file, debug);
+    Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
     State state = simulator.partialRun(true);
 
     int maxIter = 10;

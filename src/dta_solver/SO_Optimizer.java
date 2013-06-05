@@ -33,7 +33,7 @@ import dataStructures.Triplet;
 
 public class SO_Optimizer extends AdjointForJava<State> {
 
-  private Simulator simulation;
+  private Simulator simulator;
 
   private double epsilon = 0.001;
 
@@ -88,19 +88,19 @@ public class SO_Optimizer extends AdjointForJava<State> {
   public SO_Optimizer(DifferentiableMultivariateOptimizer op, int maxIter,
       Simulator simu) {
     super(op, maxIter);
-    simulation = simu;
+    simulator = simu;
 
     alpha = simu.getAlpha();
-    T = simulation.time_discretization.getNb_steps();
-    C = simulation.lwr_network.getNb_compliantCommodities();
-    cells = simulation.lwr_network.getCells();
+    T = simulator.time_discretization.getNb_steps();
+    C = simulator.lwr_network.getNb_compliantCommodities();
+    cells = simulator.lwr_network.getCells();
 
-    sources = simulation.lwr_network.getSources();
+    sources = simulator.lwr_network.getSources();
     O = sources.length;
-    destinations = simulation.lwr_network.getSinks();
+    destinations = simulator.lwr_network.getSinks();
     S = destinations.length;
 
-    junctions = simulation.lwr_network.getJunctions();
+    junctions = simulator.lwr_network.getJunctions();
 
     /* For every time steps there are C compliant flows, and O non compliant */
     temporal_control_block_size = C;
@@ -154,7 +154,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
   public double[] getControl() {
 
     assert alpha != 0 : "The share of the compliant commodities is zero. No optimization possible";
-    IntertemporalOriginsSplitRatios splits = simulation.splits;
+    IntertemporalOriginsSplitRatios splits = simulator.splits;
 
     /* For every time steps there are C compliant flows */
     double[] control = new double[T * temporal_control_block_size];
@@ -194,7 +194,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
    */
   public double[] getFullControl() {
 
-    IntertemporalOriginsSplitRatios splits = simulation.splits;
+    IntertemporalOriginsSplitRatios splits = simulator.splits;
 
     /* For every time steps there are C compliant flows, and O non compliant */
     double[] control = new double[T * (C + 1)];
@@ -323,7 +323,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
     int commodity;
     double[] origin_demands;
     for (int orig = 0; orig < O; orig++) {
-      origin_demands = simulation.origin_demands.get(sources[orig]);
+      origin_demands = simulator.origin_demands.get(sources[orig]);
 
       Iterator<Integer> it = sources[orig]
           .getCompliant_commodities()
@@ -347,7 +347,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
   public Option<SparseCCDoubleMatrix2D> dhdx(State state, double[] control) {
 
     IntertemporalSplitRatios internal_SR =
-        simulation.lwr_network.getInternal_split_ratios();
+        simulator.lwr_network.getInternal_split_ratios();
 
     SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(
         H_block_size * T,
@@ -385,8 +385,8 @@ public class SO_Optimizer extends AdjointForJava<State> {
            * Derivative terms with respect to flow-out(i,c,k-1) and
            * flow-in(i,c,k-1)
            */
-          delta_t_over_l = simulation.time_discretization.getDelta_t() /
-              simulation.lwr_network.getCell(cell_id).getLength();
+          delta_t_over_l = simulator.time_discretization.getDelta_t() /
+              simulator.lwr_network.getCell(cell_id).getLength();
 
           assert Numerical.validNumber(delta_t_over_l);
 
@@ -919,10 +919,10 @@ public class SO_Optimizer extends AdjointForJava<State> {
           double derivative_term = 0;
 
           sum_of_split_ratios = state.sum_of_split_ratios[orig][k];
-          // TODO : For now we imposes \sum \beta > 0.999
-          assert sum_of_split_ratios >= 0.999 : "The sum of the split ratios ("
-              + sum_of_split_ratios + ") should be >= 0.999";
-          derivative_term = epsilon / (0.999 - sum_of_split_ratios);
+          // TODO : For now we imposes \sum \beta > 1
+          assert sum_of_split_ratios >= 1 : "The sum of the split ratios ("
+              + sum_of_split_ratios + ") should be >= 1";
+          derivative_term = epsilon / (1 - sum_of_split_ratios);
 
           assert Numerical.validNumber(derivative_term);
 
@@ -971,7 +971,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
 
   public State forwardSimulate(double[] control, boolean debug) {
 
-    IntertemporalOriginsSplitRatios splits = simulation.splits;
+    IntertemporalOriginsSplitRatios splits = simulator.splits;
 
     int index_in_control = 0;
     int commodity;
@@ -999,7 +999,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
       }
 
     }
-    State state = simulation.run(debug);
+    State state = simulator.run(debug);
     /* At the end we add the sum of the split ratios at the state */
     state.sum_of_split_ratios = sum_of_split_ratios;
 
@@ -1034,11 +1034,23 @@ public class SO_Optimizer extends AdjointForJava<State> {
     for (int orig = 0; orig < O; orig++)
       for (int k = 0; k < T; k++)
         objective -=
-            epsilon * Math.log(state.sum_of_split_ratios[orig][k] - 0.999);
+            epsilon * Math.log(state.sum_of_split_ratios[orig][k] - 1);
 
     assert Numerical.validNumber(objective);
 
     return objective;
+  }
+
+  /**
+   * @brief Run the solver to find the optimal allocation of the compliant
+   *        split-ratios
+   * @details It begins from a not physical initialized compliant split-ratios
+   * @return The control vector representing the compliant split-ratios
+   */
+  public double[] solve() {
+
+    simulator.initializeSplitRatiosForOptimizer();
+    return solve(getControl());
   }
 
   public void printSizes() {

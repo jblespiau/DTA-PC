@@ -57,9 +57,46 @@ public class IntertemporalOriginSplitRatios {
 
     // Adding the compliant split ratios
     LinkedList<Integer> compliant = o.getCompliant_commodities();
-    
-    Iterator<Integer> it ;
+
+    Iterator<Integer> it;
     double share = alpha / ((double) (compliant.size()));
+    Integer c;
+    for (int k = 0; k < time_step; k++) {
+      it = compliant.iterator();
+      while (it.hasNext()) {
+        c = it.next();
+        add(k, c, share);
+      }
+    }
+  }
+
+  /**
+   * @brief Gives a not physical default split_ratios for all time steps
+   * @details The sum of the split ratios at one origin at one time step is
+   *          greater than 1
+   * @param commodity_1
+   *          The id of the first compliant commodity
+   * @param commodity_n
+   *          The id of the last compliant commodity
+   * @param time_step
+   *          The total number of time steps
+   * @param nb_buffers
+   *          The number of buffer in the origin
+   * @param alpha
+   */
+  public void automaticUniformNotPhysicalDistribution(Origin o, double alpha) {
+
+    int time_step = split_ratios.length;
+    // Adding the non-compliant split ratios
+    if (alpha != 0)
+      for (int k = 0; k < time_step; k++)
+        add(k, 0, 1.0 - alpha);
+
+    // Adding the compliant split ratios
+    LinkedList<Integer> compliant = o.getCompliant_commodities();
+
+    Iterator<Integer> it;
+    double share = alpha * 1.1 / ((double) (compliant.size()));
     Integer c;
     for (int k = 0; k < time_step; k++) {
       it = compliant.iterator();

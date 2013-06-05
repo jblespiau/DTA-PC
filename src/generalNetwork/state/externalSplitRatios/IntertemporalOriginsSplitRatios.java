@@ -43,9 +43,31 @@ public class IntertemporalOriginsSplitRatios {
 
   /**
    * @brief Constructs default split-ratios for all time steps with equally
+   *        likely compliant flows representing @a alpha * 1,1% of the total flo
+   */
+  public static IntertemporalOriginsSplitRatios
+      defaultNotPhysicalSpitRatio(
+          int total_time_step,
+          Origin[] origins,
+          double alpha) {
+    IntertemporalOriginsSplitRatios result = new IntertemporalOriginsSplitRatios(
+        origins.length);
+
+    IntertemporalOriginSplitRatios tmp;
+    for (int o = 0; o < origins.length; o++) {
+      tmp = new IntertemporalOriginSplitRatios(total_time_step);
+      tmp.automaticUniformNotPhysicalDistribution(origins[o], alpha);
+      result.origins_split_ratios.put(origins[o], tmp);
+    }
+
+    return result;
+  }
+
+  /**
+   * @brief Constructs default split-ratios for all time steps with equally
    *        likely compliant flows representing @a alpha % of the total flow
    */
-  static public IntertemporalOriginsSplitRatios defaultSplitRatios(
+  static public IntertemporalOriginsSplitRatios defaultPhysicalSplitRatios(
       int total_time_step,
       Origin[] origins, double alpha) {
     return new IntertemporalOriginsSplitRatios(total_time_step, origins, alpha);

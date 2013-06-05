@@ -92,7 +92,7 @@ public class Simulator {
      */
     System.out.print("Initializing split-ratios at the origins...");
     splits =
-        IntertemporalOriginsSplitRatios.defaultSplitRatios(
+        IntertemporalOriginsSplitRatios.defaultPhysicalSplitRatios(
             nb_steps,
             discretized_graph.sources, alpha);
     System.out.println("Done");
@@ -196,5 +196,29 @@ public class Simulator {
 
   public boolean isFullSystemOptimal() {
     return alpha == 1.0;
+  }
+
+  /**
+   * @brief Initialize split-ratios that are valid one for any optimizer
+   * @details An optimizer works with some split-ratios such that the sum of the
+   *          split-ratios at every origin for every time steps is greater than
+   *          1. It initialized the non-compliant split ratios to its real value
+   */
+  protected void initializeSplitRatiosForOptimizer() {
+
+    assert alpha != 0 : "The share of the compliant commodities is zero. No optimization of the compliant commodities can be done, so initializing the split-ratios for an optimizer is illigal";
+    int nb_steps = time_discretization.getNb_steps();
+
+    /*
+     * Initialization of a not physical set for the control split-ratios at the
+     * origins
+     */
+    System.out
+        .print("Initializing split-ratios for the optimizer at the origins...");
+    splits =
+        IntertemporalOriginsSplitRatios.defaultNotPhysicalSpitRatio(
+            nb_steps,
+            discretized_graph.sources, alpha);
+    System.out.println("Done");
   }
 }
