@@ -1,5 +1,7 @@
 package dta_solver;
 
+import io.InputOutput;
+
 import java.util.Iterator;
 import java.util.Map.Entry;
 
@@ -35,6 +37,8 @@ public class SO_Optimizer extends AdjointForJava<State> {
 
   private double epsilon = 0.001;
 
+  /* Share of the compliant commodities */
+  private double alpha;
   /* Total number of time steps */
   private int T;
   /* Number of compliant commodities */
@@ -86,6 +90,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
     super(op, maxIter);
     simulation = simu;
 
+    alpha = simu.getAlpha();
     T = simulation.time_discretization.getNb_steps();
     C = simulation.lwr_network.getNb_compliantCommodities();
     cells = simulation.lwr_network.getCells();
@@ -98,7 +103,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
     junctions = simulation.lwr_network.getJunctions();
 
     /* For every time steps there are C compliant flows, and O non compliant */
-    temporal_control_block_size = (C + O);
+    temporal_control_block_size = C;
 
     /* State Vector X */
     /* Size of a block describing all the densities for a given time step */
@@ -141,28 +146,64 @@ public class SO_Optimizer extends AdjointForJava<State> {
   }
 
   /**
-   * @brief Return the 1x(C+O) matrix representing the control where
-   *        C is the number of compliant commodities and O the number of origins
-   * @details There are T blocks of size (C+O). The i-th block contains the
-   *          control at time step i.
+   * @brief Return the 1xC matrix representing the control where
+   *        C is the number of compliant commodities
+   * @details There are T blocks of size C. The i-th block contains the
+   *          controls at time step i.
    */
   public double[] getControl() {
 
+    assert alpha != 0 : "The share of the compliant commodities is zero. No optimization possible";
     IntertemporalOriginsSplitRatios splits = simulation.splits;
 
-    /* For every time steps there are C compliant flows, and O non compliant */
+    /* For every time steps there are C compliant flows */
     double[] control = new double[T * temporal_control_block_size];
 
     int index_in_control = 0;
     int commodity;
     Double split_ratio;
     for (int orig = 0; orig < O; orig++) {
+      Iterator<Integer> it = sources[orig]
+          .getCompliant_commodities()
+          .iterator();
+      while (it.hasNext()) {
+        commodity = it.next();
+        for (int k = 0; k < T; k++) {
+          /*
+           * Mapping between splits.get(sources[orig], k).get(commodity) and
+           * U[k*(C + sources.length) + index_in_control]
+           */
+          split_ratio = splits.get(sources[orig], k).get(commodity);
+          if (split_ratio != null)
+            control[k * temporal_control_block_size + index_in_control] = split_ratio
+                / alpha;
+        }
+        index_in_control++;
+      }
+    }
+
+    return control;
+  }
+
+  /**
+   * @brief Return the 1x(C+O= matrix representing the compliant and
+   *        non-compliant commodities where C is the number of compliant
+   *        commodities and 0 the number of origins
+   * @details There are T blocks of size (C+O). The i-th block contains the
+   *          controls at time step i.
+   */
+  public double[] getFullControl() {
+
+    IntertemporalOriginsSplitRatios splits = simulation.splits;
+
+    /* For every time steps there are C compliant flows, and O non compliant */
+    double[] control = new double[T * (C + 1)];
+
+    int index_in_control = 0;
+    int commodity;
+    Double split_ratio;
+    for (int orig = 0; orig < O; orig++) {
       for (int k = 0; k < T; k++) {
-        /*
-         * Mapping between
-         * splits.get(sources[orig], k).get(0)
-         * and U[k*(C + sources.length + index_in_control)]
-         */
         split_ratio = splits.get(sources[orig], k).get(0);
         if (split_ratio != null) {
           control[k * temporal_control_block_size + index_in_control] = split_ratio;
@@ -176,11 +217,6 @@ public class SO_Optimizer extends AdjointForJava<State> {
       while (it.hasNext()) {
         commodity = it.next();
         for (int k = 0; k < T; k++) {
-          /*
-           * Mapping between
-           * splits.get(sources[orig], k).get(commodity) and
-           * U[k*(C +sources.length) + index_in_control]
-           */
           split_ratio = splits.get(sources[orig], k).get(commodity);
           if (split_ratio != null) {
             control[k * temporal_control_block_size + index_in_control] = split_ratio;
@@ -188,11 +224,13 @@ public class SO_Optimizer extends AdjointForJava<State> {
           }
         }
         index_in_control++;
-
       }
     }
-
     return control;
+  }
+
+  public void printFullControl() {
+    InputOutput.printControl(getFullControl(), C + 1);
   }
 
   private void parseStateVector(Profile p) {
@@ -281,17 +319,22 @@ public class SO_Optimizer extends AdjointForJava<State> {
         H_block_size * T,
         temporal_control_block_size * T);
 
-    int size, i, j, index_in_control = 0;
+    int i, j, index_in_control = 0;
+    int commodity;
     double[] origin_demands;
     for (int orig = 0; orig < O; orig++) {
-      size = sources[orig].getCompliant_commodities().size();
       origin_demands = simulation.origin_demands.get(sources[orig]);
-      for (int c = 0; c < size + 1; c++) {
-        for (int k = 0; k < T; k++) {
-          i = k * H_block_size + sources[orig].getUniqueId();
-          j = k * temporal_control_block_size + index_in_control;
 
-          result.setQuick(i, j, origin_demands[k]);
+      Iterator<Integer> it = sources[orig]
+          .getCompliant_commodities()
+          .iterator();
+      while (it.hasNext()) {
+        commodity = it.next();
+        for (int k = 0; k < T; k++) {
+          i = k * H_block_size + sources[orig].getUniqueId() * (C + 1)
+              + commodity;
+          j = k * temporal_control_block_size + index_in_control;
+          result.setQuick(i, j, origin_demands[k] * alpha);
         }
         index_in_control++;
       }
@@ -866,34 +909,6 @@ public class SO_Optimizer extends AdjointForJava<State> {
     double sum_of_split_ratios;
     for (int orig = 0; orig < O; orig++) {
 
-      /* In case of full System Optimal computation we skip the NC flows */
-      if (!simulation.isFullSystemOptimal()) {
-        for (int k = 0; k < T; k++) {
-          /*
-           * Mapping between
-           * splits.get(sources[orig], k).get(0) and U[k*(C + sources.length)]
-           */
-          double derivative_term = 0;
-          if (control[k * temporal_control_block_size] == 0) {
-            System.out
-                .println("!FAILURE! A non compliant split ratio is ZERO !");
-            assert false;
-          }
-
-          sum_of_split_ratios = state.sum_of_split_ratios[orig][k];
-
-          // TODO : For now we imposes \sum \beta > 0.999
-          assert sum_of_split_ratios >= 0.999;
-          // To skip one operation we do 1 / (a-b) instead of - 1 / (b-a)
-          derivative_term = epsilon / (0.999 - sum_of_split_ratios);
-
-          assert Numerical.validNumber(derivative_term);
-
-          result.set(k * temporal_control_block_size, derivative_term);
-        }
-      }
-      index_in_control++;
-
       Iterator<Integer> it = sources[orig]
           .getCompliant_commodities()
           .iterator();
@@ -905,7 +920,8 @@ public class SO_Optimizer extends AdjointForJava<State> {
 
           sum_of_split_ratios = state.sum_of_split_ratios[orig][k];
           // TODO : For now we imposes \sum \beta > 0.999
-          assert sum_of_split_ratios >= 0.999;
+          assert sum_of_split_ratios >= 0.999 : "The sum of the split ratios ("
+              + sum_of_split_ratios + ") should be >= 0.999";
           derivative_term = epsilon / (0.999 - sum_of_split_ratios);
 
           assert Numerical.validNumber(derivative_term);
@@ -943,7 +959,8 @@ public class SO_Optimizer extends AdjointForJava<State> {
   }
 
   /**
-   * @brief Forward simulate after having loaded the external split ratios
+   * @brief Forward simulate after having loaded the external split ratios for
+   *        compliant commodities
    * @details For now we even put the null split ratios because we never clear
    *          the split ratios
    */
@@ -961,21 +978,6 @@ public class SO_Optimizer extends AdjointForJava<State> {
     double[][] sum_of_split_ratios = new double[O][T];
     for (int orig = 0; orig < O; orig++) {
 
-      for (int k = 0; k < T; k++) {
-        /*
-         * Mapping between
-         * splits.get(sources[orig], k).get(0)
-         * and U[k*(C + sources.length + index_in_control)]
-         */
-        splits.get(sources[orig], k)
-            .put(0,
-                control[k * temporal_control_block_size + index_in_control]);
-        sum_of_split_ratios[orig][k] +=
-            control[k * temporal_control_block_size + index_in_control];
-
-      }
-      index_in_control++;
-
       Iterator<Integer> it = sources[orig]
           .getCompliant_commodities()
           .iterator();
@@ -983,13 +985,13 @@ public class SO_Optimizer extends AdjointForJava<State> {
         commodity = it.next();
         for (int k = 0; k < T; k++) {
           /*
-           * Mapping between
-           * splits.get(sources[orig], k).get(commodity) and
-           * U[k*(C +sources.length) + index_in_control]
+           * Mapping between splits.get(sources[orig], k).get(commodity) and
+           * U[k * C + index_in_control]
            */
           splits.get(sources[orig], k).
               put(commodity,
-                  control[k * temporal_control_block_size + index_in_control]);
+                  control[k * temporal_control_block_size + index_in_control]
+                      * alpha);
           sum_of_split_ratios[orig][k] +=
               control[k * temporal_control_block_size + index_in_control];
         }

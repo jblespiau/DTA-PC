@@ -1,6 +1,6 @@
 {
   "max_time_step": 4,
-  "delta_t": 1,
+  "delta_t": 0.6,
   "demands": [
     {
       "origin_id": 0,

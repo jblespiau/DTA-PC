@@ -21,6 +21,25 @@ public class InputOutput {
     }
   }
 
+  public static void printTable(double[] table) {
+    for (int i = 0; i < table.length; i++) {
+      System.out.printf("%9.2f \n", table[i]);
+    }
+  }
+
+  public static void printControl(double[] table, int C) {
+    int T = table.length / C;
+    assert (T * C == table.length) : "The control vector and the number of commodities does not match";
+
+    for (int k = 0; k < T; k++) {
+      System.out.print("Time step " + k + " ");
+      for (int i = 0; i < C; i++)
+        // System.out.printf("%9.5f", table[i]);
+        System.out.print(table[i] + " ");
+      System.out.println();
+    }
+  }
+
   public static void tableToFile(double[][] table, String file_name) {
     Formatter formatter = null;
     try {

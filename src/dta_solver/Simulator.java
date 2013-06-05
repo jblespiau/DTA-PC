@@ -25,12 +25,25 @@ public class Simulator {
     time_discretization = new Discretization(delta_t, nb_steps);
   }
 
+  /**
+   * @brief Creates a Dynamic Traffic Assignment with Partial Compliance
+   *        simulator
+   * @param network_file
+   *          File containing the description of the network
+   * @param data_file
+   *          File containing the demands and non-compliant split ratios
+   * @param alpha
+   *          Share of the non compliant-flow
+   * @param debug
+   *          True will enable debug mode and debug printing
+   */
   public Simulator(
       String network_file,
       String data_file,
+      double alpha,
       boolean debug) {
     /* For now we study full compliance. TODO: modify this */
-    alpha = 1.0;
+    this.alpha = alpha;
 
     JsonFactory json = new JsonFactory(debug);
 
