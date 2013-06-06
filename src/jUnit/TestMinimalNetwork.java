@@ -70,7 +70,7 @@ public class TestMinimalNetwork {
      * .get()
      * .toString());
      */
-    double[] final_control = optimizer.solve(optimizer.getControl());
+    double[] final_control = optimizer.solve();
 
     /* Study of the last computed state */
     State final_state = optimizer.forwardSimulate(final_control, true);

@@ -926,7 +926,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
            */
           if (origin_demands[k] != 0) {
             sum_of_split_ratios = state.sum_of_split_ratios[orig][k];
-            assert sum_of_split_ratios >= 1 : "The sum of the split ratios ("
+            assert sum_of_split_ratios > 1 : "The sum of the split ratios ("
                 + sum_of_split_ratios + ") should be >= 1";
             derivative_term = epsilon / (1 - sum_of_split_ratios);
 
