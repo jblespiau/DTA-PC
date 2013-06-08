@@ -1107,4 +1107,12 @@ public class SO_Optimizer extends AdjointForJava<State> {
 
     }
   }
+
+  public double getAlpha() {
+    return alpha;
+  }
+
+  public void setAlpha(double alpha) {
+    this.alpha = alpha;
+  }
 }
