@@ -16,6 +16,10 @@ public class Node {
 
   @Expose
   protected int unique_id;
+  @Expose
+  protected int x;
+  @Expose
+  protected int y;
   /* int[] incoming, outgoing should NEVER be used except for serialization */
   @Expose
   private int[] incoming, outgoing;
@@ -30,10 +34,12 @@ public class Node {
     unique_id = id;
   }
 
-  public Node(GraphUIDFactory id) {
+  public Node(GraphUIDFactory id, int x, int y) {
     incoming_links = new Vector<Link>(1);
     outgoing_links = new Vector<Link>(1);
     unique_id = id.getId_node();
+    this.x = x;
+    this.y = y;
   }
 
   public boolean isMergingNode() {
@@ -84,11 +90,11 @@ public class Node {
     List<Link> incoming_l = new ArrayList<Link>(incoming.length);
     List<Link> outgoing_l = new ArrayList<Link>(outgoing.length);
     if (priority_needed) {
-    priorities = new HashMap<Integer, Double>(incoming.length);
+      priorities = new HashMap<Integer, Double>(incoming.length);
     } else {
       priorities = null;
     }
-    
+
     for (int i = 0; i < incoming.length; i++) {
       incoming_l.add(links[incoming[i]]);
       if (priority_needed) {
@@ -108,7 +114,6 @@ public class Node {
     incoming_links.addAll(incoming_l);
     outgoing_links.addAll(outgoing_l);
 
-    
     /* Updates the @a from and @a to fields in the links */
     updateConnectedlinks();
 

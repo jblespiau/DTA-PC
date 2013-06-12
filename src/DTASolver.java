@@ -1,3 +1,4 @@
+import generalNetwork.graph.Editor;
 import generalNetwork.state.State;
 
 import org.wsj.IpOptAdjointOptimizer;
@@ -11,7 +12,10 @@ public class DTASolver {
    * @param args
    */
   public static void main(String[] args) {
+    Editor e = new Editor();
+  }
 
+  public static void optimizationExample() {
     /* Share of the non-compliant flow */
     double alpha = 0.9;
     boolean debug = false;
@@ -29,7 +33,7 @@ public class DTASolver {
     double[] final_control = optimizer.solve();
 
     State final_state = optimizer.forwardSimulate(final_control, false);
-    
+
     optimizer.printProperties(final_state);
     optimizer.printFullControl();
   }

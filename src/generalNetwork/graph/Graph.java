@@ -113,14 +113,6 @@ public class Graph {
     return new Link(l, v, w, f_max, jam_density, id_factory);
   }
 
-  public Node newNode() {
-    return new Node(id_factory);
-  }
-
-  public Path newPath() {
-    return new Path(id_factory);
-  }
-
   public void print() {
     System.out.println("Printing the {Link, Node} graph");
     for (int i = 0; i < origins.length; i++) {
