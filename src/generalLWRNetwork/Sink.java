@@ -117,4 +117,10 @@ class Sink extends Cell {
   public double getLength() {
     return 1.0;
   }
+
+  @Override
+  public double getJamDensity() {
+    assert (false);
+    return Double.MAX_VALUE;
+  }
 }

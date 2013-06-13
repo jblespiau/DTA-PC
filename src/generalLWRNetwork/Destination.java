@@ -16,7 +16,7 @@ public class Destination {
       // System.out.println("[Destination.java]Creation of a SingleJunction destination");
 
       int nb_incoming_links = j.getPrev().length;
-      assert nb_incoming_links > 0 : "The destination has no incoming links";
+      assert nb_incoming_links > 0 : "The destination " + j.getUniqueId() + " has no incoming links";
 
       sink = new Sink();
       new_cells.add(sink);

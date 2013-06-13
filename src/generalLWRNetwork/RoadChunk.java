@@ -176,6 +176,11 @@ public class RoadChunk extends Cell {
   }
 
   @Override
+  public double getJamDensity() {
+    return jam_density;
+  }
+
+  @Override
   public LinkedHashMap<Integer, Double> getUpdatedDensity(
       LinkedHashMap<Integer, Double> densities,
       LinkedHashMap<Integer, Double> in_flows,

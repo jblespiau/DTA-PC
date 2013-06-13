@@ -106,9 +106,10 @@ public class Buffer extends Cell {
       assert density != null : "In the buffer, the density of an existing commodity should not be null";
 
       density = density - delta_t * out_flow;
-      //TODO: Check if negative densities are normals
+      // TODO: Check if negative densities are normals
       if (density < 0 && Numerical.equals(density, 0, 10E-6)) {
-        System.out.println("Warning: Negative density in a buffer (" + density + "). Rouding up to 0");
+        System.out.println("Warning: Negative density in a buffer (" + density
+            + "). Rouding up to 0");
         density = 0.0;
       }
       assert density >= 0 : "Negative density(" + density + ") in a buffer";
@@ -135,5 +136,11 @@ public class Buffer extends Cell {
   @Override
   public double getLength() {
     return 1.0;
+  }
+
+  @Override
+  public double getJamDensity() {
+    assert (false);
+    return Double.MAX_VALUE;
   }
 }

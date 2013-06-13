@@ -39,6 +39,8 @@ public abstract class Cell {
 
   abstract public double getLength();
 
+  abstract public double getJamDensity();
+
   abstract public double getDemand(double total_density, double delta_t);
 
   abstract public double getDerivativeDemand(double total_density);;
