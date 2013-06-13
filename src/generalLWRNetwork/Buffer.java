@@ -54,7 +54,7 @@ public class Buffer extends Cell {
 
   @Override
   public String toString() {
-    return "[(" + getUniqueId() + ")Buffer]";
+    return "[(" + getUniqueId() + ")Buffer->J" + next.getUniqueId() + "]";
   }
 
   @Override

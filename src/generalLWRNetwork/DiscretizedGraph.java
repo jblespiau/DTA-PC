@@ -1,9 +1,11 @@
 package generalLWRNetwork;
 
 import generalNetwork.graph.Graph;
+import generalNetwork.graph.GraphDestination;
 import generalNetwork.graph.Link;
 import generalNetwork.graph.Node;
 import generalNetwork.graph.Path;
+import generalNetwork.graph.Source;
 import generalNetwork.state.internalSplitRatios.IntertemporalSplitRatios;
 
 import java.util.HashMap;
@@ -14,6 +16,10 @@ import java.util.Map.Entry;
 public class DiscretizedGraph {
 
   // TODO: turn everything in private
+  public Node[] graph_nodes; /* We suppose nodes[i].unique_id = i */
+  public Link[] graph_links; /* We suppose links[i].unique_id = i */
+  public Source[] graph_origins;
+  public GraphDestination[] graph_destinations;
   /*
    * Contains the junctions which were not present in the graph added
    * because of the discretization
@@ -41,6 +47,11 @@ public class DiscretizedGraph {
   int nb_paths;
 
   public DiscretizedGraph(Graph g, double delta_t, int time_steps) {
+    graph_nodes = g.getNodes();
+    graph_links = g.getLinks();
+    graph_origins = g.getOrigins();
+    graph_destinations = g.getDestinations();
+
     new_cells = new LinkedList<Cell>();
     new_junctions = new LinkedList<Junction>();
     node_to_origin = new HashMap<Integer, Origin>();
@@ -62,6 +73,12 @@ public class DiscretizedGraph {
     junctions = new Junction[nodes.length];
     for (int i = 0; i < nodes.length; i++) {
       junctions[i] = discretizeJunction(nodes[i], delta_t);
+      /* We set the next junction of the last cells of a link */
+      if (nodes[i].incoming_links.size() != 0) {
+        for (int cp = 0; cp < nodes[i].incoming_links.size(); cp++) {
+          lastCellofLink(nodes[i].incoming_links.get(cp)).setNext(junctions[i]);
+        }
+      }
     }
 
     /*
@@ -99,6 +116,16 @@ public class DiscretizedGraph {
           + junctions[i].getUniqueId()
           + " has a null next array. Your network is likely to be wrong.";
     }
+    /* We check that all the cells except sinks have a next cell */
+    Iterator<Cell> it = new_cells.iterator();
+    Cell cell;
+    while (it.hasNext())
+    {
+      cell = it.next();
+      assert (cell.isSink() || cell.getNext() != null) : "Cell "
+          + cell.getUniqueId() + " has no next junction";
+    }
+
     /*
      * We add the compliant split_ratios corresponding to the different paths
      */
@@ -141,8 +168,8 @@ public class DiscretizedGraph {
     assert nb_cell_to_build > 0 : "We must build a > 0 number of cells";
 
     // We build the following links
-    Cell cell;
-    Junction current_j, previous_j = null;
+    Cell cell = null;
+    Junction current_j = null, previous_j = null;
     int i;
     for (i = 0; i < nb_cell_to_build - 1; i++) {
       cell = new RoadChunk(v * delta_t, v, w, F_max, jam_density);
@@ -157,9 +184,12 @@ public class DiscretizedGraph {
       new_junctions.add(current_j);
 
       current_j.setPrev(new Cell[] { cell });
-      cell.setNext(current_j);
       previous_j = current_j;
+
+      cell.setNext(current_j);
     }
+    if (cell != null)
+      cell.setNext(current_j);
 
     // Last cell (or unique cell) of the link
     cell = new RoadChunk(v * delta_t, v, w, F_max, jam_density);
@@ -167,9 +197,10 @@ public class DiscretizedGraph {
     if (i == 0) {
       result.begin = cell;
     }
-    result.end = cell;
     if (previous_j != null)
       previous_j.setNext(new Cell[] { cell });
+
+    result.end = cell;
 
     return result;
   }
@@ -314,6 +345,7 @@ public class DiscretizedGraph {
   public Cell firstCellofLink(Link l) {
     return firstCellofLink(l.getUnique_id());
   }
+
   /**
    * @brief Returns the last cell of the equivalent representation of the link
    *        of the given id
@@ -324,7 +356,7 @@ public class DiscretizedGraph {
   public Cell lastCellofLink(int link_id) {
     return link_to_cells[link_id].end;
   }
-  
+
   public Cell lastCellofLink(Link l) {
     return lastCellofLink(l.getUnique_id());
   }

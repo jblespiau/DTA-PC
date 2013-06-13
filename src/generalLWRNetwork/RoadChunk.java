@@ -72,7 +72,7 @@ public class RoadChunk extends Cell {
 
   @Override
   public String toString() {
-    return "[(" + getUniqueId() + ")Road" + "]";
+    return "[(" + getUniqueId() + ")Road" + "->J" + next.getUniqueId() + "]";
   }
 
   @Override
@@ -99,7 +99,7 @@ public class RoadChunk extends Cell {
     int u_id = this.getUniqueId();
 
     assert next != null : "The roadChunck " + getUniqueId()
-        + " has no following cell.";
+        + " has no following junction";
 
     Iterator<Double> densities = initial_densities.values().iterator();
     while (densities.hasNext()) {
