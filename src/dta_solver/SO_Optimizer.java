@@ -1077,6 +1077,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
   public double[] solve() {
 
     simulator.initializeSplitRatiosForOptimizer();
+    /* solve is inherited by AdjointForJava<State> */
     return solve(getControl());
   }
 
@@ -1114,5 +1115,76 @@ public class SO_Optimizer extends AdjointForJava<State> {
 
   public void setAlpha(double alpha) {
     this.alpha = alpha;
+  }
+
+  private long averageTime(long begin, long end, int nb_cycles) {
+    return (end - begin);
+  }
+
+  public void profileComputationTime() {
+
+    long startTime;
+    long endTime;
+    double[] control = getControl();
+    int nb_iterations = 1000;
+    System.out.print("Time for " + nb_iterations
+        + " iterations of forward simulate... ");
+    startTime = System.currentTimeMillis();
+
+    for (int i = 0; i < nb_iterations; i++) {
+      forwardSimulate(control);
+    }
+    endTime = System.currentTimeMillis();
+    System.out.println(averageTime(startTime, endTime, nb_iterations));
+
+    simulator.initializeSplitRatiosForOptimizer();
+    State state = forwardSimulate(getControl());
+
+    /* J */
+    System.out.print("Time for " + nb_iterations
+        + " iterations of objective J... ");
+    startTime = System.currentTimeMillis();
+    for (int i = 0; i < nb_iterations; i++) {
+      objective(state, control);
+    }
+    endTime = System.currentTimeMillis();
+    System.out.println(averageTime(startTime, endTime, nb_iterations));
+
+    /* dH/dU */
+    System.out.print("Time for " + nb_iterations + " iterations of dhdu... ");
+
+    startTime = System.currentTimeMillis();
+    for (int i = 0; i < nb_iterations; i++) {
+      dhdu(state, control);
+    }
+    endTime = System.currentTimeMillis();
+    System.out.println(averageTime(startTime, endTime, nb_iterations));
+
+    /* dH/dX */
+    System.out.print("Time for " + nb_iterations + " iterations of dhdx... ");
+    startTime = System.currentTimeMillis();
+    for (int i = 0; i < nb_iterations; i++) {
+      dhdx(state, control);
+    }
+    endTime = System.currentTimeMillis();
+    System.out.println(averageTime(startTime, endTime, nb_iterations));
+
+    /* dJ/dX */
+    System.out.print("Time for " + nb_iterations + " iterations of djdx... ");
+    startTime = System.currentTimeMillis();
+    for (int i = 0; i < nb_iterations; i++) {
+      djdx(state, control);
+    }
+    endTime = System.currentTimeMillis();
+    System.out.println(averageTime(startTime, endTime, nb_iterations));
+
+    /* dJ/dU */
+    System.out.print("Time for " + nb_iterations + " iterations of djdu... ");
+    startTime = System.currentTimeMillis();
+    for (int i = 0; i < nb_iterations; i++) {
+      djdu(state, control);
+    }
+    endTime = System.currentTimeMillis();
+    System.out.println(averageTime(startTime, endTime, nb_iterations));
   }
 }
