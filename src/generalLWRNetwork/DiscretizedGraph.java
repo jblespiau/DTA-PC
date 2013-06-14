@@ -185,7 +185,6 @@ public class DiscretizedGraph {
 
       current_j.setPrev(new Cell[] { cell });
       previous_j = current_j;
-
       cell.setNext(current_j);
     }
     if (cell != null)

@@ -1,4 +1,5 @@
-import generalNetwork.graph.Editor;
+import generalNetwork.graph.DisplayGUI;
+import generalNetwork.graph.EditorGUI;
 import generalNetwork.state.State;
 
 import org.wsj.IpOptAdjointOptimizer;
@@ -12,7 +13,21 @@ public class DTASolver {
    * @param args
    */
   public static void main(String[] args) {
-    Editor e = new Editor();
+
+    printExample();
+    optimizationExample();
+  }
+
+  public static void printExample()  {
+    String network_file = "graphs/drawing.json";
+    String data_file = "graphs/drawingData.json";
+
+    Simulator simulator = new Simulator(network_file, data_file, 0.9, true);
+
+    State s = simulator.partialRun(true);
+
+    DisplayGUI e = new DisplayGUI(simulator);
+    e.displayState(s.get(15));
   }
 
   public static void optimizationExample() {

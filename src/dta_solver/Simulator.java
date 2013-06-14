@@ -13,7 +13,7 @@ import generalNetwork.state.externalSplitRatios.IntertemporalOriginsSplitRatios;
 
 public class Simulator {
 
-  DiscretizedGraph discretized_graph;
+  public DiscretizedGraph discretized_graph;
   public Discretization time_discretization;
   Demands origin_demands;
   public IntertemporalOriginsSplitRatios splits;
