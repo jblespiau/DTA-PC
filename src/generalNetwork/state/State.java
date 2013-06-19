@@ -2,9 +2,10 @@ package generalNetwork.state;
 
 import org.wsj.SystemState;
 
+import dta_solver.adjointMethod.JavaSystemState;
 import generalNetwork.state.Profile;
 
-public class State implements SystemState {
+public class State implements JavaSystemState, SystemState {
 
   public Profile[] profiles;
   /* sum[orig][k] saves the sum at the orig for time step k */
