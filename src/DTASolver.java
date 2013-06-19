@@ -1,4 +1,5 @@
 import generalNetwork.graph.DisplayGUI;
+import generalNetwork.graph.EditorGUI;
 import generalNetwork.state.State;
 
 import dta_solver.SO_Optimizer;
@@ -10,9 +11,9 @@ public class DTASolver {
    * @param args
    */
   public static void main(String[] args) {
-    // EditorGUI e = new EditorGUI();
+    //EditorGUI e = new EditorGUI();
     optimizationExample();
-    // printExample();
+    //printExample();
   }
 
   public static void printExample() {
@@ -28,11 +29,11 @@ public class DTASolver {
   }
 
   public static void optimizationExample() {
-    /* Share of the non-compliant flow */
-    double alpha = 0.9;
+    /* Share of the compliant flow */
+    double alpha = 1;
     boolean debug = false;
-    String network_file = "graphs/parallelPath.json";
-    String data_file = "graphs/parallelPathData.json";
+    String network_file = "graphs/TwoParallelPath.json";
+    String data_file = "graphs/TwoParallelPathData.json";
     // String network_file = "graphs/PathWithPriorities.json";
     // String data_file = "graphs/PathWithPrioritiesData.json";
 
