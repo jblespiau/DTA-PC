@@ -358,6 +358,8 @@ public class SO_Optimizer extends AdjointForJava<State> {
     /*********************************************************
      * Derivative terms for the Mass Conservation constraints
      *********************************************************/
+    // System.out.print("Mass conservation : ");
+    // long startTime = System.currentTimeMillis();
     // Position of a block of constraints in H indexed by k
     int block_upper_position;
     // Position of a block in the Mass Conservation block indexed by the cell_id
@@ -418,10 +420,14 @@ public class SO_Optimizer extends AdjointForJava<State> {
         }
       }
     }
-
+    // long endTime = System.currentTimeMillis();
+    // System.out.println(endTime - startTime);
     /*********************************************************
      * Derivative terms for the Flow propagation
      *********************************************************/
+    // System.out.print("Flow propagation: ");
+    // startTime= System.currentTimeMillis();
+
     double total_density;
     for (int k = 0; k < T; k++) {
       // Position of the first constraint in H dealing with supply/demand at
@@ -445,10 +451,13 @@ public class SO_Optimizer extends AdjointForJava<State> {
         }
       }
     }
-
+    // endTime= System.currentTimeMillis();
+    // System.out.println(endTime - startTime);
     /*********************************************************
      * Derivative terms for the Aggregate Split Ratios
      *********************************************************/
+    // System.out.print("Aggregate SR: ");
+    // startTime= System.currentTimeMillis();
     /*
      * This part is not efficient because we have to do
      * Nb_Aggregate_SR * T * (C+1) computation of derivative terms
@@ -526,11 +535,14 @@ public class SO_Optimizer extends AdjointForJava<State> {
 
       }
     }
+    // endTime= System.currentTimeMillis();
+    // System.out.println(endTime - startTime);
 
     /*********************************************************
      * Derivative terms for the out-flows
      *********************************************************/
-
+    // System.out.print("Out-flows: ");
+    // startTime= System.currentTimeMillis();
     int nb_prev, nb_next;
     double value;
     for (int j_id = 0; j_id < junctions.length; j_id++) {
@@ -837,9 +849,13 @@ public class SO_Optimizer extends AdjointForJava<State> {
         assert false : "[dhdx] Only 1x1, 1x2, and Nx1 junctions are possible";
       }
     }
+    // endTime= System.currentTimeMillis();
+    // System.out.println(endTime - startTime);
     /*********************************************************
      * Derivative terms for the in-flows
      *********************************************************/
+    // System.out.print("In-flows: ");
+    // startTime= System.currentTimeMillis();
     int commodity, in_id, out_id;
     for (int j_id = 0; j_id < junctions.length; j_id++) {
       for (int k = 0; k < T; k++) {
@@ -886,8 +902,16 @@ public class SO_Optimizer extends AdjointForJava<State> {
         }
       }
     }
+
+    // endTime= System.currentTimeMillis();
+    // System.out.println(endTime - startTime);
+
+    // System.out.print("Diagonal terms: ");
+    // startTime= System.currentTimeMillis();
     for (int index = 0; index < H_block_size * T; index++)
       result.setQuick(index, index, -1.0);
+    // endTime= System.currentTimeMillis();
+    // System.out.println(endTime - startTime);
 
     return new Some<SparseCCDoubleMatrix2D>(result);
   }
