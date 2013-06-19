@@ -28,11 +28,11 @@ public class IpOptOptimizer extends Ipopt {
   @Override
   protected boolean get_bounds_info(int n, double[] x_l, double[] x_u, int m,
       double[] g_l, double[] g_u) {
-    System.out.println("Bounds Info");
-    // We set only the constraint x_i >= 0
-    for (int i = 0; i < x_l.length; i++)
+    // We set only the constraint 0 <= x_i <= 1000
+    for (int i = 0; i < x_l.length; i++) {
       x_l[i] = 0;
-    System.out.println("End Bounds Info");
+      x_u[i] = 1000;
+    }
     return true;
   }
 
@@ -41,13 +41,11 @@ public class IpOptOptimizer extends Ipopt {
   protected boolean get_starting_point(int n, boolean init_x, double[] x,
       boolean init_z, double[] z_L, double[] z_U, int m, boolean init_lambda,
       double[] lambda) {
-    System.out.println("Get starting point!");
     double[] starting_point = gradient_descent.getStartingPoint();
     assert (x.length == starting_point.length);
-    for (int i = 0; i < starting_point.length; i++) {
+    for (int i = 0; i < x.length; i++)
       x[i] = starting_point[i];
-      System.out.print(" " + x[i] + " ");
-    }
+
     return true;
   }
 
@@ -57,14 +55,7 @@ public class IpOptOptimizer extends Ipopt {
    */
   @Override
   protected boolean eval_f(int n, double[] x, boolean new_x, double[] obj_value) {
-    System.out.println("Eval f. X(" + (x.length)+ ") is: ");
-    for (int i = 0; i < x.length; i++)
-      System.out.print(x[i] + ", ");
-    System.out.println();
-    
-    System.out.println("CAll to grdient descent");
     obj_value[0] = gradient_descent.objective(x);
-    System.out.println("Value :" + obj_value[0]);
     return true;
   }
 

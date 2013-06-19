@@ -342,7 +342,6 @@ public abstract class Ipopt {
 	 */
 	public int OptimizeNLP(){
 		String outfilename="";//I found input filename has no use in ipopt, future may be corrected!
-		get_starting_point(x.length, true, x, false, null, null, 3, true, null);
 		this.status= this.OptimizeTNLP( ipopt,outfilename,
 				x,g,obj_val,mult_g,mult_x_L,mult_x_U,
 				callback_grad_f,callback_jac_g,callback_hess);

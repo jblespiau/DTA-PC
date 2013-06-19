@@ -175,6 +175,8 @@ public class SO_Optimizer extends AdjointForJava<State> {
            */
           split_ratio = splits.get(sources[orig], k).get(commodity);
           if (split_ratio != null)
+            // The sum of the split ratios at the control should be equal to 1
+            // for a given origin
             control[k * temporal_control_block_size + index_in_control] = split_ratio
                 / alpha;
         }
@@ -1007,6 +1009,7 @@ public class SO_Optimizer extends AdjointForJava<State> {
     int index_in_control = 0;
     int commodity;
     double[][] sum_of_split_ratios = new double[O][T];
+    int coordinate;
     for (int orig = 0; orig < O; orig++) {
 
       Iterator<Integer> it = sources[orig]
@@ -1019,12 +1022,11 @@ public class SO_Optimizer extends AdjointForJava<State> {
            * Mapping between splits.get(sources[orig], k).get(commodity) and
            * U[k * C + index_in_control]
            */
+          coordinate = k * temporal_control_block_size + index_in_control;
           splits.get(sources[orig], k).
               put(commodity,
-                  control[k * temporal_control_block_size + index_in_control]
-                      * alpha);
-          sum_of_split_ratios[orig][k] +=
-              control[k * temporal_control_block_size + index_in_control];
+                  control[coordinate] * alpha);
+          sum_of_split_ratios[orig][k] += control[coordinate];
         }
         index_in_control++;
       }
@@ -1068,9 +1070,15 @@ public class SO_Optimizer extends AdjointForJava<State> {
       for (int k = 0; k < T; k++)
         /* If the demand is null, there is no need to set up a barrier */
         if (origin_demands[k] != 0) {
+          // assert state.sum_of_split_ratios[orig][k] - 1 > 0 :
+          // "The sum of the spit ratios ("
+          // + (state.sum_of_split_ratios[orig][k] - 1)
+          // + "at the origin is smaller than 1";
           objective -=
               epsilon * Math.log(state.sum_of_split_ratios[orig][k] - 1);
-          assert Numerical.validNumber(objective);
+          // assert Numerical.validNumber(objective) :
+          // "Objective is not a number : "
+          // + objective + ", " + (state.sum_of_split_ratios[orig][k] - 1);
         }
     }
     return objective;

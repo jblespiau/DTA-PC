@@ -137,6 +137,9 @@ public class JavaSO_Optimizer extends Adjoint<State> {
     /* Total size of a block of constraints for a given time step */
     H_block_size = 3 * mass_conservation_size + flow_propagation_size
         + size_aggregate_split_ratios;
+
+    /* Initialization of the split ratios for the Optimizer */
+    simulator.initializeSplitRatiosForOptimizer();
   }
 
   /**
@@ -169,7 +172,10 @@ public class JavaSO_Optimizer extends Adjoint<State> {
            */
           split_ratio = splits.get(sources[orig], k).get(commodity);
           if (split_ratio != null)
-            control[k * temporal_control_block_size + index_in_control] = split_ratio;
+            // The sum of the split ratios at the control should be equal to 1
+            // for a given origin
+            control[k * temporal_control_block_size + index_in_control] = split_ratio
+                / alpha;
         }
         index_in_control++;
       }
@@ -1031,8 +1037,6 @@ public class JavaSO_Optimizer extends Adjoint<State> {
 
   @Override
   public double[] getStartingPoint() {
-    simulator.initializeSplitRatiosForOptimizer();
-    printFullControl();
     return getControl();
   }
 
@@ -1074,13 +1078,14 @@ public class JavaSO_Optimizer extends Adjoint<State> {
         if (origin_demands[k] != 0) {
           double diff = state.sum_of_split_ratios[orig][k] - 1;
 
-          if (diff < 0) {
-            System.out.println("Sum of the split ratio at one origin - 1 is "
-                + diff + ". Should be > 0. Aborting.");
-            assert false;
-          }
+          // if (diff < 0) {
+          // System.out.println("Sum of the split ratio at one origin - 1 is "
+          // + diff + ". Should be > 0. Aborting.");
+          // assert false;
+          // }
           objective -= epsilon * Math.log(diff);
-          assert Numerical.validNumber(objective) : "Invalid objective function";
+          // assert Numerical.validNumber(objective) :
+          // "Invalid objective function";
         }
     }
 
@@ -1111,7 +1116,7 @@ public class JavaSO_Optimizer extends Adjoint<State> {
    */
   public double[] solve() {
 
-    simulator.initializeSplitRatiosForOptimizer();
+    // The split ratios has been initialized in the constructor
     /* solve is inherited by AdjointForJava<State> */
     return optimize(getControl());
   }
