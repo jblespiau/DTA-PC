@@ -33,7 +33,7 @@ public class Simulator {
    * @param data_file
    *          File containing the demands and non-compliant split ratios
    * @param alpha
-   *          Share of the non compliant-flow
+   *          Share of the compliant-flow
    * @param debug
    *          True will enable debug mode and debug printing
    */
@@ -58,7 +58,6 @@ public class Simulator {
     System.out.println("Done");
 
     /* Time discretization from the data */
-    System.out.println("Max time: " + data.max_time_step);
     time_discretization = new Discretization(data.delta_t, data.max_time_step);
 
     int nb_steps = time_discretization.getNb_steps();

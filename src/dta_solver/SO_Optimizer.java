@@ -176,6 +176,7 @@ public class SO_Optimizer extends Adjoint<State> {
             // for a given origin
             control[k * temporal_control_block_size + index_in_control] = split_ratio
                 / alpha;
+
         }
         index_in_control++;
       }
@@ -755,13 +756,15 @@ public class SO_Optimizer extends Adjoint<State> {
              */
             double minimum = Double.MAX_VALUE;
             int minimum_id_cell = 0;
-            double min_supply = -1, beta, supply, beta_at_minimum = 0;
+            double min_supply = -1, supply, beta_at_minimum = 0;
+            Double beta;
             for (int out = 0; out < next_cells.length; out++) {
-              assert state.profiles[k]
-                  .getJunction(junction) != null;
               beta = state.profiles[k]
                   .getJunction(junction)
                   .getAggregateSR(in_id, next_cells[out].getUniqueId());
+              if (beta == null)
+                beta = 0.0;
+
               if (beta != 0) {
                 supply = state.profiles[k].getCell(next_cells[out]).supply;
                 if (supply / beta < minimum) {
@@ -1003,7 +1006,7 @@ public class SO_Optimizer extends Adjoint<State> {
     IntertemporalOriginsSplitRatios splits = simulator.splits;
 
     int index_in_control = 0;
-    int commodity;
+    int commodity, coordinate;
     double[][] sum_of_split_ratios = new double[O][T];
     for (int orig = 0; orig < O; orig++) {
 
@@ -1017,12 +1020,10 @@ public class SO_Optimizer extends Adjoint<State> {
            * Mapping between splits.get(sources[orig], k).get(commodity) and
            * U[k * C + index_in_control]
            */
+          coordinate = k * temporal_control_block_size + index_in_control;
           splits.get(sources[orig], k).
-              put(commodity,
-                  control[k * temporal_control_block_size + index_in_control]
-                      * alpha);
-          sum_of_split_ratios[orig][k] +=
-              control[k * temporal_control_block_size + index_in_control];
+              put(commodity, control[coordinate] * alpha);
+          sum_of_split_ratios[orig][k] += control[coordinate];
         }
         index_in_control++;
       }

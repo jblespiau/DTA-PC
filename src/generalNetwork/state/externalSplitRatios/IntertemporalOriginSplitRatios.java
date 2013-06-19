@@ -57,6 +57,8 @@ public class IntertemporalOriginSplitRatios {
 
     // Adding the compliant split ratios
     LinkedList<Integer> compliant = o.getCompliant_commodities();
+    assert compliant != null : "There is no paths leaving the origin "
+        + o.getUniqueId();
 
     Iterator<Integer> it;
     double share = alpha / ((double) (compliant.size()));
