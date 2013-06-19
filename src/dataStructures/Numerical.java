@@ -9,9 +9,7 @@ public class Numerical {
   private static double epsilon = 0.0001;
 
   static public boolean validNumber(double a) {
-    return a != Double.POSITIVE_INFINITY
-        && a != Double.NEGATIVE_INFINITY
-        && a != Double.NaN;
+    return !(Double.isInfinite(a) || Double.isNaN(a));
   }
 
   static public boolean isLowerTrangular(double[][] matrix) {
