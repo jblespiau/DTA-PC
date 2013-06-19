@@ -1,7 +1,6 @@
 import generalNetwork.graph.DisplayGUI;
 import generalNetwork.state.State;
 
-import dta_solver.JavaSO_Optimizer;
 import dta_solver.SO_Optimizer;
 import dta_solver.Simulator;
 
@@ -40,7 +39,7 @@ public class DTASolver {
     Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
 
     int maxIter = 10;
-    JavaSO_Optimizer optimizer = new JavaSO_Optimizer(maxIter, simulator);
+    SO_Optimizer optimizer = new SO_Optimizer(maxIter, simulator);
     //SO_Optimizer optimizer = new SO_Optimizer(new IpOptAdjointOptimizer(), maxIter, simulator);
     //optimizer.profileComputationTime();
 

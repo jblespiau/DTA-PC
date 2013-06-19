@@ -2,24 +2,15 @@ package jUnit;
 
 import static org.junit.Assert.*;
 
-import io.InputOutput;
-
-import java.io.BufferedWriter;
 import java.io.Writer;
-import java.text.DecimalFormat;
-import java.util.Formatter;
-
-import generalNetwork.state.Profile;
-import generalNetwork.state.State;
-
 import org.junit.Test;
-import org.wsj.IpOptAdjointOptimizer;
-
 import com.google.gson.Gson;
 
 import dataStructures.Numerical;
 import dta_solver.SO_Optimizer;
 import dta_solver.Simulator;
+import generalNetwork.state.State;
+import io.InputOutput;
 
 public class TestMinimalNetwork {
 
@@ -40,8 +31,7 @@ public class TestMinimalNetwork {
     State state = simulator.partialRun(true);
 
     int maxIter = 10;
-    SO_Optimizer optimizer = new SO_Optimizer(new IpOptAdjointOptimizer(),
-        maxIter, simulator);
+    SO_Optimizer optimizer = new SO_Optimizer(maxIter, simulator);
 
     optimizer.printSizes();
 
@@ -52,7 +42,6 @@ public class TestMinimalNetwork {
     /* Checking of dH/dX */
     double[][] dhdx = optimizer
         .dhdx(state, optimizer.getControl())
-        .get()
         .toArray();
 
     assertTrue("dH/dX should be a not singular lower triangular matrix",
