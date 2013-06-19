@@ -1,9 +1,7 @@
 import generalNetwork.graph.DisplayGUI;
-import generalNetwork.graph.EditorGUI;
 import generalNetwork.state.State;
 
-import org.wsj.IpOptAdjointOptimizer;
-
+import dta_solver.JavaSO_Optimizer;
 import dta_solver.SO_Optimizer;
 import dta_solver.Simulator;
 
@@ -13,12 +11,12 @@ public class DTASolver {
    * @param args
    */
   public static void main(String[] args) {
-
-    printExample();
+    // EditorGUI e = new EditorGUI();
     optimizationExample();
+    // printExample();
   }
 
-  public static void printExample()  {
+  public static void printExample() {
     String network_file = "graphs/drawing.json";
     String data_file = "graphs/drawingData.json";
 
@@ -42,8 +40,9 @@ public class DTASolver {
     Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
 
     int maxIter = 10;
-    SO_Optimizer optimizer = new SO_Optimizer(new IpOptAdjointOptimizer(),
-        maxIter, simulator);
+    JavaSO_Optimizer optimizer = new JavaSO_Optimizer(maxIter, simulator);
+    //SO_Optimizer optimizer = new SO_Optimizer(new IpOptAdjointOptimizer(), maxIter, simulator);
+    //optimizer.profileComputationTime();
 
     double[] final_control = optimizer.solve();
 
