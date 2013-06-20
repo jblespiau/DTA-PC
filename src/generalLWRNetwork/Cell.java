@@ -43,7 +43,7 @@ public abstract class Cell {
 
   abstract public double getDemand(double total_density, double delta_t);
 
-  abstract public double getDerivativeDemand(double total_density);;
+  abstract public double getDerivativeDemand(double total_density, double delta_t);;
 
   abstract public double getSupply(double total_density);
 

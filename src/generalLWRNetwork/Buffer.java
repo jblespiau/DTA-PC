@@ -38,8 +38,8 @@ public class Buffer extends Cell {
   }
 
   @Override
-  public double getDerivativeDemand(double total_density) {
-    return 1;
+  public double getDerivativeDemand(double total_density, double delta_t) {
+    return  1.0 / delta_t;
   }
 
   @Override

@@ -144,7 +144,7 @@ public class RoadChunk extends Cell {
   }
 
   @Override
-  public double getDerivativeDemand(double total_density) {
+  public double getDerivativeDemand(double total_density, double delta_t) {
     if (v * total_density < F_max) {
       return v;
     } else {

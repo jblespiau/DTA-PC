@@ -71,6 +71,7 @@ public class SO_Optimizer extends Adjoint<State> {
   private int mass_conservation_size;
   /* Size of a block describing the Flow Propagation constraints */
   private int flow_propagation_size;
+
   /* Size of the block describing the Aggregate SR constraints */
   // size_aggregate_split_ratios;
   /* Size of the block describing the out-flows constraints : */
@@ -78,7 +79,7 @@ public class SO_Optimizer extends Adjoint<State> {
   /* Size of the block describing the in-flows constraints : */
   // mass_conservation_size
   /* Total size of a block of constraints for a given time step */
-  private int H_block_size;
+  // x_block_size
 
   public SO_Optimizer(int maxIter, Simulator simu) {
     super(maxIter);
@@ -135,11 +136,36 @@ public class SO_Optimizer extends Adjoint<State> {
     /* Size of the block describing the in-flows constraints : */
     // mass_conservation_size
     /* Total size of a block of constraints for a given time step */
-    H_block_size = 3 * mass_conservation_size + flow_propagation_size
+    int H_block_size = 3 * mass_conservation_size + flow_propagation_size
         + size_aggregate_split_ratios;
 
+    assert (H_block_size == x_block_size);
     /* Initialization of the split ratios for the Optimizer */
     simulator.initializeSplitRatiosForOptimizer();
+  }
+
+  public void printSizes() {
+    System.out.println("Total size of X: " + T * x_block_size);
+    System.out.println("Details: \n" +
+        "- time steps: " + T + "\n" +
+        "- density_block: " + size_density_block +
+        " : (1 NC + " + C + "compliant commodities )* " + cells.length
+        + " cells\n" +
+        "- demand_supply: " + size_demand_suply_block +
+        " : 2 (for demand, supply) * " + cells.length + " cells)\n" +
+        "- aggregate SR: " + size_aggregate_split_ratios +
+        "(is the sum of the in.size() * out.size() at all junctions\n" +
+        "- f_in: " + size_density_block +
+        " : (same as the density block)\n" +
+        "- f_ out: " + size_density_block +
+        " : (same as the density block)");
+
+    System.out.println("Total size of H: " + T * x_block_size);
+    System.out.println("Details: " + T + " time steps, " +
+        "(Mass Cons: " + mass_conservation_size +
+        ", Flow prog: " + flow_propagation_size +
+        ", aggregate SR: " + size_aggregate_split_ratios +
+        ", f_in and out: " + 2 * size_density_block);
   }
 
   /**
@@ -219,7 +245,8 @@ public class SO_Optimizer extends Adjoint<State> {
         for (int k = 0; k < T; k++) {
           split_ratio = splits.get(sources[orig], k).get(commodity);
           if (split_ratio != null) {
-            control[k * temporal_control_block_size + index_in_control] = split_ratio * alpha;
+            control[k * temporal_control_block_size + index_in_control] = split_ratio
+                * alpha;
           }
         }
         index_in_control++;
@@ -315,7 +342,7 @@ public class SO_Optimizer extends Adjoint<State> {
   public SparseCCDoubleMatrix2D dhdu(State state, double[] control) {
 
     SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(
-        H_block_size * T,
+        x_block_size * T,
         temporal_control_block_size * T);
 
     int i, j, index_in_control = 0;
@@ -330,7 +357,7 @@ public class SO_Optimizer extends Adjoint<State> {
       while (it.hasNext()) {
         commodity = it.next();
         for (int k = 0; k < T; k++) {
-          i = k * H_block_size + sources[orig].getUniqueId() * (C + 1)
+          i = k * x_block_size + sources[orig].getUniqueId() * (C + 1)
               + commodity;
           j = k * temporal_control_block_size + index_in_control;
           result.setQuick(i, j, origin_demands[k] * alpha);
@@ -349,9 +376,10 @@ public class SO_Optimizer extends Adjoint<State> {
         simulator.lwr_network.getInternal_split_ratios();
 
     SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(
-        H_block_size * T,
+        x_block_size * T,
         x_block_size * T);
 
+    double delta_t = simulator.time_discretization.getDelta_t();
     /* The diagonal terms are done at the end */
 
     /*********************************************************
@@ -366,9 +394,9 @@ public class SO_Optimizer extends Adjoint<State> {
     double delta_t_over_l;
     int i, j;
     for (int k = 1; k < T; k++) {
-      block_upper_position = k * H_block_size;
+      block_upper_position = k * x_block_size;
       for (int cell_id = 0; cell_id < cells.length; cell_id++) {
-        sub_block_position = cell_id * (C + 1);
+        sub_block_position = (C + 1) * cell_id;
         for (int c = 0; c < C + 1; c++) {
 
           // Line of interest in the H matrix
@@ -386,7 +414,7 @@ public class SO_Optimizer extends Adjoint<State> {
            * Derivative terms with respect to flow-out(i,c,k-1) and
            * flow-in(i,c,k-1)
            */
-          delta_t_over_l = simulator.time_discretization.getDelta_t() /
+          delta_t_over_l = delta_t /
               simulator.lwr_network.getCell(cell_id).getLength();
 
           assert Numerical.validNumber(delta_t_over_l);
@@ -402,19 +430,19 @@ public class SO_Optimizer extends Adjoint<State> {
       // have been zero
       for (int o = 0; o < O; o++) {
         for (int c = 0; c < C + 1; c++) {
-          i = block_upper_position + sources[o].getUniqueId() * (C + 1) + c;
-          j = x_block_size * (k - 1) + sources[o].getUniqueId() * (C + 1) + c;
+          i = block_upper_position + (C + 1) * sources[o].getUniqueId() + c;
+          j = x_block_size * (k - 1) + (C + 1) * sources[o].getUniqueId() + c;
           // flow-in
           result.setQuick(i, j + f_in_position, 0.0);
         }
       }
       for (int s = 0; s < S; s++) {
         for (int c = 0; c < C + 1; c++) {
-          i = block_upper_position + destinations[s].getUniqueId() * (C + 1)
+          i = block_upper_position + (C + 1) * destinations[s].getUniqueId()
               + c;
-          j = x_block_size * (k - 1) + destinations[s].getUniqueId() * (C + 1)
+          j = x_block_size * (k - 1) + (C + 1) * destinations[s].getUniqueId()
               + c;
-          // flow-in
+          // flow-out
           result.setQuick(i, j + f_out_position, 0.0);
         }
       }
@@ -431,7 +459,7 @@ public class SO_Optimizer extends Adjoint<State> {
     for (int k = 0; k < T; k++) {
       // Position of the first constraint in H dealing with supply/demand at
       // time step k
-      block_upper_position = k * H_block_size + mass_conservation_size;
+      block_upper_position = k * x_block_size + mass_conservation_size;
       for (int cell_id = 0; cell_id < cells.length; cell_id++) {
         sub_block_position = cell_id * 2;
         i = block_upper_position + sub_block_position;
@@ -441,7 +469,7 @@ public class SO_Optimizer extends Adjoint<State> {
           // Demand first
           result.setQuick(i,
               x_block_size * k + cell_id * (C + 1) + c,
-              cells[cell_id].getDerivativeDemand(total_density));
+              cells[cell_id].getDerivativeDemand(total_density, delta_t));
 
           // Then supply
           result.setQuick(i + 1,
@@ -480,7 +508,7 @@ public class SO_Optimizer extends Adjoint<State> {
         next_length = junction.getNext().length;
         for (int out = 0; out < next_length; out++) {
           for (int k = 0; k < T; k++) {
-            block_upper_position = k * H_block_size
+            block_upper_position = k * x_block_size
                 + mass_conservation_size + flow_propagation_size;
 
             /* There is no intertemporal split ratios for Nx1 junctions */
@@ -554,7 +582,7 @@ public class SO_Optimizer extends Adjoint<State> {
         double demand, supply, f_out;
         CellInfo cell_info;
         int prev_id = junction.getPrev()[0].getUniqueId();
-        int next_id = junction.getPrev()[0].getUniqueId();
+        int next_id = junction.getNext()[0].getUniqueId();
         for (int k = 0; k < T; k++) {
           cell_info = state.profiles[k].getCell(prev_id);
           total_density = cell_info.total_density;
@@ -572,9 +600,7 @@ public class SO_Optimizer extends Adjoint<State> {
             if (partial_density == null)
               partial_density = 0.0;
 
-            i = H_block_size * k + mass_conservation_size
-                + flow_propagation_size + size_aggregate_split_ratios + prev_id
-                * (C + 1) + c;
+            i = x_block_size * k + f_in_position + (C + 1) * prev_id + c;
             j = x_block_size * k + prev_id * (C + 1) + c;
             value = f_out * (total_density - partial_density)
                 / (total_density * total_density);
@@ -652,7 +678,7 @@ public class SO_Optimizer extends Adjoint<State> {
                 DfDsupply = P1 * Df_inDsupply;
               }
 
-              i = H_block_size * k + mass_conservation_size
+              i = x_block_size * k + mass_conservation_size
                   + flow_propagation_size + size_aggregate_split_ratios + in_1
                   * (C + 1) + c;
               j = x_block_size * k + in_1 * (C + 1) + c;
@@ -707,7 +733,7 @@ public class SO_Optimizer extends Adjoint<State> {
                 DfDsupply = P2 * Df_inDsupply;
               }
 
-              i = H_block_size * k + mass_conservation_size
+              i = x_block_size * k + mass_conservation_size
                   + flow_propagation_size + size_aggregate_split_ratios + in_2
                   * (C + 1) + c;
               j = x_block_size * k + in_2 * (C + 1) + c;
@@ -786,7 +812,7 @@ public class SO_Optimizer extends Adjoint<State> {
                 if (partial_density == null)
                   partial_density = 0.0;
 
-                i = H_block_size * k + mass_conservation_size
+                i = x_block_size * k + mass_conservation_size
                     + flow_propagation_size + size_aggregate_split_ratios
                     + in_id * (C + 1) + c;
                 j = x_block_size * k + minimum_id_cell * (C + 1) + c;
@@ -818,7 +844,7 @@ public class SO_Optimizer extends Adjoint<State> {
                 if (partial_density == null)
                   partial_density = 0.0;
 
-                i = H_block_size * k + mass_conservation_size
+                i = x_block_size * k + mass_conservation_size
                     + flow_propagation_size + size_aggregate_split_ratios
                     + in_id * (C + 1) + c;
                 j = x_block_size * k + minimum_id_cell * (C + 1) + c;
@@ -869,7 +895,7 @@ public class SO_Optimizer extends Adjoint<State> {
             // We don't know the split ratios so we suppose it is 1 for all
             assert junctions[j_id].getNext().length <= 1;
             for (int c = 0; c < C + 1; c++) {
-              i = H_block_size * k + 2 * mass_conservation_size
+              i = x_block_size * k + 2 * mass_conservation_size
                   + flow_propagation_size + aggregate_SR_index
                   + junctions[j_id].getNext()[0].getUniqueId() * (C + 1)
                   + c;
@@ -891,7 +917,7 @@ public class SO_Optimizer extends Adjoint<State> {
             out_id = entry.getKey().outgoing;
             commodity = entry.getKey().commodity;
 
-            i = H_block_size * k + 2 * mass_conservation_size
+            i = x_block_size * k + 2 * mass_conservation_size
                 + flow_propagation_size + aggregate_SR_index + out_id * (C + 1)
                 + commodity;
             j = x_block_size * k + f_out_position + in_id * (C + 1) + commodity;
@@ -909,7 +935,7 @@ public class SO_Optimizer extends Adjoint<State> {
 
     // System.out.print("Diagonal terms: ");
     // startTime= System.currentTimeMillis();
-    for (int index = 0; index < H_block_size * T; index++)
+    for (int index = 0; index < x_block_size * T; index++)
       result.setQuick(index, index, -1.0);
     // endTime= System.currentTimeMillis();
     // System.out.println(endTime - startTime);
@@ -1120,22 +1146,6 @@ public class SO_Optimizer extends Adjoint<State> {
     // The split ratios has been initialized in the constructor
     /* solve is inherited by AdjointForJava<State> */
     return optimize(getControl());
-  }
-
-  public void printSizes() {
-    System.out.println("Total size of X: " + T * x_block_size);
-    System.out.println("Details: " + T + " time steps, " +
-        "(density_block: " + size_density_block +
-        ", demand_supply: " + size_demand_suply_block +
-        ", aggregate SR: " + size_aggregate_split_ratios +
-        ", f_in and out: " + 2 * size_density_block);
-
-    System.out.println("Total size of H: " + T * H_block_size);
-    System.out.println("Details: " + T + " time steps, " +
-        "(Mass Cons: " + mass_conservation_size +
-        ", Flow prog: " + flow_propagation_size +
-        ", aggregate SR: " + size_aggregate_split_ratios +
-        ", f_in and out: " + 2 * size_density_block);
   }
 
   public void printProperties(State state) {
