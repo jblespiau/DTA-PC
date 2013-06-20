@@ -219,7 +219,7 @@ public class SO_Optimizer extends Adjoint<State> {
         for (int k = 0; k < T; k++) {
           split_ratio = splits.get(sources[orig], k).get(commodity);
           if (split_ratio != null) {
-            control[k * temporal_control_block_size + index_in_control] = split_ratio;
+            control[k * temporal_control_block_size + index_in_control] = split_ratio * alpha;
           }
         }
         index_in_control++;
