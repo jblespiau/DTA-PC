@@ -511,15 +511,17 @@ public class SO_Optimizer extends Adjoint<State> {
 
       prev_length = junction.getPrev().length;
       for (int in = 0; in < prev_length; in++) {
+        Cell in_cell = junction.getPrev()[in];
         next_length = junction.getNext().length;
         for (int out = 0; out < next_length; out++) {
+          Cell out_cell = junction.getNext()[out];
           for (int k = 0; k < T; k++) {
             /* Here we study beta(in, out) (k) */
             block_upper_position = k * x_block_size
                 + aggregate_split_ratios_position;
 
             /*
-             * There is no intertemporal split ratios for Nx1 junctions.
+             * There are no inter-temporal split ratios for Nx1 junctions.
              * More precisely for all i \in Incoming link and j the unique
              * outgoing link
              * we have all the split ratio from i to j that is 1 and constant
@@ -530,29 +532,37 @@ public class SO_Optimizer extends Adjoint<State> {
               junction_SR = intert_junction_SR.get(k);
               assert junction_SR != null;
             }
-            in_cell_info = state.profiles[k].getCell(in);
+            in_cell_info = state.profiles[k].getCell(in_cell);
 
             i = block_upper_position + aggregate_SR_index;
-            j = k * x_block_size + (C + 1) * in;
+            j = k * x_block_size + (C + 1) * in_cell.getUniqueId();
 
             for (int c = 0; c < C + 1; c++) {
               /*
-               * If there is no intertemporal_split ratios this means we are at
-               * a Nx1
-               * junction and we always have beta = 1
+               * If there are no intertemporal_split ratios this means we are at
+               * a Nx1 junction and we always have beta = 1. However for the 1x1
+               * junction, the aggregate spit ratio has absolutely no influence
+               * on the flows and we can do without computing it
+               * TODO: Optimization possible
                */
-              if (junction_SR == null)
+              if (junction_SR == null) {
+                if (prev_length == 1 && next_length == 1)
+                  continue;
                 i_j_c_SR = 1.0;
-              else
-                i_j_c_SR = junction_SR.get(in, out, c);
+              } else
+                i_j_c_SR = junction_SR.get(in_cell.getUniqueId(),
+                    out_cell.getUniqueId(), c);
 
               /*
                * If the split ratio for this commodity is zero, then the
                * aggregate split ratio is independent of this split ratio
                */
-              if (i_j_c_SR == null || i_j_c_SR == 0)
+              // if (i_j_c_SR == null || i_j_c_SR == 0)
+              // continue;
+              if (i_j_c_SR == null) {
                 continue;
-
+                // i_j_c_SR = 0.0;
+              }
               partial_density = in_cell_info.partial_densities.get(c);
               if (partial_density == null)
                 partial_density = 0.0;
@@ -563,14 +573,14 @@ public class SO_Optimizer extends Adjoint<State> {
                     * (total_density - partial_density)
                     / (total_density * total_density);
                 assert Numerical.validNumber(derivative_term);
-                result.setQuick(i, j, derivative_term);
+
+                if (derivative_term != 0)
+                  result.setQuick(i, j + c, derivative_term);
               }
-
             }
-            aggregate_SR_index++;
           }
+          aggregate_SR_index++;
         }
-
       }
     }
     // endTime= System.currentTimeMillis();
