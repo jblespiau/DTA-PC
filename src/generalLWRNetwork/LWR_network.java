@@ -220,8 +220,8 @@ public class LWR_network {
        */
       demand = getCell(cell_id).getDemand(density, delta_t);
       supply = getCell(cell_id).getSupply(density);
-      assert demand >= 0 : "Demand should be positive";
-      assert supply >= 0 : "Supply should be positive";
+      assert demand >= 0 : "Demand should be positive (" + demand + ")";
+      assert supply >= 0 : "Supply should be positive (" + supply + ")*";
 
       p.getCell(cell_id).demand = demand;
       p.getCell(cell_id).supply = supply;
