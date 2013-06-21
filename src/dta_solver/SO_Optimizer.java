@@ -615,14 +615,20 @@ public class SO_Optimizer extends Adjoint<State> {
           supply = state.profiles[k].getCell(next_id).supply;
 
           f_out = Math.min(demand, supply);
-          /* Derivative terms with respect to the partial densities */
+
           for (int c = 0; c < C + 1; c++) {
             partial_density = cell_info.partial_densities.get(c);
             if (partial_density == null)
               partial_density = 0.0;
 
-            i = x_block_size * k + f_in_position + (C + 1) * prev_id + c;
-            j = x_block_size * k + prev_id * (C + 1) + c;
+            i = x_block_size * k + f_out_position + (C + 1) * prev_id + c;
+
+            /*
+             * Derivative terms with respect to the partial densities.
+             * There are 3 cases but the use of f_out = min (supply,demand)
+             * makes a factorization possible
+             */
+            j = x_block_size * k + (C + 1) * prev_id + c;
             value = f_out * (total_density - partial_density)
                 / (total_density * total_density);
             assert Numerical.validNumber(value);
@@ -632,16 +638,14 @@ public class SO_Optimizer extends Adjoint<State> {
             if (partial_density == 0)
               continue;
 
+            if (demand < supply) {
+              j = x_block_size * k + demand_supply_position + 2 * prev_id;
+            } else if (supply < demand) {
+              j = x_block_size * k + demand_supply_position + 2 * prev_id + 1;
+            }
             value = partial_density / total_density;
             assert Numerical.validNumber(value);
-            if (demand < supply) {
-              j = x_block_size * k + size_density_block + 2 * prev_id;
-              result.setQuick(i, j, value);
-            } else if (supply < demand) {
-              value = partial_density / total_density;
-              j = x_block_size * k + size_density_block + 2 * prev_id + 1;
-              result.setQuick(i, j, value);
-            }
+            result.setQuick(i, j, value);
           }
         }
         // Derivative terms for 1x2 junctions
