@@ -159,9 +159,9 @@ public class SO_Optimizer extends Adjoint<State> {
         " : 2 (for demand, supply) * " + cells.length + " cells)\n" +
         "- aggregate SR: " + size_aggregate_split_ratios +
         "(is the sum of the in.size() * out.size() at all junctions\n" +
-        "- f_in: " + size_density_block +
+        "- f_out: " + size_density_block +
         " : (same as the density block)\n" +
-        "- f_ out: " + size_density_block +
+        "- f_ in: " + size_density_block +
         " : (same as the density block)");
 
     System.out.println("Total size of H: " + T * x_block_size);
@@ -703,8 +703,7 @@ public class SO_Optimizer extends Adjoint<State> {
                 DfDsupply = P1 * Df_inDsupply;
               }
 
-              i = x_block_size * k + size_density_block
-                  + flow_propagation_size + size_aggregate_split_ratios + in_1
+              i = x_block_size * k + f_out_position + in_1
                   * (C + 1) + c;
               j = x_block_size * k + in_1 * (C + 1) + c;
 
@@ -715,17 +714,17 @@ public class SO_Optimizer extends Adjoint<State> {
               /* Derivative terms with respect to supply/demand */
               if (partial_density != 0) {
                 if (DfDdemand1 != 0) {
-                  j = x_block_size * k + size_demand_suply_block + in_1 * 2;
+                  j = x_block_size * k + demand_supply_position + in_1 * 2;
                   assert Numerical.validNumber(DfDdemand1);
                   result.setQuick(i, j, DfDdemand1);
                 }
                 if (DfDdemand2 != 0) {
-                  j = x_block_size * k + size_demand_suply_block + in_2 * 2;
+                  j = x_block_size * k + demand_supply_position + in_2 * 2;
                   assert Numerical.validNumber(DfDdemand2);
                   result.setQuick(i, j, DfDdemand2);
                 }
                 if (DfDsupply != 0) {
-                  j = x_block_size * k + size_demand_suply_block + out * 2 + 1;
+                  j = x_block_size * k + demand_supply_position + out * 2 + 1;
                   assert Numerical.validNumber(DfDsupply);
                   result.setQuick(i, j, DfDsupply);
                 }
@@ -758,8 +757,7 @@ public class SO_Optimizer extends Adjoint<State> {
                 DfDsupply = P2 * Df_inDsupply;
               }
 
-              i = x_block_size * k + size_density_block
-                  + flow_propagation_size + size_aggregate_split_ratios + in_2
+              i = x_block_size * k + f_out_position + in_2
                   * (C + 1) + c;
               j = x_block_size * k + in_2 * (C + 1) + c;
 
@@ -770,17 +768,17 @@ public class SO_Optimizer extends Adjoint<State> {
               /* Derivative terms with respect to supply/demand */
               if (partial_density != 0) {
                 if (DfDdemand1 != 0) {
-                  j = x_block_size * k + size_demand_suply_block + in_1 * 2;
+                  j = x_block_size * k + demand_supply_position + in_1 * 2;
                   assert Numerical.validNumber(DfDdemand1);
                   result.setQuick(i, j, DfDdemand1);
                 }
                 if (DfDdemand2 != 0) {
-                  j = x_block_size * k + size_demand_suply_block + in_2 * 2;
+                  j = x_block_size * k + demand_supply_position + in_2 * 2;
                   assert Numerical.validNumber(DfDdemand2);
                   result.setQuick(i, j, DfDdemand2);
                 }
                 if (DfDsupply != 0) {
-                  j = x_block_size * k + size_demand_suply_block + out * 2 + 1;
+                  j = x_block_size * k + demand_supply_position + out * 2 + 1;
                   assert Numerical.validNumber(DfDsupply);
                   result.setQuick(i, j, DfDsupply);
                 }
@@ -837,8 +835,7 @@ public class SO_Optimizer extends Adjoint<State> {
                 if (partial_density == null)
                   partial_density = 0.0;
 
-                i = x_block_size * k + size_density_block
-                    + flow_propagation_size + size_aggregate_split_ratios
+                i = x_block_size * k + f_out_position
                     + in_id * (C + 1) + c;
                 j = x_block_size * k + minimum_id_cell * (C + 1) + c;
 
@@ -852,7 +849,7 @@ public class SO_Optimizer extends Adjoint<State> {
                   result.setQuick(i, j, value);
 
                   /* Derivative with respect to supply and demand */
-                  j = x_block_size * k + size_demand_suply_block + in_id * 2;
+                  j = x_block_size * k + demand_supply_position + in_id * 2;
                   value = tmp
                       * partial_density / total_density;
                   assert Numerical.validNumber(value);
@@ -869,8 +866,7 @@ public class SO_Optimizer extends Adjoint<State> {
                 if (partial_density == null)
                   partial_density = 0.0;
 
-                i = x_block_size * k + size_density_block
-                    + flow_propagation_size + size_aggregate_split_ratios
+                i = x_block_size * k + f_out_position
                     + in_id * (C + 1) + c;
                 j = x_block_size * k + minimum_id_cell * (C + 1) + c;
 
@@ -884,7 +880,7 @@ public class SO_Optimizer extends Adjoint<State> {
                   result.setQuick(i, j, value);
 
                   /* Derivative with respect to supply and demand */
-                  j = x_block_size * k + size_demand_suply_block
+                  j = x_block_size * k + demand_supply_position
                       + minimum_id_cell * 2 + 1;
                   value = tmp
                       * partial_density / total_density / beta_at_minimum;
