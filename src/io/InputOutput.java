@@ -47,7 +47,7 @@ public class InputOutput {
     } catch (FileNotFoundException e) {
       e.printStackTrace();
     }
-
+    formatter.format("Size of the matrix: " + table[0].length + "x" + table.length + "\n");
     for (int i = 0; i < table.length; i++) {
       for (int j = 0; j < table[0].length; j++)
         formatter.format("%6.2f ", table[i][j]);

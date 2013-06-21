@@ -62,13 +62,14 @@ public class SO_Optimizer extends Adjoint<State> {
   private int size_f_out_block;
   /* Total size of the description of a profile for a given time step */
   private int x_block_size;
-
+  private int demand_supply_position;
+  private int aggregate_split_ratios_position;
   private int f_out_position;
   private int f_in_position;
 
   /* Constraints Vector H */
   /* Size of a block describing the Mass Conversation constraints */
-  private int mass_conservation_size;
+  // size_density_block;
   /* Size of a block describing the Flow Propagation constraints */
   private int flow_propagation_size;
 
@@ -120,13 +121,16 @@ public class SO_Optimizer extends Adjoint<State> {
     x_block_size = (3 * (C + 1) + 2) * cells.length
         + size_aggregate_split_ratios;
 
-    f_out_position = size_density_block + size_demand_suply_block
-        + size_aggregate_split_ratios;
+    demand_supply_position = size_density_block;
+    aggregate_split_ratios_position =
+        demand_supply_position + size_demand_suply_block;
+    f_out_position =
+        aggregate_split_ratios_position + size_aggregate_split_ratios;
     f_in_position = f_out_position + size_f_out_block;
 
     /* Constraints Vector H */
     /* Size of a block describing the Mass Conversation constraints */
-    mass_conservation_size = size_density_block;
+    // size_density_block;
     /* Size of a block describing the Flow Propagation constraints */
     flow_propagation_size = size_demand_suply_block;
     /* Size of the block describing the Aggregate SR constraints */
@@ -136,7 +140,7 @@ public class SO_Optimizer extends Adjoint<State> {
     /* Size of the block describing the in-flows constraints : */
     // mass_conservation_size
     /* Total size of a block of constraints for a given time step */
-    int H_block_size = 3 * mass_conservation_size + flow_propagation_size
+    int H_block_size = 3 * size_density_block + flow_propagation_size
         + size_aggregate_split_ratios;
 
     assert (H_block_size == x_block_size);
@@ -162,7 +166,7 @@ public class SO_Optimizer extends Adjoint<State> {
 
     System.out.println("Total size of H: " + T * x_block_size);
     System.out.println("Details: " + T + " time steps, " +
-        "(Mass Cons: " + mass_conservation_size +
+        "(Mass Cons: " + size_density_block +
         ", Flow prog: " + flow_propagation_size +
         ", aggregate SR: " + size_aggregate_split_ratios +
         ", f_in and out: " + 2 * size_density_block);
@@ -450,7 +454,7 @@ public class SO_Optimizer extends Adjoint<State> {
     // long endTime = System.currentTimeMillis();
     // System.out.println(endTime - startTime);
     /*********************************************************
-     * Derivative terms for the Flow propagation
+     * Derivative terms for the Flow propagation (demand/supply)
      *********************************************************/
     // System.out.print("Flow propagation: ");
     // startTime= System.currentTimeMillis();
@@ -459,7 +463,7 @@ public class SO_Optimizer extends Adjoint<State> {
     for (int k = 0; k < T; k++) {
       // Position of the first constraint in H dealing with supply/demand at
       // time step k
-      block_upper_position = k * x_block_size + mass_conservation_size;
+      block_upper_position = k * x_block_size + demand_supply_position;
       for (int cell_id = 0; cell_id < cells.length; cell_id++) {
         sub_block_position = cell_id * 2;
         i = block_upper_position + sub_block_position;
@@ -490,9 +494,12 @@ public class SO_Optimizer extends Adjoint<State> {
      * Nb_Aggregate_SR * T * (C+1) computation of derivative terms
      */
     Junction junction;
+    /* Used to know the position of the current SR under study */
     int aggregate_SR_index = 0;
     Double partial_density;
+    /* Used to store beta(i,j,c)(k) */
     Double i_j_c_SR;
+    /* Store the split ratios at a junction. Is null when Nx1 junction */
     JunctionSplitRatios junction_SR;
     CellInfo in_cell_info;
     int prev_length, next_length;
@@ -504,15 +511,19 @@ public class SO_Optimizer extends Adjoint<State> {
 
       prev_length = junction.getPrev().length;
       for (int in = 0; in < prev_length; in++) {
-
         next_length = junction.getNext().length;
         for (int out = 0; out < next_length; out++) {
           for (int k = 0; k < T; k++) {
+            /* Here we study beta(in, out) (k) */
             block_upper_position = k * x_block_size
-                + mass_conservation_size + flow_propagation_size;
+                + aggregate_split_ratios_position;
 
-            /* There is no intertemporal split ratios for Nx1 junctions */
-
+            /*
+             * There is no intertemporal split ratios for Nx1 junctions.
+             * More precisely for all i \in Incoming link and j the unique
+             * outgoing link
+             * we have all the split ratio from i to j that is 1 and constant
+             */
             if (intert_junction_SR == null)
               junction_SR = null;
             else {
@@ -678,7 +689,7 @@ public class SO_Optimizer extends Adjoint<State> {
                 DfDsupply = P1 * Df_inDsupply;
               }
 
-              i = x_block_size * k + mass_conservation_size
+              i = x_block_size * k + size_density_block
                   + flow_propagation_size + size_aggregate_split_ratios + in_1
                   * (C + 1) + c;
               j = x_block_size * k + in_1 * (C + 1) + c;
@@ -733,7 +744,7 @@ public class SO_Optimizer extends Adjoint<State> {
                 DfDsupply = P2 * Df_inDsupply;
               }
 
-              i = x_block_size * k + mass_conservation_size
+              i = x_block_size * k + size_density_block
                   + flow_propagation_size + size_aggregate_split_ratios + in_2
                   * (C + 1) + c;
               j = x_block_size * k + in_2 * (C + 1) + c;
@@ -812,7 +823,7 @@ public class SO_Optimizer extends Adjoint<State> {
                 if (partial_density == null)
                   partial_density = 0.0;
 
-                i = x_block_size * k + mass_conservation_size
+                i = x_block_size * k + size_density_block
                     + flow_propagation_size + size_aggregate_split_ratios
                     + in_id * (C + 1) + c;
                 j = x_block_size * k + minimum_id_cell * (C + 1) + c;
@@ -844,7 +855,7 @@ public class SO_Optimizer extends Adjoint<State> {
                 if (partial_density == null)
                   partial_density = 0.0;
 
-                i = x_block_size * k + mass_conservation_size
+                i = x_block_size * k + size_density_block
                     + flow_propagation_size + size_aggregate_split_ratios
                     + in_id * (C + 1) + c;
                 j = x_block_size * k + minimum_id_cell * (C + 1) + c;
@@ -895,7 +906,7 @@ public class SO_Optimizer extends Adjoint<State> {
             // We don't know the split ratios so we suppose it is 1 for all
             assert junctions[j_id].getNext().length <= 1;
             for (int c = 0; c < C + 1; c++) {
-              i = x_block_size * k + 2 * mass_conservation_size
+              i = x_block_size * k + 2 * size_density_block
                   + flow_propagation_size + aggregate_SR_index
                   + junctions[j_id].getNext()[0].getUniqueId() * (C + 1)
                   + c;
@@ -917,7 +928,7 @@ public class SO_Optimizer extends Adjoint<State> {
             out_id = entry.getKey().outgoing;
             commodity = entry.getKey().commodity;
 
-            i = x_block_size * k + 2 * mass_conservation_size
+            i = x_block_size * k + 2 * size_density_block
                 + flow_propagation_size + aggregate_SR_index + out_id * (C + 1)
                 + commodity;
             j = x_block_size * k + f_out_position + in_id * (C + 1) + commodity;
