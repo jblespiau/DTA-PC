@@ -78,12 +78,16 @@ public class Simulator {
       System.out.println(origin_demands.toString());
 
     /* Creation of the non-compliant split-ratios */
-    System.out.print("Loading non compliant split-ratios from JSON...");
-    discretized_graph.split_ratios.addNonCompliantSplitRatios(
-        discretized_graph,
-        data.non_compliant_split_ratios,
-        discretized_graph.node_to_origin);
-    System.out.println("Done");
+    if (alpha != 1) {
+      System.out.print("Loading non compliant split-ratios from JSON...");
+      discretized_graph.split_ratios.addNonCompliantSplitRatios(
+          discretized_graph,
+          data.non_compliant_split_ratios,
+          discretized_graph.node_to_origin);
+      System.out.println("Done");
+    } else {
+      System.out.println("Full System Optimal: no no-compliant split ratios");
+    }
 
     /*
      * Initialization of a physical set for the control split-ratios at the
