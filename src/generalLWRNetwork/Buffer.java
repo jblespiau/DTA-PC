@@ -39,7 +39,7 @@ public class Buffer extends Cell {
 
   @Override
   public double getDerivativeDemand(double total_density, double delta_t) {
-    return  1.0 / delta_t;
+    return 1.0 / delta_t;
   }
 
   @Override
@@ -78,6 +78,8 @@ public class Buffer extends Cell {
       LinkedHashMap<Integer, Double> in_flows,
       LinkedHashMap<Integer, Double> out_flows, double delta_t) {
 
+    assert in_flows == null || in_flows.size() == 0 : "There should not be any in-flow in a buffer";
+
     LinkedHashMap<Integer, Double> result = new LinkedHashMap<Integer, Double>();
 
     /* We first add all the densities */
@@ -103,7 +105,7 @@ public class Buffer extends Cell {
       out_flow = f_out.getValue();
 
       density = result.get(commodity);
-      assert density != null : "In the buffer, the density of an existing commodity should not be null";
+      assert density != null : "In the buffer, the density of an exiting commodity should not be null";
 
       density = density - delta_t * out_flow;
       // TODO: Check if negative densities are normals

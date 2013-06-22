@@ -226,8 +226,12 @@ public class RoadChunk extends Cell {
       entry = iterator_out_flows.next();
       commodity = entry.getKey();
       out_flow = entry.getValue();
-      density = result.get(commodity) + delta_t / length * (-out_flow);
-
+      density = result.get(commodity) - delta_t / length * out_flow;
+      assert density >= 0 : "The density should be positive." +
+          "Initial density: " + result.get(commodity) +
+          " Out-flow: " + out_flow +
+          " delta_t: " + delta_t +
+          " gives a new density of " + density;
       if (density == 0)
         result.remove(commodity);
       else

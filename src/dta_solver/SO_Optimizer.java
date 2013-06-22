@@ -206,6 +206,7 @@ public class SO_Optimizer extends Adjoint<State> {
             // for a given origin
             control[k * temporal_control_block_size + index_in_control] = split_ratio
                 / alpha;
+          assert split_ratio / alpha >= 0 : "We are exporting a negative control";
 
         }
         index_in_control++;
@@ -1086,6 +1087,8 @@ public class SO_Optimizer extends Adjoint<State> {
            * U[k * C + index_in_control]
            */
           coordinate = k * temporal_control_block_size + index_in_control;
+          assert control[coordinate] >= 0 : "The " + coordinate
+              + "-th control (" + control[coordinate] + ") should be positive";
           splits.get(sources[orig], k).
               put(commodity, control[coordinate] * alpha);
           sum_of_split_ratios[orig][k] += control[coordinate];
@@ -1106,8 +1109,16 @@ public class SO_Optimizer extends Adjoint<State> {
     return getControl();
   }
 
+  /**
+   * @details This function imposes that the control is physical (every split
+   *          ratio is positive)
+   */
   @Override
   public double objective(double[] control) {
+    /* Inforces control[i] >= 0, \forall i */
+    for (int i = 0; i < control.length; i++)
+      if (control[i] <= 0)
+        return Double.MAX_VALUE;
     return objective(forwardSimulate(control), control);
   }
 

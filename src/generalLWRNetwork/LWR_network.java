@@ -203,7 +203,8 @@ public class LWR_network {
 
     /* We inject the demand in the buffers of the profile p */
     for (int b = 0; b < sources.length; b++) {
-      sources[b].injectDemand(previous_profile,
+      sources[b].injectDemand(
+          previous_profile,
           p,
           origin_demand.get(sources[b], time_step),
           splits.get(sources[b], time_step),
@@ -220,8 +221,10 @@ public class LWR_network {
        */
       demand = getCell(cell_id).getDemand(density, delta_t);
       supply = getCell(cell_id).getSupply(density);
-      assert demand >= 0 : "Demand should be positive (" + demand + ")";
-      assert supply >= 0 : "Supply should be positive (" + supply + ")*";
+      assert demand >= 0 : "Demand (" + demand + ") should be positive" +
+          " at cell " + cell_id + ", time step " + time_step;
+      assert supply >= 0 : "Supply (" + supply + ") should be positive" +
+          " at cell " + cell_id + ", time step " + time_step;
 
       p.getCell(cell_id).demand = demand;
       p.getCell(cell_id).supply = supply;

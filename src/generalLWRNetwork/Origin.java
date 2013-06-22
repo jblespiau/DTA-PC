@@ -83,15 +83,20 @@ public class Origin {
   public void injectDemand(Profile previous_profile, Profile p, Double demand,
       HashMapIntegerDouble splits, double delta_t) {
 
-    LinkedHashMap<Integer, Double> previous_densities;
-    previous_densities = previous_profile.getCell(entries[0]).partial_densities;
+    assert demand >= 0 : "The vehicle demand at the origin should be positive";
+    assert splits != null;
+
+    LinkedHashMap<Integer, Double> previous_densities =
+        previous_profile.getCell(entries[0]).partial_densities;
 
     /*
      * The densities are the previous_profile densities to which we removed the
-     * out-flow
+     * out-flow and to which we add the demand
      */
+    /* Here we compute the previous densities - out-flow */
     LinkedHashMap<Integer, Double> new_densities =
-        entries[0].getUpdatedDensity(previous_densities,
+        entries[0].getUpdatedDensity(
+            previous_densities,
             null,
             previous_profile.getCell(entries[0].getUniqueId()).out_flows,
             delta_t);
@@ -101,19 +106,23 @@ public class Origin {
         .entrySet()
         .iterator();
     Entry<Integer, Double> split_entry;
+    double new_density, split_ratio;
     Double previous_density;
     int commodity;
     while (split_iterator.hasNext()) {
       split_entry = split_iterator.next();
+      split_ratio = split_entry.getValue();
+      assert split_ratio >= 0 : "The split ratio (" + split_ratio
+          + ") has to be positive";
       commodity = split_entry.getKey();
 
       previous_density = new_densities.get(commodity);
       if (previous_density == null) {
-        new_densities.put(commodity, demand * split_entry.getValue());
+        new_density = demand * split_ratio;
       } else {
-        new_densities.put(commodity, previous_density + demand
-            * split_entry.getValue());
+        new_density = previous_density + demand * split_ratio;
       }
+      new_densities.put(commodity, new_density);
     }
 
     p.getCell(entries[0]).partial_densities = new_densities;

@@ -135,11 +135,15 @@ public class CellInfo {
 
   public void recomputeTotalDensity() {
     Iterator<Double> it = partial_densities.values().iterator();
-    double total_density = 0;
+    double new_total_density = 0;
+    Double partial_density;
     while (it.hasNext()) {
-      total_density += it.next();
+      partial_density = it.next();
+      assert partial_density != null && partial_density >= 0 : " Negative partial density ("
+          + partial_density + ")";
+      new_total_density += partial_density;
     }
-    this.total_density = total_density;
+    this.total_density = new_total_density;
   }
 
   public boolean equals(Object obj, double epsilon) {
@@ -156,7 +160,7 @@ public class CellInfo {
       return false;
     if (!Numerical.equals(total_density, other.total_density, epsilon))
       return false;
-    
+
     if (in_flows == null) {
       if (other.in_flows != null)
         return false;
