@@ -10,7 +10,6 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import dataStructures.PairCells;
-import dataStructures.Triplet;
 
 /**
  * @brief Represent a junctions between cells
@@ -242,20 +241,19 @@ public class Junction {
       }
       // 1xN junctions
     } else if (prev.length == 1) {
-
       /*
-       * in_id = prev[0] is the incoming cell and j an outgoing cell at
-       * the studied junction
-       * We first compute for all flow_out_(in_id, k).
+       * We first compute flow_out_(in_id, k).
        * Then we compute flow_out (in_id,c,k) and flow_in(j,c,k)
        * If it is not zero we save it in the corresponding cells
        */
       /*
-       * We have: flow_out(in_id,j) = min (supply_j / beta(in_id,j),
-       * demand(in_id)
+       * We have:
+       * flow_out(in_id,j) =
+       * min ({supply_j / beta(in_id,j) when beta(in_id,j) > 0}, demand(in_id)
        */
 
       /* JunctionInfo j_info is used to saves the beta(in_id, j, c) */
+      /* in_id is the id of the single incoming link */
       int in_id = prev[0].getUniqueId();
 
       CellInfo cell_i = p.getCell(prev[0]);
@@ -266,40 +264,45 @@ public class Junction {
       if (flow_out == 0)
         return;
 
-      Iterator<Entry<Triplet, Double>> iterator =
-          junction_sr.compliant_split_ratios
-              .entrySet()
-              .iterator();
-      Entry<Triplet, Double> entry;
-      Triplet triplet;
-      Double beta_ijc, previous_beta;
-      Double density_ic;
-      Integer out_id;
-      /* Calculation of the beta(i, j) * density(i,k) */
-      while (iterator.hasNext()) {
-        entry = iterator.next();
-        triplet = entry.getKey();
-        beta_ijc = entry.getValue();
+      /*
+       * Computation of kapa =
+       * sum[beta(i, j, c)(k) * density(i,c,k)] for compliant
+       */
+      Iterator<Entry<Integer, Double>> iterator_partial_densities =
+          cell_i.partial_densities.entrySet().iterator();
+      Entry<Integer, Double> entry_density;
+      Integer commodity;
+      Double partial_density, kapa, beta_ijc;
+      int out_id;
+      while (iterator_partial_densities.hasNext()) {
+        entry_density = iterator_partial_densities.next();
+        commodity = entry_density.getKey();
+        partial_density = entry_density.getValue();
 
-        density_ic = cell_i.partial_densities.get(triplet.commodity);
-        if (density_ic == null)
+        assert (partial_density != null);
+        if (partial_density == 0)
           continue;
 
-        out_id = new Integer(triplet.outgoing);
-        assert out_id != null;
-        assert triplet.incoming == in_id;
+        for (int out = 0; out < next.length; out++) {
+          out_id = next[out].getUniqueId();
+          beta_ijc = junction_sr.get(in_id, out_id, commodity);
+          if (beta_ijc == null)
+            continue;
 
-        previous_beta = j_info.getAggregateSR(in_id, out_id.intValue());
-        if (previous_beta == null)
-          j_info
-              .putAggregateSR(in_id, out_id.intValue(), density_ic * beta_ijc);
-        else
-          j_info.putAggregateSR(in_id, out_id.intValue(), previous_beta
-              + density_ic * beta_ijc);
+          kapa = j_info.getAggregateSR(in_id, out_id);
+          if (kapa == null)
+            j_info.putAggregateSR(in_id, out_id, partial_density * beta_ijc);
+          else
+            j_info.putAggregateSR(in_id, out_id, kapa + partial_density
+                * beta_ijc);
+        }
       }
 
+      /*
+       * Then we get the real beta(i,j) = 1/ total_density * previous thing
+       * At the same time we compute the flow-out
+       */
       Iterator<Entry<PairCells, Double>> iterator_beta = j_info.entryIterator();
-
       Entry<PairCells, Double> beta_entry;
       PairCells i_j;
       double density_i = cell_i.total_density;
@@ -316,7 +319,8 @@ public class Junction {
         j_info.put(i_j, beta_ij_dividedby_density);
 
         assert i_j.incoming == in_id;
-        assert beta_entry.getValue() >= 0 : "Negative value in Junction (" + beta_entry.getValue() + ")";
+        assert beta_entry.getValue() >= 0 : "Negative value in Junction ("
+            + beta_entry.getValue() + ")";
         assert beta_ij_dividedby_density >= 0;
 
         flow_out = Math.min(flow_out,
@@ -324,9 +328,8 @@ public class Junction {
                 / beta_ij_dividedby_density);
       }
 
-      Iterator<Entry<Integer, Double>> iterator_partial_densities =
+      iterator_partial_densities =
           cell_i.partial_densities.entrySet().iterator();
-      Entry<Integer, Double> entry_density;
       double flow_out_dividedby_density = flow_out / density_i;
       double out_flow_for_commodity;
       while (iterator_partial_densities.hasNext()) {
@@ -339,7 +342,7 @@ public class Junction {
 
         for (int out = 0; out < next.length; out++) {
           /* We compute flow_in(j,c,k) */
-          beta_ijc = junction_sr.get(prev[0].getUniqueId(),
+          beta_ijc = junction_sr.get(in_id,
               next[out].getUniqueId(),
               entry_density.getKey());
           if (beta_ijc == null)

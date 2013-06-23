@@ -149,27 +149,22 @@ public class SO_Optimizer extends Adjoint<State> {
   }
 
   public void printSizes() {
-    System.out.println("Total size of X: " + T * x_block_size);
+    System.out.println("*******************************************");
+    System.out.println("Total size of X and H: " + T * x_block_size);
     System.out.println("Details: \n" +
         "- time steps: " + T + "\n" +
         "- density_block: " + size_density_block +
-        " : (1 NC + " + C + "compliant commodities )* " + cells.length
+        " : (1 NC + " + C + " compliant commodities )* " + cells.length
         + " cells\n" +
         "- demand_supply: " + size_demand_suply_block +
         " : 2 (for demand, supply) * " + cells.length + " cells)\n" +
         "- aggregate SR: " + size_aggregate_split_ratios +
-        "(is the sum of the in.size() * out.size() at all junctions\n" +
+        " (is the sum of the in.size() * out.size() at all junctions)\n" +
         "- f_out: " + size_density_block +
         " : (same as the density block)\n" +
         "- f_ in: " + size_density_block +
         " : (same as the density block)");
-
-    System.out.println("Total size of H: " + T * x_block_size);
-    System.out.println("Details: " + T + " time steps, " +
-        "(Mass Cons: " + size_density_block +
-        ", Flow prog: " + flow_propagation_size +
-        ", aggregate SR: " + size_aggregate_split_ratios +
-        ", f_in and out: " + 2 * size_density_block);
+    System.out.println("*******************************************");
   }
 
   /**

@@ -61,10 +61,9 @@ public class DiscretizedGraph {
     NetworkUIDFactory.resetJunction_id();
 
     /* Discretize all the links */
-    Link[] links = g.getLinks();
-    link_to_cells = new LinkPair[links.length];
-    for (int i = 0; i < links.length; i++) {
-      link_to_cells[i] = discretizeLink(links[i], delta_t);
+    link_to_cells = new LinkPair[graph_links.length];
+    for (int i = 0; i < graph_links.length; i++) {
+      link_to_cells[i] = discretizeLink(graph_links[i], delta_t);
     }
 
     /* Transform Nodes into Junctions */
@@ -136,13 +135,10 @@ public class DiscretizedGraph {
      * to initialize default split ratios. It is when creating the commodities
      * according to paths that we create this mapping
      */
-    HashMap<Junction, LinkedList<Integer>> commodities_at_origins =
-        new HashMap<Junction, LinkedList<Integer>>(sources.length);
-
     Path[] paths = g.getPaths();
-    for (int i = 0; i < paths.length; i++) {
-      createSplitRatios(g, paths[i], commodities_at_origins);
-    }
+
+    createSplitRatios(g, paths);
+
     nb_paths = paths.length;
 
     total_nb_junctions = NetworkUIDFactory.IdJunction() + 1;
@@ -254,69 +250,70 @@ public class DiscretizedGraph {
 
   /**
    * @brief Build the split ratios for the compliant commodities
+   * @details For every path, we have to add the id of the commodity at the
+   *          origin (the junction from which the first link of the path is
+   *          leaving). We also have to add the split ratios at junction crossed
+   *          by the path where there is more than 1 outgoing link.
    */
-  private void createSplitRatios(Graph g, Path p,
-      HashMap<Junction, LinkedList<Integer>> commodities_at_origins) {
+  private void createSplitRatios(Graph g, Path[] paths) {
 
-    Iterator<Integer> iterator = p.iterator();
-    Link[] links = g.getLinks();
-    Junction j;
-    int previous_link_id = -1, current_link_id = -1;
-    LinkedList<Integer> commodities;
-    while (iterator.hasNext()) {
-      current_link_id = iterator.next();
+    /* paths[c] is used by commodity c+1 */
+    for (int c = 0; c < paths.length; c++) {
+      Path p = paths[c];
+      assert p.getUnique_id() == c;
+      Iterator<Integer> iterator = p.iterator();
+      int previous_link_id = -1, current_link_id = -1;
 
-      j = junctions[links[current_link_id].from.getUnique_id()];
-      assert j != null;
+      /* Origin */
+      int origin_id = graph_links[p.getFirstLink()].from.getUnique_id();
+      Origin o = node_to_origin.get(origin_id);
 
-      // We add one commodity at the junction
-      commodities = commodities_at_origins.get(j);
-      if (commodities == null) {
-        commodities = new LinkedList<Integer>();
-        commodities_at_origins.put(j, commodities);
+      /*
+       * We add one commodity at the origin.
+       * If it is the first, we create the linkedlist
+       */
+      LinkedList<Integer> commodities_at_origin = o.getCompliant_commodities();
+      if (commodities_at_origin == null) {
+        commodities_at_origin = new LinkedList<Integer>();
+        o.compliant_commodities = commodities_at_origin;
       }
-      commodities.add(current_link_id + 1);
+      commodities_at_origin.add(c + 1);
 
-      // There is nothing to do for nx1 junctions
-      if (!j.isMergingJunction()) {
-        // We add a split ratio for the first junction (origin)
-        // We have to take the id of the buffer placed before the junction
-        if (previous_link_id == -1) {
-          assert j.getPrev().length == 1 : "A multiple exit origin must have an incoming link";
-          split_ratios.addCompliantSRToJunction(
-              j.getPrev()[0].getUniqueId(),
-              link_to_cells[current_link_id].begin.getUniqueId(),
-              p.getUnique_id() + 1, 1, j);
-        } else {
-          split_ratios.addCompliantSRToJunction(
-              link_to_cells[previous_link_id].end.getUniqueId(),
-              link_to_cells[current_link_id].begin.getUniqueId(),
-              p.getUnique_id() + 1, 1, j);
+      while (iterator.hasNext()) {
+        current_link_id = iterator.next();
+
+        /* junction at the origin of the current_link */
+        Junction j = junctions[graph_links[current_link_id].from.getUnique_id()];
+
+        assert j != null;
+
+        // There is nothing to do for nx1 junctions
+        if (!j.isMergingJunction()) {
+          // We add a split ratio for the first junction (origin)
+          // We have to take the id of the buffer placed before the junction
+          if (previous_link_id == -1) {
+            assert j.getPrev().length == 1 : "The first junction must have an incoming link";
+            split_ratios.addCompliantSRToJunction(
+                j.getPrev()[0].getUniqueId(),
+                link_to_cells[current_link_id].begin.getUniqueId(),
+                c + 1, 1, j);
+          } else {
+            split_ratios.addCompliantSRToJunction(
+                link_to_cells[previous_link_id].end.getUniqueId(),
+                link_to_cells[current_link_id].begin.getUniqueId(),
+                c + 1, 1, j);
+          }
         }
+        previous_link_id = current_link_id;
       }
 
-      previous_link_id = current_link_id;
-
+      /*
+       * There is nothing to do for the last node. However we check that the
+       * last node is Nx1 junction
+       */
+      assert (junctions[graph_links[current_link_id].to.getUnique_id()]
+          .getNext().length <= 1) : "The arrival of a path should not have multiple exits";
     }
-
-    /*
-     * We say to each origins how many commodities will leave from them
-     */
-    LinkedList<Integer> tmp;
-    for (int o = 0; o < sources.length; o++) {
-      tmp = commodities_at_origins.get(sources[o].junction);
-      if (tmp != null) {
-        sources[o].compliant_commodities = tmp;
-      } else {
-        assert false;
-      }
-    }
-
-    /*
-     * There is nothing to do for the last node. However we check that the last
-     * node is Nx1 junction
-     */
-    assert (junctions[links[current_link_id].to.getUnique_id()].getNext().length <= 1) : "The arrival of a path should not have multiple exits";
   }
 
   /**

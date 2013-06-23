@@ -89,7 +89,9 @@ public class Buffer extends Cell {
     Entry<Integer, Double> entry;
     while (densities_it.hasNext()) {
       entry = densities_it.next();
-      result.put(new Integer(entry.getKey()), new Double(entry.getValue()));
+      // TODO: remove this test
+      if (entry.getValue() != 0)
+        result.put(new Integer(entry.getKey()), new Double(entry.getValue()));
     }
 
     /* We update the densities for the flow that have out_flows */
@@ -105,7 +107,11 @@ public class Buffer extends Cell {
       out_flow = f_out.getValue();
 
       density = result.get(commodity);
-      assert density != null : "In the buffer, the density of an exiting commodity should not be null";
+
+      assert density != null || out_flow == 0 : "In the buffer, the density of an exiting commodity should not be null";
+      // TODO: remove this test
+      if (density == null && out_flow == 0)
+        continue;
 
       density = density - delta_t * out_flow;
       // TODO: Check if negative densities are normals

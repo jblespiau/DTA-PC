@@ -41,4 +41,11 @@ public class JunctionSplitRatios {
     else
       return compliant_split_ratios.get(new Triplet(in, out, commodity));
   }
+
+  @Override
+  public String toString() {
+    return "JunctionSplitRatios [non_compliant_split_ratios="
+        + non_compliant_split_ratios + ", compliant_split_ratios="
+        + compliant_split_ratios + "]";
+  }
 }

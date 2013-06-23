@@ -36,7 +36,11 @@ public class Path {
       path[i] = path_list.get(i);
     }
   }
-  
+
+  public Integer getFirstLink() {
+    return path_list.get(0);
+  }
+
   public Iterator<Integer> iterator() {
     return path_list.iterator();
   }

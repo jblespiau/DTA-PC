@@ -34,4 +34,10 @@ public class Link {
   public int getUnique_id() {
     return unique_id;
   }
+
+  @Override
+  public String toString() {
+    return "Link [(" + unique_id +
+        "): J" + from.getUnique_id() + " -> J" + to.getUnique_id() + "]";
+  }
 }
