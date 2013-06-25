@@ -24,9 +24,4 @@ public class State implements JavaSystemState {
   public int size() {
     return profiles.length;
   }
-
-  @Override
-  public Object getState() {
-    return this;
-  }
 }

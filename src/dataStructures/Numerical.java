@@ -33,6 +33,13 @@ public class Numerical {
     return true;
   }
 
+  static public boolean close(double a, double b, double e) {
+    if (Math.abs(a) < 10)
+      return Math.abs(a - b) < e;
+    else
+      return Math.abs((a - b) / a) < e;
+  }
+
   static public boolean equals(double a, double b, double e) {
     return Math.abs(a - b) < e;
   }

@@ -334,6 +334,18 @@ public class SO_Optimizer extends Adjoint<State> {
     }
   }
 
+  public void informationIndexInX(int i) {
+    int time_step = i / x_block_size;
+    System.out.println("Time step: " + time_step);
+    int remaining = i % x_block_size;
+    if (remaining < demand_supply_position) {
+      int cell_id = remaining / (C + 1);
+      int c = (remaining % (C + 1));
+      System.out.println("Partial density of commodity " + c + " in cell "
+          + (cell_id));
+    }
+  }
+
   /**
    * @brief Computes the dH/dU matrix.
    * @details
@@ -360,6 +372,7 @@ public class SO_Optimizer extends Adjoint<State> {
           i = k * x_block_size + sources[orig].getUniqueId() * (C + 1)
               + commodity;
           j = k * temporal_control_block_size + index_in_control;
+
           result.setQuick(i, j, origin_demands[k] * alpha);
         }
         index_in_control++;
@@ -1014,8 +1027,8 @@ public class SO_Optimizer extends Adjoint<State> {
             sum_of_split_ratios = state.sum_of_split_ratios[orig][k];
             assert sum_of_split_ratios > 1 : "The sum of the split ratios ("
                 + sum_of_split_ratios + ") should be >= 1";
-            derivative_term = epsilon / (1 - sum_of_split_ratios);
 
+            derivative_term = epsilon / (1 - sum_of_split_ratios);
             assert Numerical.validNumber(derivative_term);
 
             result.set(k * temporal_control_block_size
@@ -1054,7 +1067,7 @@ public class SO_Optimizer extends Adjoint<State> {
   /**
    * @brief Forward simulate after having loaded the external split ratios for
    *        compliant commodities
-   * @details For now we even put the null split ratios because we never clear
+   * @details For now we even put the zero split ratios because we never clear
    *          the split ratios
    */
   @Override
