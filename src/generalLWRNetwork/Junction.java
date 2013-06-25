@@ -241,22 +241,17 @@ public class Junction {
       }
       // 1xN junctions
     } else if (prev.length == 1) {
-      /*
-       * We first compute flow_out_(in_id, k).
-       * Then we compute flow_out (in_id,c,k) and flow_in(j,c,k)
-       * If it is not zero we save it in the corresponding cells
-       */
-      /*
-       * We have:
-       * flow_out(in_id,j) =
-       * min ({supply_j / beta(in_id,j) when beta(in_id,j) > 0}, demand(in_id)
-       */
 
       /* JunctionInfo j_info is used to saves the beta(in_id, j, c) */
       /* in_id is the id of the single incoming link */
       int in_id = prev[0].getUniqueId();
-
       CellInfo cell_i = p.getCell(prev[0]);
+
+      /*
+       * We first compute flow_out_(in_id, k) =
+       * min ({supply_j / beta(in_id,j) when beta(in_id,j) > 0}, demand(in_id)
+       * Then we compute flow_out (in_id,c,k) and flow_in(j,c,k)
+       */
 
       double flow_out = cell_i.demand;
 
@@ -266,7 +261,7 @@ public class Junction {
 
       /*
        * Computation of kapa =
-       * sum[beta(i, j, c)(k) * density(i,c,k)] for compliant
+       * sum[beta(i, j, c)(k) * density(i,c,k)]
        */
       Iterator<Entry<Integer, Double>> iterator_partial_densities =
           cell_i.partial_densities.entrySet().iterator();
@@ -312,10 +307,10 @@ public class Junction {
       /* We compute flow_out(in_id,k) */
       while (iterator_beta.hasNext()) {
         beta_entry = iterator_beta.next();
-        beta_ij_dividedby_density = beta_entry.getValue() / density_i;
         i_j = beta_entry.getKey();
-
         /* Computation of beta(i, j) by dividing by density(i,k) */
+        beta_ij_dividedby_density = beta_entry.getValue() / density_i;
+
         j_info.put(i_j, beta_ij_dividedby_density);
 
         assert i_j.incoming == in_id;
@@ -328,12 +323,14 @@ public class Junction {
                 / beta_ij_dividedby_density);
       }
 
+      /* Then we compute the partial flow-out and flow int */
       iterator_partial_densities =
           cell_i.partial_densities.entrySet().iterator();
       double flow_out_dividedby_density = flow_out / density_i;
       double out_flow_for_commodity;
       while (iterator_partial_densities.hasNext()) {
         entry_density = iterator_partial_densities.next();
+        commodity = entry_density.getKey();
 
         /* We compute flow_out(i,c,k) */
         out_flow_for_commodity = flow_out_dividedby_density
@@ -344,11 +341,11 @@ public class Junction {
           /* We compute flow_in(j,c,k) */
           beta_ijc = junction_sr.get(in_id,
               next[out].getUniqueId(),
-              entry_density.getKey());
+              commodity);
           if (beta_ijc == null)
             continue;
           else {
-            p.getCell(next[out]).in_flows.put(entry_density.getKey(),
+            p.getCell(next[out]).in_flows.put(commodity,
                 beta_ijc * out_flow_for_commodity);
           }
         }
