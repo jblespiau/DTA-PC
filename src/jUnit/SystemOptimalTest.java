@@ -20,6 +20,9 @@ import dta_solver.Simulator;
  */
 public class SystemOptimalTest {
 
+  static private Simulator simulator;
+  private static SO_Optimizer optimizer;
+
   @Test
   public void testdHdx() {
     /* We are running a full SO (Share of the compliant flow= 1) */
@@ -28,15 +31,15 @@ public class SystemOptimalTest {
     String network_file = "graphs/TwoParallelPath.json";
     String data_file = "graphs/TwoParallelPathData.json";
 
-    Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
+    simulator = new Simulator(network_file, data_file, alpha, debug);
 
     int maxIter = 20;
 
-    SO_Optimizer optimizer = new SO_Optimizer(maxIter, simulator);
+    optimizer = new SO_Optimizer(maxIter, simulator);
     optimizer.printSizes();
 
     double[] control = optimizer.getControl();
-    State state = optimizer.forwardSimulate(control, false);
+    State state = optimizer.forwardSimulate(control, true);
 
     System.out.println("Control");
     optimizer.printFullControl();
@@ -205,8 +208,9 @@ public class SystemOptimalTest {
       // Beta(0 -> 3)
       {
         int in = 3;
-        //int out = 0;
-        constraint_row = k * H_constraint_size + aggregate_SR_position + index_split_ratios;
+        // int out = 0;
+        constraint_row = k * H_constraint_size + aggregate_SR_position
+            + index_split_ratios;
         // Only one non nul derivative term (c = 1)
         int c = 1;
         variable_column = k * H_constraint_size + C * in + c;
@@ -217,8 +221,7 @@ public class SystemOptimalTest {
         double total_density = state.profiles[k].getCell(in).total_density;
         if (total_density == 0)
           continue;
-        System.out.println("Partial : " + partial_density + " total: "
-            + total_density);
+
         double value = (total_density - partial_density)
             / (total_density * total_density);
         result.setQuick(constraint_row, variable_column, value);
@@ -227,8 +230,9 @@ public class SystemOptimalTest {
       // Beta(0 -> 2)
       {
         int in = 3;
-        //int out = 2;
-        constraint_row = k * H_constraint_size + aggregate_SR_position + index_split_ratios;
+        // int out = 2;
+        constraint_row = k * H_constraint_size + aggregate_SR_position
+            + index_split_ratios;
         // Only one non nul derivative term (c = 2)
         int c = 2;
         variable_column = k * H_constraint_size + C * in + c;
@@ -246,7 +250,7 @@ public class SystemOptimalTest {
         result.setQuick(constraint_row, variable_column, value);
       }
     }
-    
+
     /* dH³_(k, i, c)/dx (flow_out) */
     /* I trust the code for the 1x1 junction */
     Junction junction;
@@ -303,7 +307,8 @@ public class SystemOptimalTest {
             if (demand < supply) {
               j = H_constraint_size * k + demand_supply_position + 2 * prev_id;
             } else if (supply < demand) {
-              j = H_constraint_size * k + demand_supply_position + 2 * prev_id + 1;
+              j = H_constraint_size * k + demand_supply_position + 2 * prev_id
+                  + 1;
             }
             value = partial_density / total_density;
             assert Numerical.validNumber(value);
@@ -312,7 +317,7 @@ public class SystemOptimalTest {
         }
       }
     }
-    System.out.println("(42,11):" + result.get(42,11));
+    System.out.println("(42,11):" + result.get(42, 11));
     return result;
   }
 
@@ -334,10 +339,59 @@ public class SystemOptimalTest {
           nb_differences++;
           System.out.println("Difference in (" + i + ", " + j
               + ") from t1 (" + t1[i][j] + ") and t2 (" + t2[i][j] + ")");
+          System.out.print("dH:");
+          informationIndexInX(i);
+          System.out.print("dx:");
+          informationIndexInX(j);
         }
       }
     }
     System.out.println("Total number of differences: " + nb_differences);
     return result;
+  }
+  public void informationIndexInX(int i) {
+    int x_block_size = 60;
+    int time_step = i / x_block_size;
+    int C = 2;
+    int H_constraint_size = 60;
+    int density_position = 0;
+    int demand_supply_position = 15;
+    int aggregate_split_ratios_position = 15 + 10;
+    int f_out_position = 15 + 10 + 5;
+    int f_in_position = 15 + 10 + 5 + 15;
+    assert (f_out_position == 30);
+    assert (f_in_position == 45);
+    
+    
+    System.out.print("[k=" + time_step + "]");
+    int remaining = i % x_block_size;
+    if (remaining < demand_supply_position) {
+      int cell_id = remaining / (C + 1);
+      int c = (remaining % (C + 1));
+      System.out.println("Partial density of commodity " + c + " in cell "
+          + (cell_id));
+    } else if (remaining < aggregate_split_ratios_position) {
+      int cell_id = (remaining - demand_supply_position) / 2;
+      int is_demand = (remaining % 2);
+      if (is_demand == 0)
+        System.out.println("Demand in cell " + (cell_id));
+      else
+        System.out.println("Supply in cell " + (cell_id));
+    } else if (remaining < f_out_position) {
+      int cell_id = (remaining - aggregate_split_ratios_position) / (C + 1);
+      int c = (remaining % (C + 1));
+      System.out
+          .println("Aggregate split ratio");
+    } else if (remaining < f_in_position) {
+      int cell_id = (remaining - f_out_position) / (C + 1);
+      int c = (remaining % (C + 1));
+      System.out
+      .println("Flow-out of commodity " + c + " in cell " + (cell_id));
+    } else {
+      int cell_id = (remaining - f_in_position) / (C + 1);
+      int c = (remaining % (C + 1));
+      System.out
+      .println("Flow-in of commodity " + c + " in cell " + (cell_id));
+    }
   }
 }
