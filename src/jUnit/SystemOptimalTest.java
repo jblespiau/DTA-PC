@@ -46,7 +46,6 @@ public class SystemOptimalTest {
     System.out.println("Computation of dH/dx");
     double[][] dhdx = optimizer.dhdx(state,
         control).toArray();
-    InputOutput.tableToFile(dhdx, "dHdX Test");
 
     SparseCCDoubleMatrix2D correct_dhdx = correctDhdx(simulator, state);
     assertTrue(compareTable(dhdx, correct_dhdx.toArray()));
@@ -243,8 +242,7 @@ public class SystemOptimalTest {
         double total_density = state.profiles[k].getCell(in).total_density;
         if (total_density == 0)
           continue;
-        System.out.println("Partial : " + partial_density + " total: "
-            + total_density);
+
         double value = (total_density - partial_density)
             / (total_density * total_density);
         result.setQuick(constraint_row, variable_column, value);
@@ -372,8 +370,8 @@ public class SystemOptimalTest {
           + (cell_id));
     } else if (remaining < aggregate_split_ratios_position) {
       int cell_id = (remaining - demand_supply_position) / 2;
-      int is_demand = (remaining % 2);
-      if (is_demand == 0)
+      int is_supply = (remaining % 2);
+      if (is_supply == 1)
         System.out.println("Demand in cell " + (cell_id));
       else
         System.out.println("Supply in cell " + (cell_id));
