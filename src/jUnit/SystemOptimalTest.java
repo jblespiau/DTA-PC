@@ -48,6 +48,12 @@ public class SystemOptimalTest {
         control).toArray();
 
     SparseCCDoubleMatrix2D correct_dhdx = correctDhdx(simulator, state);
+    double[] gradient = new double[6];
+    optimizer.gradient(gradient, control);
+
+    System.out.println("Gradient:");
+    InputOutput.printTable(gradient);
+
     assertTrue(compareTable(dhdx, correct_dhdx.toArray()));
     optimizer.printSizes();
 
@@ -200,11 +206,12 @@ public class SystemOptimalTest {
       result.setQuick(i, i, -1.0);
 
     /* Split ratios */
-    int index_split_ratios = 0;
+
     for (int k = 0; k < 3; k++) {
+      int index_split_ratios = 0;
       int j = 0;
       // Junction 0
-      // Beta(0 -> 3)
+      // Beta(3 -> 0)
       {
         int in = 3;
         // int out = 0;
@@ -223,16 +230,17 @@ public class SystemOptimalTest {
 
         double value = (total_density - partial_density)
             / (total_density * total_density);
+
         result.setQuick(constraint_row, variable_column, value);
       }
       index_split_ratios++;
-      // Beta(0 -> 2)
+      // Beta(3 -> 2)
       {
         int in = 3;
         // int out = 2;
         constraint_row = k * H_constraint_size + aggregate_SR_position
             + index_split_ratios;
-        // Only one non nul derivative term (c = 2)
+        // Only one non zero derivative term (c = 2)
         int c = 2;
         variable_column = k * H_constraint_size + C * in + c;
         Double partial_density = state.profiles[k].getCell(in).partial_densities
@@ -315,7 +323,7 @@ public class SystemOptimalTest {
         }
       }
     }
-    System.out.println("(42,11):" + result.get(42, 11));
+
     return result;
   }
 
@@ -347,6 +355,7 @@ public class SystemOptimalTest {
     System.out.println("Total number of differences: " + nb_differences);
     return result;
   }
+
   public void informationIndexInX(int i) {
     int x_block_size = 60;
     int time_step = i / x_block_size;
@@ -359,8 +368,7 @@ public class SystemOptimalTest {
     int f_in_position = 15 + 10 + 5 + 15;
     assert (f_out_position == 30);
     assert (f_in_position == 45);
-    
-    
+
     System.out.print("[k=" + time_step + "]");
     int remaining = i % x_block_size;
     if (remaining < demand_supply_position) {
@@ -384,12 +392,12 @@ public class SystemOptimalTest {
       int cell_id = (remaining - f_out_position) / (C + 1);
       int c = (remaining % (C + 1));
       System.out
-      .println("Flow-out of commodity " + c + " in cell " + (cell_id));
+          .println("Flow-out of commodity " + c + " in cell " + (cell_id));
     } else {
       int cell_id = (remaining - f_in_position) / (C + 1);
       int c = (remaining % (C + 1));
       System.out
-      .println("Flow-in of commodity " + c + " in cell " + (cell_id));
+          .println("Flow-in of commodity " + c + " in cell " + (cell_id));
     }
   }
 }
