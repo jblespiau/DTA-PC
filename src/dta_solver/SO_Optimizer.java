@@ -1067,8 +1067,11 @@ public class SO_Optimizer extends Adjoint<State> {
     int block_position;
     for (int k = 0; k < T; k++) {
       block_position = k * x_block_size;
-      for (int partial_density_id = 0; partial_density_id < size_density_block; partial_density_id++) {
-        result.setQuick(block_position + partial_density_id, 1.0);
+      for (int cell_id = 0; cell_id < cells.length; cell_id++) {
+        double value = cells[cell_id].getLength();
+        for (int c = 0; c < (C + 1); c++) {
+          result.setQuick(block_position + (C + 1) * cell_id + c, value);
+        }
       }
     }
 
