@@ -336,13 +336,35 @@ public class SO_Optimizer extends Adjoint<State> {
 
   public void informationIndexInX(int i) {
     int time_step = i / x_block_size;
-    System.out.println("Time step: " + time_step);
+    System.out.print("[k=" + time_step + "]");
     int remaining = i % x_block_size;
     if (remaining < demand_supply_position) {
       int cell_id = remaining / (C + 1);
       int c = (remaining % (C + 1));
       System.out.println("Partial density of commodity " + c + " in cell "
           + (cell_id));
+    } else if (remaining < aggregate_split_ratios_position) {
+      int cell_id = (remaining - demand_supply_position) / 2;
+      int is_demand = (remaining % 2);
+      if (is_demand == 0)
+        System.out.println("Demand in cell " + (cell_id));
+      else
+        System.out.println("Supply in cell " + (cell_id));
+    } else if (remaining < f_out_position) {
+      int cell_id = (remaining - aggregate_split_ratios_position) / (C + 1);
+      int c = (remaining % (C + 1));
+      System.out
+          .println("Aggregate split ratio");
+    } else if (remaining < f_in_position) {
+      int cell_id = (remaining - f_out_position) / (C + 1);
+      int c = (remaining % (C + 1));
+      System.out
+          .println("Flow-out of commodity " + c + " in cell " + (cell_id));
+    } else {
+      int cell_id = (remaining - f_in_position) / (C + 1);
+      int c = (remaining % (C + 1));
+      System.out
+          .println("Flow-in of commodity " + c + " in cell " + (cell_id));
     }
   }
 
