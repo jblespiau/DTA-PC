@@ -86,7 +86,7 @@ public class Simulator {
           discretized_graph.node_to_origin);
       System.out.println("Done");
     } else {
-      System.out.println("Full System Optimal: no no-compliant split ratios");
+      System.out.println("Full System Optimal detected.");
     }
 
     /*
@@ -94,10 +94,7 @@ public class Simulator {
      * origins
      */
     System.out.print("Initializing split-ratios at the origins...");
-    splits =
-        IntertemporalOriginsSplitRatios.defaultPhysicalSplitRatios(
-            nb_steps,
-            discretized_graph.sources, alpha);
+    initializSplitRatios();
     System.out.println("Done");
 
     if (debug)
@@ -202,6 +199,19 @@ public class Simulator {
   }
 
   /**
+   * @brief Initialization of a physical set for the control split-ratios at the
+   *        origins
+   */
+  protected void initializSplitRatios() {
+
+    int nb_steps = time_discretization.getNb_steps();
+    splits =
+        IntertemporalOriginsSplitRatios.defaultPhysicalSplitRatios(
+            nb_steps,
+            discretized_graph.sources, alpha);
+  }
+
+  /**
    * @brief Initialize split-ratios that are valid one for any optimizer
    * @details An optimizer works with some split-ratios such that the sum of the
    *          split-ratios at every origin for every time steps is greater than
@@ -209,7 +219,7 @@ public class Simulator {
    */
   protected void initializeSplitRatiosForOptimizer() {
 
-    assert alpha != 0 : "The share of the compliant commodities is zero. No optimization of the compliant commodities can be done, so initializing the split-ratios for an optimizer is illigal";
+    assert alpha != 0 : "The share of the compliant commodities is zero. No optimization of the compliant commodities can be done, so initializing the split-ratios for an optimizer is illegal";
     int nb_steps = time_discretization.getNb_steps();
 
     /*

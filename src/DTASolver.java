@@ -58,11 +58,10 @@ public class DTASolver {
   public static void optimizationExampleByFiniteDifferences() {
     /* Share of the compliant flow */
     double alpha = 1;
-    boolean debug = true;
     String network_file = "graphs/TwoParallelPath.json";
     String data_file = "graphs/TwoParallelPathData.json";
 
-    Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
+    Simulator simulator = new Simulator(network_file, data_file, alpha, false);
 
     int maxIter = 2;
     SO_OptimizerByFiniteDifferences optimizer = new SO_OptimizerByFiniteDifferences(maxIter, simulator);

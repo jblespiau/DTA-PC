@@ -48,7 +48,7 @@ public class SO_OptimizerByFiniteDifferences extends SO_Optimizer {
     }
     return objective;
   }
-  
+
   public double objective222(double[] control) {
     /* Inforces control[i] >= 0, \forall i */
     for (int i = 0; i < control.length; i++)
@@ -69,7 +69,7 @@ public class SO_OptimizerByFiniteDifferences extends SO_Optimizer {
     }
     return objective;
   }
-  
+
   /**
    * @brief Fill in the gradient with the values of the gradient
    * @param gradient_f
@@ -96,7 +96,7 @@ public class SO_OptimizerByFiniteDifferences extends SO_Optimizer {
       System.out.println(gradient[i]);
 
     /* We project the gradient on the feasible space */
-    
+
     for (int k = 0; k < T; k++) {
       int index = 0;
       for (int o = 0; o < O; o++) {
