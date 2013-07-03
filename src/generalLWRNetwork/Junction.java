@@ -155,90 +155,6 @@ public class Junction {
        */
       previous_info.updateOutFlows(flow);
       next_info.updateInFlows(previous_info.out_flows, next[0].isSink());
-
-      // 2x1 junctions
-    } else if (prev.length == 2 && next.length == 1) {
-
-      CellInfo prev1 = p.getCell(prev[0]);
-      CellInfo prev2 = p.getCell(prev[1]);
-      CellInfo next_info = p.getCell(next[0]);
-
-      j_info.putAggregateSR(prev[0], next[0], 1.0);
-      j_info.putAggregateSR(prev[1], next[0], 1.0);
-
-      double demand1 = prev1.demand;
-      double demand2 = prev2.demand;
-      flow = Math.min(demand1 + demand2, next_info.supply);
-      if (flow == 0)
-        return;
-
-      Double P1 = priorities.get(prev[0].getUniqueId());
-      Double P2 = priorities.get(prev[1].getUniqueId());
-      assert P1 != null && P2 != null : "In 2x1 solving, we didn't found the priority for both roads";
-
-      Double flow_1, flow_2;
-      if (P1 * (flow - demand1) > P2 * demand1) {
-        flow_1 = demand1;
-      } else if (P1 * demand2 < P2 * (flow - demand2)) {
-        flow_1 = flow - demand2;
-      } else {
-        flow_1 = P1 / (P1 + P2) * flow;
-      }
-      flow_2 = flow - flow_1;
-
-      assert flow_1 <= demand1;
-      assert flow_2 <= demand2;
-      /* Computing the partial out-flow for the first incoming link */
-      if (flow_1 != 0) {
-        Iterator<Entry<Integer, Double>> iterator_partial_densities =
-            prev1.partial_densities.entrySet().iterator();
-        Entry<Integer, Double> entry_density;
-        double flow_out_dividedby_density = flow_1 / prev1.total_density;
-        double out_flow_for_commodity;
-        while (iterator_partial_densities.hasNext()) {
-          entry_density = iterator_partial_densities.next();
-
-          /* We compute flow_out(1,c,k) */
-          out_flow_for_commodity = flow_out_dividedby_density
-              * entry_density.getValue();
-          prev1.out_flows.put(entry_density.getKey(), out_flow_for_commodity);
-
-          /* We add it into the in-flow of the next */
-          Double in_flow = next_info.in_flows.get(entry_density.getKey());
-
-          if (in_flow == null) {
-            in_flow = 0.0;
-          }
-          next_info.in_flows.put(entry_density.getKey(), in_flow
-              + out_flow_for_commodity);
-        }
-      }
-
-      /* Computing the partial out-flow for the second incoming link */
-      if (flow_2 != 0) {
-        Iterator<Entry<Integer, Double>> iterator_partial_densities =
-            prev2.partial_densities.entrySet().iterator();
-        Entry<Integer, Double> entry_density;
-        double flow_out_dividedby_density = flow_2 / prev2.total_density;
-        double out_flow_for_commodity;
-        while (iterator_partial_densities.hasNext()) {
-          entry_density = iterator_partial_densities.next();
-
-          /* We compute flow_out(1,c,k) */
-          out_flow_for_commodity = flow_out_dividedby_density
-              * entry_density.getValue();
-          prev2.out_flows.put(entry_density.getKey(), out_flow_for_commodity);
-
-          /* We add it into the in-flow of the next */
-          Double in_flow = next_info.in_flows.get(entry_density.getKey());
-
-          if (in_flow == null) {
-            in_flow = 0.0;
-          }
-          next_info.in_flows.put(entry_density.getKey(), in_flow
-              + out_flow_for_commodity);
-        }
-      }
       // 1xN junctions
     } else if (prev.length == 1) {
 
@@ -349,9 +265,90 @@ public class Junction {
                 beta_ijc * out_flow_for_commodity);
           }
         }
+      }
+      // 2x1 junctions
+    } else if (prev.length == 2 && next.length == 1) {
 
+      CellInfo prev1 = p.getCell(prev[0]);
+      CellInfo prev2 = p.getCell(prev[1]);
+      CellInfo next_info = p.getCell(next[0]);
+
+      j_info.putAggregateSR(prev[0], next[0], 1.0);
+      j_info.putAggregateSR(prev[1], next[0], 1.0);
+
+      double demand1 = prev1.demand;
+      double demand2 = prev2.demand;
+      flow = Math.min(demand1 + demand2, next_info.supply);
+      if (flow == 0)
+        return;
+
+      Double P1 = priorities.get(prev[0].getUniqueId());
+      Double P2 = priorities.get(prev[1].getUniqueId());
+      assert P1 != null && P2 != null : "In 2x1 solving, we didn't found the priority for both roads";
+
+      Double flow_1, flow_2;
+      if (P1 * (flow - demand1) > P2 * demand1) {
+        flow_1 = demand1;
+      } else if (P1 * demand2 < P2 * (flow - demand2)) {
+        flow_1 = flow - demand2;
+      } else {
+        flow_1 = P1 / (P1 + P2) * flow;
+      }
+      flow_2 = flow - flow_1;
+
+      assert flow_1 <= demand1;
+      assert flow_2 <= demand2;
+      /* Computing the partial out-flow for the first incoming link */
+      if (flow_1 != 0) {
+        Iterator<Entry<Integer, Double>> iterator_partial_densities =
+            prev1.partial_densities.entrySet().iterator();
+        Entry<Integer, Double> entry_density;
+        double flow_out_dividedby_density = flow_1 / prev1.total_density;
+        double out_flow_for_commodity;
+        while (iterator_partial_densities.hasNext()) {
+          entry_density = iterator_partial_densities.next();
+
+          /* We compute flow_out(1,c,k) */
+          out_flow_for_commodity = flow_out_dividedby_density
+              * entry_density.getValue();
+          prev1.out_flows.put(entry_density.getKey(), out_flow_for_commodity);
+
+          /* We add it into the in-flow of the next */
+          Double in_flow = next_info.in_flows.get(entry_density.getKey());
+
+          if (in_flow == null) {
+            in_flow = 0.0;
+          }
+          next_info.in_flows.put(entry_density.getKey(), in_flow
+              + out_flow_for_commodity);
+        }
       }
 
+      /* Computing the partial out-flow for the second incoming link */
+      if (flow_2 != 0) {
+        Iterator<Entry<Integer, Double>> iterator_partial_densities =
+            prev2.partial_densities.entrySet().iterator();
+        Entry<Integer, Double> entry_density;
+        double flow_out_dividedby_density = flow_2 / prev2.total_density;
+        double out_flow_for_commodity;
+        while (iterator_partial_densities.hasNext()) {
+          entry_density = iterator_partial_densities.next();
+
+          /* We compute flow_out(1,c,k) */
+          out_flow_for_commodity = flow_out_dividedby_density
+              * entry_density.getValue();
+          prev2.out_flows.put(entry_density.getKey(), out_flow_for_commodity);
+
+          /* We add it into the in-flow of the next */
+          Double in_flow = next_info.in_flows.get(entry_density.getKey());
+
+          if (in_flow == null) {
+            in_flow = 0.0;
+          }
+          next_info.in_flows.put(entry_density.getKey(), in_flow
+              + out_flow_for_commodity);
+        }
+      }
     } else {
       System.out.println("Only 1x1 and 1xN junctions are working for now");
       System.exit(1);

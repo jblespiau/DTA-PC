@@ -31,7 +31,7 @@ public class DTASolver {
   public static void optimizationExample() {
     /* Share of the compliant flow */
     double alpha = 1;
-    boolean debug = false;
+    boolean debug = true;
     String network_file = "graphs/TwoParallelPath.json";
     String data_file = "graphs/TwoParallelPathData.json";
     // String network_file = "graphs/PathWithPriorities.json";
@@ -44,9 +44,10 @@ public class DTASolver {
     //SO_Optimizer optimizer = new SO_Optimizer(new IpOptAdjointOptimizer(), maxIter, simulator);
     //optimizer.profileComputationTime();
 
+    optimizer.printSizes();
     double[] final_control = optimizer.solve();
 
-    State final_state = optimizer.forwardSimulate(final_control, false);
+    State final_state = optimizer.forwardSimulate(final_control, true);
 
     optimizer.printProperties(final_state);
     optimizer.printFullControl();

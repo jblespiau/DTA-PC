@@ -45,4 +45,8 @@ public class JunctionInfo {
   public void put(PairCells pair, double value) {
     aggregate_split_ratios.put(pair, value);
   }
+
+  public double size() {
+    return aggregate_split_ratios.size();
+  }
 }

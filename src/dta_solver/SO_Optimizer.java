@@ -645,9 +645,6 @@ public class SO_Optimizer extends Adjoint<State> {
           cell_info = state.profiles[k].getCell(prev_id);
           total_density = cell_info.total_density;
 
-          if (total_density == 0)
-            continue;
-
           demand = cell_info.demand;
           supply = state.profiles[k].getCell(next_id).supply;
 
@@ -665,24 +662,170 @@ public class SO_Optimizer extends Adjoint<State> {
              * There are 3 cases but the use of f_out = min (supply,demand)
              * makes a factorization possible
              */
-            j = x_block_size * k + (C + 1) * prev_id + c;
-            value = f_out * (total_density - partial_density)
-                / (total_density * total_density);
-            assert Numerical.validNumber(value);
-            result.setQuick(i, j, value);
+            if (total_density != 0) {
+              j = x_block_size * k + (C + 1) * prev_id + c;
+              value = f_out * (total_density - partial_density)
+                  / (total_density * total_density);
+              assert Numerical.validNumber(value);
+              result.setQuick(i, j, value);
+            }
 
             /* Derivative terms with respect to supply/demand */
-            if (partial_density == 0)
-              continue;
-
-            if (demand < supply) {
+            if (demand < supply || demand == 0) {
+              /* The demand is limiting the out-flow */
+              assert supply != 0;
               j = x_block_size * k + demand_supply_position + 2 * prev_id;
+              if (demand == 0)
+                /* Special case where the derivative is 1 */
+                value = 1;
+              else
+                value = partial_density / total_density;
+              assert Numerical.validNumber(value);
+              result.setQuick(i, j, value);
             } else if (supply < demand) {
+              /* The supply is limiting the out-flow */
+              if (partial_density == 0)
+                continue;
+              /* Derivation term with respect to the supply */
               j = x_block_size * k + demand_supply_position + 2 * prev_id + 1;
+              value = partial_density / total_density;
+              assert Numerical.validNumber(value);
+              result.setQuick(i, j, value);
+
+              /* Derivative term with respect to the aggregate split ratios */
+              j = x_block_size * k + aggregate_split_ratios_position
+                  + aggregate_index + next_id;
+              value = -f_out * partial_density / total_density;
+              assert Numerical.validNumber(value);
+              result.setQuick(i, j, value);
+            } else {
+              System.out.println("[Warning] Critical point where a" +
+                  "derivative dfout is not defined. supply = demand");
             }
-            value = partial_density / total_density;
-            assert Numerical.validNumber(value);
-            result.setQuick(i, j, value);
+
+          }
+        }
+
+        // Derivative terms for 1xN junctions
+      } else if (nb_prev == 1) {
+        CellInfo cell_info;
+        for (int k = 0; k < T; k++) {
+          int in_id = junction.getPrev()[0].getUniqueId();
+          cell_info = state.profiles[k].getCell(in_id);
+          Cell[] next_cells = junction.getNext();
+          total_density = cell_info.total_density;
+          double demand = cell_info.demand;
+
+          /*
+           * We find j such that f_(in_id)_out = min (supply_j /
+           * \beta_(in_id)_j)
+           */
+          int minimum_id_cell = -1;
+          int minimum_id_in_next = -1;
+          int number_of_minimums = 0;
+          double min_supply_over_beta = Double.MAX_VALUE, supply, beta_at_minimum = 0;
+          Double beta;
+          for (int out = 0; out < next_cells.length; out++) {
+            beta = state.profiles[k]
+                .getJunction(junction)
+                .getAggregateSR(in_id, next_cells[out].getUniqueId());
+
+            if (beta == null)
+              beta = 0.0;
+
+            if (beta != 0) {
+              supply = state.profiles[k].getCell(next_cells[out]).supply;
+              if (supply / beta < min_supply_over_beta) {
+                min_supply_over_beta = supply / beta;
+                minimum_id_cell = next_cells[out].getUniqueId();
+                minimum_id_in_next = out;
+                beta_at_minimum = beta;
+                number_of_minimums = 1;
+              } else if (supply / beta == min_supply_over_beta) {
+                number_of_minimums++;
+              }
+            }
+          }
+          assert !Double.isInfinite(min_supply_over_beta);
+          if (demand == min_supply_over_beta)
+            number_of_minimums++;
+
+          double flow_out;
+          if (demand < min_supply_over_beta) {
+            flow_out = demand;
+            for (int c = 0; c < C + 1; c++) {
+              partial_density = cell_info.partial_densities.get(c);
+              if (partial_density == null)
+                partial_density = 0.0;
+
+              i = x_block_size * k + f_out_position + (C + 1) * in_id + c;
+
+              /* Derivative with respect to partial densities */
+              if (total_density != 0) {
+                j = x_block_size * k + (C + 1) * in_id + c;
+                value = flow_out * (total_density - partial_density)
+                    / (total_density * total_density);
+                assert Numerical.validNumber(value);
+                result.setQuick(i, j, value);
+              }
+              /*
+               * Derivative with respect to supply and demand.
+               * There is only the derivative with respect to the demand
+               */
+              j = x_block_size * k + demand_supply_position + in_id * 2;
+
+              if (total_density != 0)
+                value = partial_density / total_density;
+              else
+                value = 1;
+              assert Numerical.validNumber(value);
+              result.setQuick(i, j, value);
+            }
+          } else if (min_supply_over_beta < demand) {
+            assert total_density != 0;
+            flow_out = min_supply_over_beta;
+            for (int c = 0; c < C + 1; c++) {
+              partial_density = cell_info.partial_densities.get(c);
+              if (partial_density == null)
+                partial_density = 0.0;
+
+              i = x_block_size * k + f_out_position + (C + 1) * in_id + c;
+
+              /* Derivative with respect to partial densities */
+              j = x_block_size * k + (C + 1) * in_id + c;
+              value = flow_out * (total_density - partial_density)
+                  / (total_density * total_density);
+              assert Numerical.validNumber(value);
+              result.setQuick(i, j, value);
+
+              /*
+               * Derivative with respect to supply and aggregate split ratio
+               */
+              if (number_of_minimums != 1) {
+                System.out.println("More than 1 minimum " + number_of_minimums);
+                continue;
+              }
+              /* Derivation with respect to the supply */
+              if (partial_density != 0) {
+                j = x_block_size * k + demand_supply_position + minimum_id_cell
+                    * 2 + 1;
+                value = partial_density / total_density / beta_at_minimum;
+                assert Numerical.validNumber(value);
+                result.setQuick(i, j, value);
+
+                /* Derivative with respect with the aggregate split ratio */
+                /* Computation of the position of the aggregate SR */
+                j = x_block_size * k + aggregate_split_ratios_position
+                    + aggregate_index + minimum_id_in_next;
+                value = -flow_out * partial_density
+                    / total_density / beta_at_minimum;
+                assert Numerical.validNumber(value);
+                result.setQuick(i, j, value);
+              }
+            }
+          } else {
+            System.out.println("[Warning] Partial derivative not define in "
+                + "1xN junction because supply == demand");
           }
         }
         // Derivative terms for 2x1 junctions
@@ -828,121 +971,6 @@ public class SO_Optimizer extends Adjoint<State> {
 
         }
 
-        // Derivative terms for 1xN junctions
-      } else if (nb_prev == 1) {
-        CellInfo cell_info;
-        for (int k = 0; k < T; k++) {
-          int in_id = junction.getPrev()[0].getUniqueId();
-          cell_info = state.profiles[k].getCell(in_id);
-          Cell[] next_cells = junction.getNext();
-          total_density = cell_info.total_density;
-          double demand = cell_info.demand;
-
-          if (total_density == 0)
-            continue;
-          /*
-           * We find j such that f_(in_id)_out = min (supply_j /
-           * \beta_(in_id)_j)
-           */
-          double minimum = Double.MAX_VALUE;
-          int minimum_id_cell = -1;
-          int minimum_id_in_next = -1;
-          int number_of_minimums = 0;
-          double min_supply_over_beta = -1, supply, beta_at_minimum = 0;
-          Double beta;
-          for (int out = 0; out < next_cells.length; out++) {
-            beta = state.profiles[k]
-                .getJunction(junction)
-                .getAggregateSR(in_id, next_cells[out].getUniqueId());
-            if (beta == null)
-              beta = 0.0;
-
-            if (beta != 0) {
-              supply = state.profiles[k].getCell(next_cells[out]).supply;
-              if (supply / beta < minimum) {
-                min_supply_over_beta = supply / beta;
-                minimum_id_cell = next_cells[out].getUniqueId();
-                minimum_id_in_next = out;
-                beta_at_minimum = beta;
-                number_of_minimums = 1;
-              } else if (supply / beta == minimum) {
-                number_of_minimums++;
-              }
-            }
-          }
-          if (demand == min_supply_over_beta)
-            number_of_minimums++;
-          assert min_supply_over_beta != -1;
-
-          double flow_out;
-          if (demand < min_supply_over_beta) {
-            flow_out = demand;
-            for (int c = 0; c < C + 1; c++) {
-              partial_density = cell_info.partial_densities.get(c);
-              if (partial_density == null)
-                partial_density = 0.0;
-
-              i = x_block_size * k + f_out_position + (C + 1) * in_id + c;
-
-              /* Derivative with respect to partial densities */
-              j = x_block_size * k + (C + 1) * in_id + c;
-              value = flow_out * (total_density - partial_density)
-                  / (total_density * total_density);
-              assert Numerical.validNumber(value);
-              result.setQuick(i, j, value);
-
-              /*
-               * Derivative with respect to supply and demand.
-               * There is only the derivative with respect to the demand
-               */
-              j = x_block_size * k + demand_supply_position + in_id * 2;
-              value = partial_density / total_density;
-              assert Numerical.validNumber(value);
-              result.setQuick(i, j, value);
-            }
-          } else if (min_supply_over_beta < demand) {
-            flow_out = min_supply_over_beta;
-            for (int c = 0; c < C + 1; c++) {
-              partial_density = cell_info.partial_densities.get(c);
-              if (partial_density == null)
-                partial_density = 0.0;
-
-              i = x_block_size * k + f_out_position + (C + 1) * in_id + c;
-
-              /* Derivative with respect to partial densities */
-              j = x_block_size * k + (C + 1) * in_id + c;
-              value = flow_out * (total_density - partial_density)
-                  / (total_density * total_density);
-              assert Numerical.validNumber(value);
-              result.setQuick(i, j, value);
-
-              /*
-               * Derivative with respect to supply and aggregate split ratio
-               */
-              if (number_of_minimums != 1) {
-                System.out.println("More than 1 minimum " + number_of_minimums);
-                continue;
-              }
-
-              if (partial_density != 0) {
-                j = x_block_size * k + demand_supply_position + minimum_id_cell
-                    * 2 + 1;
-                value = partial_density / total_density / beta_at_minimum;
-                assert Numerical.validNumber(value);
-                result.setQuick(i, j, value);
-
-                /* Derivative with respect with the aggregate split ratio */
-                /* Computation of the position of the aggregate SR */
-                j = x_block_size * k + aggregate_split_ratios_position
-                    + aggregate_index + minimum_id_in_next;
-                value = -flow_out * partial_density
-                    / total_density / beta_at_minimum;
-                assert Numerical.validNumber(value);
-                result.setQuick(i, j, value);
-              }
-            }
-          }
-        }
       } else {
         assert false : "[dhdx] Only 1x1, 2x1, and Nx1 junctions are possible";
       }
@@ -967,14 +995,17 @@ public class SO_Optimizer extends Adjoint<State> {
           for (int in = 0; in < prev_length; in++) {
             in_id = junctions[j_id].getPrev()[in].getUniqueId();
             out_id = junctions[j_id].getNext()[0].getUniqueId();
-            // We don't know the split ratios so we suppose it is 1 for all
+            /* Partial derivative with respect to the flow-out(i,c) */
             for (int c = 0; c < C + 1; c++) {
               i = x_block_size * k + f_in_position + out_id * (C + 1) + c;
               j = x_block_size * k + f_out_position + in_id * (C + 1) + c;
+
               result.setQuick(i, j, 1.0);
             }
           }
         } else {
+          assert junctions[j_id].getNext().length != 1;
+
           Iterator<Entry<Triplet, Double>> iterator =
               junction_SR.non_compliant_split_ratios
                   .entrySet()
@@ -985,7 +1016,7 @@ public class SO_Optimizer extends Adjoint<State> {
             in_id = entry.getKey().incoming;
             out_id = entry.getKey().outgoing;
             commodity = entry.getKey().commodity;
-
+            assert commodity == 0;
             i = x_block_size * k + f_in_position + out_id * (C + 1) + commodity;
             j = x_block_size * k + f_out_position + in_id * (C + 1) + commodity;
             assert Numerical.validNumber(entry.getValue());
@@ -1001,6 +1032,7 @@ public class SO_Optimizer extends Adjoint<State> {
             in_id = entry.getKey().incoming;
             out_id = entry.getKey().outgoing;
             commodity = entry.getKey().commodity;
+            assert commodity != 0;
 
             i = x_block_size * k + f_in_position + out_id * (C + 1) + commodity;
             j = x_block_size * k + f_out_position + in_id * (C + 1) + commodity;
