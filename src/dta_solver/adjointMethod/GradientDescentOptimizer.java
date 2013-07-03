@@ -17,7 +17,7 @@ public interface GradientDescentOptimizer {
   /**
    * @brief Returns the evaluation of the cost function at point x
    */
-  public double objective(double[] x);
+  public double objective(double[] u);
 
   /**
    * @brief Get a valid point to begin the gradient descent

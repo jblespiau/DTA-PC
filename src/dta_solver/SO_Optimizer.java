@@ -35,15 +35,15 @@ public class SO_Optimizer extends Adjoint<State> {
   /* Share of the compliant commodities */
   private double alpha;
   /* Total number of time steps */
-  private int T;
+  protected int T;
   /* Number of compliant commodities */
-  private int C;
-  private Cell[] cells;
+  protected int C;
+  protected Cell[] cells;
   private Junction[] junctions;
-  private Origin[] sources;
-  private Destination[] destinations;
+  protected Origin[] sources;
+  protected Destination[] destinations;
   /* Number of origins */
-  private int O;
+  protected int O;
   /* Number of destinations */
   private int S;
 
@@ -1163,8 +1163,11 @@ public class SO_Optimizer extends Adjoint<State> {
            * U[k * C + index_in_control]
            */
           coordinate = k * temporal_control_block_size + index_in_control;
-          assert control[coordinate] >= 0 : "The " + coordinate
-              + "-th control (" + control[coordinate] + ") should be positive";
+          // TODO: Check this !
+          /*
+           * assert control[coordinate] >= 0 : "The " + coordinate
+           * + "-th control (" + control[coordinate] + ") should be positive";
+           */
           splits.get(sources[orig], k).
               put(commodity, control[coordinate] * alpha);
           sum_of_split_ratios[orig][k] += control[coordinate];

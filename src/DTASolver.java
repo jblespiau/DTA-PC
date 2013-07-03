@@ -1,7 +1,9 @@
+import io.InputOutput;
 import generalNetwork.graph.DisplayGUI;
 import generalNetwork.graph.EditorGUI;
 import generalNetwork.state.State;
 
+import dta_solver.SO_OptimizerByFiniteDifferences;
 import dta_solver.SO_Optimizer;
 import dta_solver.Simulator;
 
@@ -12,7 +14,7 @@ public class DTASolver {
    */
   public static void main(String[] args) {
     //EditorGUI e = new EditorGUI();
-    optimizationExample();
+    optimizationExampleByFiniteDifferences();
     //printExample();
   }
 
@@ -49,6 +51,33 @@ public class DTASolver {
 
     State final_state = optimizer.forwardSimulate(final_control, true);
 
+    optimizer.printProperties(final_state);
+    optimizer.printFullControl();
+  }
+  
+  public static void optimizationExampleByFiniteDifferences() {
+    /* Share of the compliant flow */
+    double alpha = 1;
+    boolean debug = true;
+    String network_file = "graphs/TwoParallelPath.json";
+    String data_file = "graphs/TwoParallelPathData.json";
+
+    Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
+
+    int maxIter = 2;
+    SO_OptimizerByFiniteDifferences optimizer = new SO_OptimizerByFiniteDifferences(maxIter, simulator);
+
+    optimizer.printSizes();
+    double[] final_control = optimizer.solve();
+
+    State final_state = optimizer.forwardSimulate(final_control, true);
+
+    double[] gradient = new double[final_control.length];
+    optimizer.gradient(gradient, final_control);
+
+    System.out.println("Gradient:");
+    InputOutput.printTable(gradient);
+    
     optimizer.printProperties(final_state);
     optimizer.printFullControl();
   }
