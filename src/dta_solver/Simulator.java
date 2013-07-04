@@ -202,7 +202,7 @@ public class Simulator {
    * @brief Initialization of a physical set for the control split-ratios at the
    *        origins
    */
-  protected void initializSplitRatios() {
+  public void initializSplitRatios() {
 
     int nb_steps = time_discretization.getNb_steps();
     splits =

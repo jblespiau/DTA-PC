@@ -28,7 +28,7 @@ import dta_solver.adjointMethod.Adjoint;
 
 public class SO_Optimizer extends Adjoint<State> {
 
-  private Simulator simulator;
+  protected Simulator simulator;
 
   private double epsilon = 0.001;
 
@@ -1196,7 +1196,7 @@ public class SO_Optimizer extends Adjoint<State> {
   public double objective(double[] control) {
     /* Inforces control[i] >= 0, \forall i */
     for (int i = 0; i < control.length; i++)
-      if (control[i] <= 0)
+      if (control[i] < 0)
         return Double.MAX_VALUE;
     return objective(forwardSimulate(control), control);
   }

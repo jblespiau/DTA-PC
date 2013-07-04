@@ -1,11 +1,11 @@
 {
-  "max_time_step": 3,
+  "max_time_step": 5,
   "delta_t": 1,
   "demands": [
     {
       "origin_id": 0,
       "demand": [
-        1.5,
+        0.1,
         0.0
       ]
     }

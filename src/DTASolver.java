@@ -1,3 +1,4 @@
+import optimization.GradientDescentMethod;
 import io.InputOutput;
 import generalNetwork.graph.DisplayGUI;
 import generalNetwork.graph.EditorGUI;
@@ -13,9 +14,9 @@ public class DTASolver {
    * @param args
    */
   public static void main(String[] args) {
-    //EditorGUI e = new EditorGUI();
+    // EditorGUI e = new EditorGUI();
     optimizationExampleByFiniteDifferences();
-    //printExample();
+    // printExample();
   }
 
   public static void printExample() {
@@ -43,8 +44,9 @@ public class DTASolver {
 
     int maxIter = 10;
     SO_Optimizer optimizer = new SO_Optimizer(maxIter, simulator);
-    //SO_Optimizer optimizer = new SO_Optimizer(new IpOptAdjointOptimizer(), maxIter, simulator);
-    //optimizer.profileComputationTime();
+    // SO_Optimizer optimizer = new SO_Optimizer(new IpOptAdjointOptimizer(),
+    // maxIter, simulator);
+    // optimizer.profileComputationTime();
 
     optimizer.printSizes();
     double[] final_control = optimizer.solve();
@@ -54,7 +56,7 @@ public class DTASolver {
     optimizer.printProperties(final_state);
     optimizer.printFullControl();
   }
-  
+
   public static void optimizationExampleByFiniteDifferences() {
     /* Share of the compliant flow */
     double alpha = 1;
@@ -64,20 +66,27 @@ public class DTASolver {
     Simulator simulator = new Simulator(network_file, data_file, alpha, false);
 
     int maxIter = 2;
-    SO_OptimizerByFiniteDifferences optimizer = new SO_OptimizerByFiniteDifferences(maxIter, simulator);
-
-    optimizer.printSizes();
-    double[] final_control = optimizer.solve();
-
-    State final_state = optimizer.forwardSimulate(final_control, true);
-
-    double[] gradient = new double[final_control.length];
-    optimizer.gradient(gradient, final_control);
-
-    System.out.println("Gradient:");
-    InputOutput.printTable(gradient);
-    
-    optimizer.printProperties(final_state);
-    optimizer.printFullControl();
+    SO_OptimizerByFiniteDifferences optimizer = new SO_OptimizerByFiniteDifferences(
+        maxIter, simulator);
+    /*
+     * optimizer.printSizes();
+     * double[] final_control = optimizer.solve();
+     * 
+     * State final_state = optimizer.forwardSimulate(final_control, true);
+     * 
+     * double[] gradient = new double[final_control.length];
+     * optimizer.gradient(gradient, final_control);
+     * 
+     * System.out.println("Gradient:");
+     * InputOutput.printTable(gradient);
+     * 
+     * optimizer.printProperties(final_state);
+     * optimizer.printFullControl();
+     */
+    GradientDescentMethod homemade_test = new GradientDescentMethod();
+    double[] result = homemade_test.solve(optimizer);
+    System.out.println("Final control");
+    for (int i = 0; i < result.length; i++)
+      System.out.println(result[i]);
   }
 }
