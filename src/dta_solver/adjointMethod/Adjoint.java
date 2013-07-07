@@ -59,8 +59,11 @@ public abstract class Adjoint<T extends JavaSystemState> implements
   }
 
   public DoubleMatrix1D adjointVector(T state, double[] control) {
-    //SparseCCDoubleMatrix2D dhdxTranspose = dhdx(state, control).getTranspose();
-    SparseCCDoubleMatrix2D dhdxTranspose = new SparseCCDoubleMatrix2D(dAlg.transpose(dhdx(state, control)).toArray());
+    // SparseCCDoubleMatrix2D dhdxTranspose = dhdx(state,
+    // control).getTranspose();
+    SparseCCDoubleMatrix2D dhdxTranspose = new SparseCCDoubleMatrix2D(dAlg
+        .transpose(dhdx(state, control))
+        .toArray());
     SparseDoubleMatrix1D djdx = djdx(state, control);
     return algebra.solve(dhdxTranspose, djdx);
 
@@ -73,7 +76,7 @@ public abstract class Adjoint<T extends JavaSystemState> implements
     // solver.fn = f
     // solver.u0 = startPoint
     ipOptOptimizer.create(n, 0, 0, 0, Ipopt.C_STYLE);
-    
+
     ipOptOptimizer.setStringOption(Ipopt.KEY_MU_STRATEGY, "adaptive");
     ipOptOptimizer.setStringOption(Ipopt.KEY_HESSIAN_APPROXIMATION,
         "limited-memory");

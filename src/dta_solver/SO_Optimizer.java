@@ -345,7 +345,7 @@ public class SO_Optimizer extends Adjoint<State> {
           + (cell_id));
     } else if (remaining < aggregate_split_ratios_position) {
       int cell_id = (remaining - demand_supply_position) / 2;
-      int is_demand = (remaining % 2);
+      int is_demand = ((remaining - demand_supply_position - cell_id * 2) % 2);
       if (is_demand == 0)
         System.out.println("Demand in cell " + (cell_id));
       else

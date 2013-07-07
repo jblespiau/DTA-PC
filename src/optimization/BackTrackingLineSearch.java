@@ -39,7 +39,7 @@ public class BackTrackingLineSearch implements LineSearchMethod {
       else if (direction[i] < 0)
         t = Math.min(t, (-initial_point[i] / direction[i]));
     //System.out.println("Value of T " + t);
- 
+    t -= 10E-4;
     double initial_value = function.objective(initial_point);
 
     //System.out.println("Gradient in backstracking LineSearch");

@@ -79,7 +79,7 @@ public class SO_OptimizerByFiniteDifferences extends SO_Optimizer {
    *          The point where the gradient is computed
    */
   public void gradient(double[] gradient_f, double[] control) {
-    double deviation = 0.05;
+    double deviation = 0.001;
     double value = objective222(control);
     double[] gradient = new double[gradient_f.length];
     for (int i = 0; i < control.length; i++) {

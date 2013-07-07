@@ -30,6 +30,9 @@ public final class DebugFunctions {
     return compareTable(t1, t2, 10E-6);
   }
 
+  /**
+   * @brief Return true if t1 and t2 are identical
+   */
   public static boolean compareTable(double[][] t1, double[][] t2, double error) {
 
     assert (t1.length == t2.length);
