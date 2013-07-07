@@ -13,6 +13,6 @@ public interface LineSearchMethod {
    * @param function The cost function
    * @return A point in the direction that has a smaller evaluation value
    */
-  public double[] lineSearch(double[] initial_point,
+  public double[] lineSearch(double[] initial_point, double[] init_gradient,
       GradientDescentOptimizer function);
 }

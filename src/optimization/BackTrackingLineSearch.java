@@ -21,12 +21,10 @@ public class BackTrackingLineSearch implements LineSearchMethod {
   }
 
   @Override
-  public double[] lineSearch(double[] initial_point,
+  public double[] lineSearch(double[] initial_point, double[] gradient,
       GradientDescentOptimizer function) {
 
     /* We compute the direction which is the opposite of the gradient */
-    double[] gradient = new double[initial_point.length];
-    function.gradient(gradient, initial_point);
     double[] direction = new double[initial_point.length];
     for (int i = 0; i < gradient.length; i++)
       direction[i] = -gradient[i];

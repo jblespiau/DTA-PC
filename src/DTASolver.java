@@ -1,3 +1,4 @@
+import optimization.GradientDescent;
 import optimization.GradientDescentMethod;
 import io.InputOutput;
 import generalNetwork.graph.DisplayGUI;
@@ -69,7 +70,7 @@ public class DTASolver {
     SO_OptimizerByFiniteDifferences optimizer = new SO_OptimizerByFiniteDifferences(
         maxIter, simulator);
 
-    GradientDescentMethod homemade_test = new GradientDescentMethod();
+    GradientDescentMethod homemade_test = new GradientDescent();
     double[] result = homemade_test.solve(optimizer);
     System.out.println("Final control");
     for (int i = 0; i < result.length; i++)
