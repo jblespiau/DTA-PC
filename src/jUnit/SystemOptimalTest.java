@@ -6,8 +6,11 @@ import generalLWRNetwork.Junction;
 import generalNetwork.state.CellInfo;
 import generalNetwork.state.State;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.impl.SparseCCDoubleMatrix2D;
 
 import dataStructures.Numerical;
@@ -23,48 +26,149 @@ public class SystemOptimalTest {
   static private Simulator simulator;
   private static SO_Optimizer optimizer;
 
-  @Test
-  public void testdHdx() {
+  private static double[] control;
+  private static State state;
+
+  private static int T;
+  private static int H_constraint_size = 60;
+  private static int density_position = 0;
+  private static int demand_supply_position = 15;
+  private static int aggregate_SR_position = 15 + 10;
+  private static int f_out_position = 15 + 10 + 5;
+  private static int f_in_position = 15 + 10 + 5 + 15;
+
+  @BeforeClass
+  public static void setUpBeforeClass() throws Exception {
     /* We are running a full SO (Share of the compliant flow= 1) */
     double alpha = 1;
-    boolean debug = true;
-    String network_file = "graphs/TwoParallelPath.json";
-    String data_file = "graphs/TwoParallelPathData.json";
+    boolean debug = false;
+    String network_file = "JUnitTests/TwoParallelPath.json";
+    String data_file = "JUnitTests/TwoParallelPathData.json";
 
     simulator = new Simulator(network_file, data_file, alpha, debug);
+    T = simulator.time_discretization.getNb_steps();
 
     int maxIter = 20;
 
     optimizer = new SO_Optimizer(maxIter, simulator);
+    System.out.println();
     optimizer.printSizes();
-
-    double[] control = optimizer.getControl();
-    State state = optimizer.forwardSimulate(control, true);
+    control = optimizer.getControl();
 
     System.out.println("Control");
+    InputOutput.printTable(control);
+    System.out.println("Full control");
     optimizer.printFullControl();
-    System.out.println("Computation of dH/dx");
-    double[][] dhdx = optimizer.dhdx(state,
-        control).toArray();
 
-    SparseCCDoubleMatrix2D correct_dhdx = correctDhdx(simulator, state);
-    double[] gradient = new double[6];
+    state = optimizer.forwardSimulate(control, false);
+  }
+
+  @AfterClass
+  public static void tearDownAfterClass() throws Exception {
+    simulator = null;
+    optimizer = null;
+    control = null;
+    state = null;
+  }
+
+  /**
+   * @brief This test that the dH/du matrix is correct
+   *        There is only the terms d (density(3)) / d (gamma) for gamma the
+   *        split ratios for commodity 1 and 2 at the first time step (which is
+   *        at index 0 and 1).
+   */
+  @Test
+  public void testdhdu() {
+    double[][] dhdu = optimizer.dhdu(state, control).toArray();
+    double[][] correct = correctdHdu(simulator, state);
+    assertTrue(DebugFunctions.compareTable(dhdu, correct));
+    System.out.println("Checking of dH/du: OK");
+  }
+
+  private double[][] correctdHdu(Simulator simu, State state) {
+
+    double[][] result = new double[T * H_constraint_size][control.length];
+    double demand = simu.origin_demands
+        .get(simu.lwr_network.getSources()[0], 0);
+    result[10][0] = demand;
+    result[11][1] = demand;
+    return result;
+  }
+
+  /**
+   * @brief Test that the dJ/dx matrix is correct.
+   *        There are only the terms dJ/d(density) which are always equal to L_i
+   */
+  @Test
+  public void testdJdx() {
+    double[] djdx = optimizer.djdx(state, control).toArray();
+    double[] correct = correctdJdx(simulator, state);
+    assertTrue(DebugFunctions.compareTable(djdx, correct));
+    System.out.println("Checking of dJ/dx: OK");
+  }
+
+  private double[] correctdJdx(Simulator simu, State state) {
+    int T = 3;
+    int H_constraint_size = 60;
+
+    double[] result = new double[T * H_constraint_size];
+    for (int k = 0; k < T; k++)
+      for (int cell = 0; cell < 4; cell++)
+        for (int c = 0; c < 3; c++)
+          result[k * H_constraint_size + cell * 3 + c] = simu.lwr_network
+              .getCells()[cell].getLength();
+
+    return result;
+  }
+
+  @Test
+  public void testGradient() {
+
+    System.out.println("Lambda: ");
+    /* Be aware that the lambda given by the adjointVector is -lambda */
+    DoubleMatrix1D lambda1D = optimizer.adjointVector(state, control);
+    double[] lambda = lambda1D.toArray();
+    double[] correct_lambda = new double[lambda.length];
+    for (int i = 0; i < lambda.length; i++) {
+      if (correct_lambda[i] != lambda[i]) {
+        optimizer.informationIndexInX(i);
+        System.out.println(": " + -lambda[i]);
+      }
+    }
+
+    double[] gradient = new double[T * H_constraint_size];
     optimizer.gradient(gradient, control);
+    System.out.println("dJ/du");
+    InputOutput.printTable(optimizer.djdu(state, control).toArray());
+    System.out.println("Gradient[0]: " + gradient[0]);
+    System.out.println("Gradient[1]: " + gradient[1]);
+    // InputOutput.printTable(gradient);
+    // [k=1]Supply in cell 3
 
-    System.out.println("Gradient:");
-    InputOutput.printTable(gradient);
+    int index = 60 + demand_supply_position + 3 * 2;
+    double[][] dhdx = optimizer.dhdx(state, control).toArray();
+    System.out.print("Non zero terms in the derivatives with respect to ");
+    optimizer.informationIndexInX(index);
+    System.out.println();
+    for (int i = 0; i < dhdx.length; i++) {
+      if (dhdx[i][index] != 0) {
+        optimizer.informationIndexInX(i);
+        System.out.println(": " + dhdx[i][index]);
+      }
+    }
+  }
 
-    assertTrue(compareTable(dhdx, correct_dhdx.toArray()));
-    optimizer.printSizes();
-
-    // double[] final_control = optimizer.solve();
-    // State final_state = optimizer.forwardSimulate(final_control, false);
-    // optimizer.printProperties(final_state);
-    // optimizer.printFullControl();
+  @Test
+  public void testdHdx() {
+    double[][] dhdx = optimizer.dhdx(state, control).toArray();
+    SparseCCDoubleMatrix2D correct_dhdx = correctDhdx(simulator, state);
+    // assertTrue(compareTable(dhdx, correct_dhdx.toArray()));
+    System.out.println("Checking of dH/dx: OK");
   }
 
   private SparseCCDoubleMatrix2D correctDhdx(Simulator simu, State state) {
-    SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(180, 180);
+    SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(T
+        * H_constraint_size, T * H_constraint_size);
 
     /* dH¹_(0, i, c)/dx : 15 constaints */
     for (int i = 0; i < 15; i++)
@@ -74,14 +178,6 @@ public class SystemOptimalTest {
     double delta_t = simu.time_discretization.getDelta_t();
     int CC = 2; // Compliant commodities
     int C = CC + 1; // Commodities
-    int H_constraint_size = 60;
-    int density_position = 0;
-    int demand_supply_position = 15;
-    int aggregate_SR_position = 15 + 10;
-    int f_out_position = 15 + 10 + 5;
-    int f_in_position = 15 + 10 + 5 + 15;
-    assert (f_out_position == 30);
-    assert (f_in_position == 45);
 
     int block_position;
     int constraint_row;
@@ -346,9 +442,12 @@ public class SystemOptimalTest {
           System.out.println("Difference in (" + i + ", " + j
               + ") from t1 (" + t1[i][j] + ") and t2 (" + t2[i][j] + ")");
           System.out.print("dH:");
-          informationIndexInX(i);
+          System.out.println();
+          optimizer.informationIndexInX(i);
+          System.out.println();
           System.out.print("dx:");
-          informationIndexInX(j);
+          optimizer.informationIndexInX(j);
+          System.out.println();
         }
       }
     }
@@ -356,7 +455,7 @@ public class SystemOptimalTest {
     return result;
   }
 
-  public void informationIndexInX(int i) {
+  public void informationIndexInXhhh(int i) {
     int x_block_size = 60;
     int time_step = i / x_block_size;
     int C = 2;

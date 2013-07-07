@@ -68,21 +68,7 @@ public class DTASolver {
     int maxIter = 2;
     SO_OptimizerByFiniteDifferences optimizer = new SO_OptimizerByFiniteDifferences(
         maxIter, simulator);
-    /*
-     * optimizer.printSizes();
-     * double[] final_control = optimizer.solve();
-     * 
-     * State final_state = optimizer.forwardSimulate(final_control, true);
-     * 
-     * double[] gradient = new double[final_control.length];
-     * optimizer.gradient(gradient, final_control);
-     * 
-     * System.out.println("Gradient:");
-     * InputOutput.printTable(gradient);
-     * 
-     * optimizer.printProperties(final_state);
-     * optimizer.printFullControl();
-     */
+
     GradientDescentMethod homemade_test = new GradientDescentMethod();
     double[] result = homemade_test.solve(optimizer);
     System.out.println("Final control");

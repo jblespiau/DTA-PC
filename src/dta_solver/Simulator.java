@@ -15,7 +15,7 @@ public class Simulator {
 
   public DiscretizedGraph discretized_graph;
   public Discretization time_discretization;
-  Demands origin_demands;
+  public Demands origin_demands;
   public IntertemporalOriginsSplitRatios splits;
   public LWR_network lwr_network;
   /* Share of the compliant flow */
