@@ -74,7 +74,7 @@ public class SOPC_Optimizer extends SO_Optimizer {
     for (int i = 0; i < control.length; i++)
       System.out.println(control[i]);
     super.gradient(gradient_f, control);
-    System.out.println("Gradient");
+    System.out.println("Gradient in SOPC");
     for (int i = 0; i < gradient_f.length; i++)
       System.out.println(gradient_f[i]);
     projectGradient(gradient_f, gradient_f);

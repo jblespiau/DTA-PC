@@ -205,10 +205,13 @@ public class Simulator {
   public void initializSplitRatios() {
 
     int nb_steps = time_discretization.getNb_steps();
+    System.out
+    .print("Initializing physical split-ratios at the origins...");
     splits =
         IntertemporalOriginsSplitRatios.defaultPhysicalSplitRatios(
             nb_steps,
             discretized_graph.sources, alpha);
+    System.out.println("Done");
   }
 
   /**

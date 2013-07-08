@@ -14,7 +14,8 @@ import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.impl.SparseCCDoubleMatrix2D;
 
 import dataStructures.Numerical;
-import dta_solver.SO_Optimizer;
+import dta_solver.SOPC_Optimizer;
+import dta_solver.SO_OptimizerByFiniteDifferences;
 import dta_solver.Simulator;
 
 /**
@@ -24,7 +25,8 @@ import dta_solver.Simulator;
 public class SystemOptimalTest {
 
   static private Simulator simulator;
-  private static SO_Optimizer optimizer;
+  private static SOPC_Optimizer optimizer;
+  private static SO_OptimizerByFiniteDifferences exactOptimizer;
 
   private static double[] control;
   private static State state;
@@ -50,7 +52,9 @@ public class SystemOptimalTest {
 
     int maxIter = 20;
 
-    optimizer = new SO_Optimizer(maxIter, simulator);
+    optimizer = new SOPC_Optimizer(maxIter, simulator);
+    exactOptimizer = new SO_OptimizerByFiniteDifferences(maxIter, simulator);
+
     System.out.println();
     optimizer.printSizes();
     control = optimizer.getControl();
@@ -96,6 +100,17 @@ public class SystemOptimalTest {
   }
 
   /**
+   * @brief Test that the dJ/du matrix is correct. Should be zero
+   */
+  @Test
+  public void testdJdu() {
+    double[] djdu = optimizer.djdu(state, control).toArray();
+    double[] correct = new double[djdu.length];
+    assertTrue(DebugFunctions.compareTable(djdu, correct));
+    System.out.println("Checking of dJ/du: OK");
+  }
+
+  /**
    * @brief Test that the dJ/dx matrix is correct.
    *        There are only the terms dJ/d(density) which are always equal to L_i
    */
@@ -108,9 +123,6 @@ public class SystemOptimalTest {
   }
 
   private double[] correctdJdx(Simulator simu, State state) {
-    int T = 3;
-    int H_constraint_size = 60;
-
     double[] result = new double[T * H_constraint_size];
     for (int k = 0; k < T; k++)
       for (int cell = 0; cell < 4; cell++)
@@ -136,26 +148,34 @@ public class SystemOptimalTest {
       }
     }
 
-    double[] gradient = new double[T * H_constraint_size];
+    double[] gradient = new double[control.length];
     optimizer.gradient(gradient, control);
     System.out.println("dJ/du");
     InputOutput.printTable(optimizer.djdu(state, control).toArray());
+    System.out.println("Gradient by the adjoint");
     System.out.println("Gradient[0]: " + gradient[0]);
     System.out.println("Gradient[1]: " + gradient[1]);
+    System.out.println("Gradient by finite differencices");
+    double[] exact_gradient = new double[control.length];
+    exactOptimizer.gradient(exact_gradient, control);
+    System.out.println("Gradient[0]: " + exact_gradient[0]);
+    System.out.println("Gradient[1]: " + exact_gradient[1]);
     // InputOutput.printTable(gradient);
     // [k=1]Supply in cell 3
 
-    int index = 60 + demand_supply_position + 3 * 2;
-    double[][] dhdx = optimizer.dhdx(state, control).toArray();
-    System.out.print("Non zero terms in the derivatives with respect to ");
-    optimizer.informationIndexInX(index);
-    System.out.println();
-    for (int i = 0; i < dhdx.length; i++) {
-      if (dhdx[i][index] != 0) {
-        optimizer.informationIndexInX(i);
-        System.out.println(": " + dhdx[i][index]);
-      }
-    }
+    /*
+     * int index = 60 + demand_supply_position + 3 * 2;
+     * double[][] dhdx = optimizer.dhdx(state, control).toArray();
+     * System.out.print("Non zero terms in the derivatives with respect to ");
+     * optimizer.informationIndexInX(index);
+     * System.out.println();
+     * for (int i = 0; i < dhdx.length; i++) {
+     * if (dhdx[i][index] != 0) {
+     * optimizer.informationIndexInX(i);
+     * System.out.println(": " + dhdx[i][index]);
+     * }
+     * }
+     */
   }
 
   @Test
