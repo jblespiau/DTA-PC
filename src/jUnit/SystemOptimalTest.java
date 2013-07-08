@@ -150,8 +150,6 @@ public class SystemOptimalTest {
 
     double[] gradient = new double[control.length];
     optimizer.gradient(gradient, control);
-    System.out.println("dJ/du");
-    InputOutput.printTable(optimizer.djdu(state, control).toArray());
     System.out.println("Gradient by the adjoint");
     System.out.println("Gradient[0]: " + gradient[0]);
     System.out.println("Gradient[1]: " + gradient[1]);
@@ -163,19 +161,18 @@ public class SystemOptimalTest {
     // InputOutput.printTable(gradient);
     // [k=1]Supply in cell 3
 
-    /*
-     * int index = 60 + demand_supply_position + 3 * 2;
-     * double[][] dhdx = optimizer.dhdx(state, control).toArray();
-     * System.out.print("Non zero terms in the derivatives with respect to ");
-     * optimizer.informationIndexInX(index);
-     * System.out.println();
-     * for (int i = 0; i < dhdx.length; i++) {
-     * if (dhdx[i][index] != 0) {
-     * optimizer.informationIndexInX(i);
-     * System.out.println(": " + dhdx[i][index]);
-     * }
-     * }
-     */
+    int index = 60 + demand_supply_position + 2 * 1;
+    double[][] dhdx = optimizer.dhdx(state, control).toArray();
+    System.out.print("Non zero terms in the derivatives with respect to ");
+    optimizer.informationIndexInX(index);
+    System.out.println();
+    for (int i = 0; i < dhdx.length; i++) {
+      if (dhdx[i][index] != 0) {
+        optimizer.informationIndexInX(i);
+        System.out.println(": " + dhdx[i][index]);
+      }
+    }
+
   }
 
   @Test

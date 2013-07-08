@@ -395,7 +395,13 @@ public class SO_Optimizer extends Adjoint<State> {
               + commodity;
           j = k * temporal_control_block_size + index_in_control;
 
-          result.setQuick(i, j, origin_demands[k] * alpha);
+          assert (cells[sources[orig].getUniqueId()].getLength() == 1) : "For now buffers must have a length of 1.0";
+          /*
+           * For now, origin_demands[k] is already a number of vehicle. So we do
+           * not multiply by the time step
+           */
+          double value = origin_demands[k] * alpha;
+          result.setQuick(i, j, value);
         }
         index_in_control++;
       }
@@ -441,7 +447,7 @@ public class SO_Optimizer extends Adjoint<State> {
 
           /*
            * We put 1 for the derivative terms of the mass conversation
-           * equations (i,c,k) with respect to density(i,c,k-1) for k \in [1, T]
+           * equations (i,c,k) with respect to density(i,c,k-1) for k : [1,T-1]
            */
           result.setQuick(i, j, 1.0);
 
@@ -449,8 +455,7 @@ public class SO_Optimizer extends Adjoint<State> {
            * Derivative terms with respect to flow-out(i,c,k-1) and
            * flow-in(i,c,k-1)
            */
-          delta_t_over_l = delta_t /
-              simulator.lwr_network.getCell(cell_id).getLength();
+          delta_t_over_l = delta_t / cells[cell_id].getLength();
 
           assert Numerical.validNumber(delta_t_over_l);
 
@@ -490,7 +495,6 @@ public class SO_Optimizer extends Adjoint<State> {
     // System.out.print("Flow propagation: ");
     // startTime= System.currentTimeMillis();
 
-    double total_density;
     for (int k = 0; k < T; k++) {
       // Position of the first constraint in H dealing with supply/demand at
       // time step k
@@ -498,7 +502,7 @@ public class SO_Optimizer extends Adjoint<State> {
       for (int cell_id = 0; cell_id < cells.length; cell_id++) {
         sub_block_position = cell_id * 2;
         i = block_upper_position + sub_block_position;
-        total_density = state.profiles[k].getCell(cell_id).total_density;
+        double total_density = state.profiles[k].getCell(cell_id).total_density;
 
         for (int c = 0; c < C + 1; c++) {
           // Demand first
@@ -526,7 +530,6 @@ public class SO_Optimizer extends Adjoint<State> {
      */
     /* Used to know the position of the current SR under study */
     int aggregate_SR_index = 0;
-    Double partial_density;
     /* Used to store beta(i,j,c)(k) */
     Double i_j_c_SR;
     /* Store the split ratios at a junction. Is null when Nx1 junction */
@@ -595,12 +598,13 @@ public class SO_Optimizer extends Adjoint<State> {
                 continue;
                 // i_j_c_SR = 0.0;
               }
-              partial_density = in_cell_info.partial_densities.get(c);
-              if (partial_density == null)
-                partial_density = 0.0;
-              total_density = in_cell_info.total_density;
+              double total_density = in_cell_info.total_density;
 
               if (total_density != 0) {
+                Double partial_density = in_cell_info.partial_densities.get(c);
+                if (partial_density == null)
+                  partial_density = 0.0;
+
                 double derivative_term = i_j_c_SR
                     * (total_density - partial_density)
                     / (total_density * total_density);
@@ -623,7 +627,7 @@ public class SO_Optimizer extends Adjoint<State> {
      *********************************************************/
     // System.out.print("Out-flows: ");
     // startTime= System.currentTimeMillis();
-    double value;
+
     /*
      * This is used to know the position of the first aggregate split ratio
      * associated with the current junction. It is incremented by nb_prev *
@@ -643,7 +647,7 @@ public class SO_Optimizer extends Adjoint<State> {
         int next_id = junction.getNext()[0].getUniqueId();
         for (int k = 0; k < T; k++) {
           cell_info = state.profiles[k].getCell(prev_id);
-          total_density = cell_info.total_density;
+          double total_density = cell_info.total_density;
 
           demand = cell_info.demand;
           supply = state.profiles[k].getCell(next_id).supply;
@@ -651,7 +655,7 @@ public class SO_Optimizer extends Adjoint<State> {
           f_out = Math.min(demand, supply);
 
           for (int c = 0; c < C + 1; c++) {
-            partial_density = cell_info.partial_densities.get(c);
+            Double partial_density = cell_info.partial_densities.get(c);
             if (partial_density == null)
               partial_density = 0.0;
 
@@ -664,7 +668,7 @@ public class SO_Optimizer extends Adjoint<State> {
              */
             if (total_density != 0) {
               j = x_block_size * k + (C + 1) * prev_id + c;
-              value = f_out * (total_density - partial_density)
+              double value = f_out * (total_density - partial_density)
                   / (total_density * total_density);
               assert Numerical.validNumber(value);
               result.setQuick(i, j, value);
@@ -675,8 +679,9 @@ public class SO_Optimizer extends Adjoint<State> {
               /* The demand is limiting the out-flow */
               assert supply != 0;
               j = x_block_size * k + demand_supply_position + 2 * prev_id;
-              if (demand == 0)
-                /* Special case where the derivative is 1 */
+
+              double value;
+              if (demand == 0) /* Special case where the derivative is 1 */
                 value = 1;
               else
                 value = partial_density / total_density;
@@ -688,16 +693,19 @@ public class SO_Optimizer extends Adjoint<State> {
                 continue;
               /* Derivation term with respect to the supply */
               j = x_block_size * k + demand_supply_position + 2 * prev_id + 1;
-              value = partial_density / total_density;
+              double value = partial_density / total_density;
               assert Numerical.validNumber(value);
               result.setQuick(i, j, value);
 
               /* Derivative term with respect to the aggregate split ratios */
-              j = x_block_size * k + aggregate_split_ratios_position
-                  + aggregate_index + next_id;
-              value = -f_out * partial_density / total_density;
-              assert Numerical.validNumber(value);
-              result.setQuick(i, j, value);
+              // TODO: Is this needed ?
+              /*
+               * j = x_block_size * k + aggregate_split_ratios_position
+               * + aggregate_index;
+               * value = -f_out * partial_density / total_density;
+               * assert Numerical.validNumber(value);
+               * result.setQuick(i, j, value);
+               */
             } else {
               System.out.println("[Warning] Critical point where a" +
                   "derivative dfout is not defined. supply = demand");
@@ -708,21 +716,20 @@ public class SO_Optimizer extends Adjoint<State> {
 
         // Derivative terms for 1xN junctions
       } else if (nb_prev == 1) {
-        CellInfo cell_info;
         for (int k = 0; k < T; k++) {
           int in_id = junction.getPrev()[0].getUniqueId();
-          cell_info = state.profiles[k].getCell(in_id);
+          CellInfo cell_info = state.profiles[k].getCell(in_id);
           Cell[] next_cells = junction.getNext();
-          total_density = cell_info.total_density;
+          double total_density = cell_info.total_density;
           double demand = cell_info.demand;
 
           /*
            * We find j such that f_(in_id)_out = min (supply_j /
            * \beta_(in_id)_j)
            */
-          int minimum_id_cell = -1;
-          int minimum_id_in_next = -1;
-          int number_of_minimums = 0;
+          int minimum_id_cell = -1; /* The id of the outgoing link */
+          int minimum_id_in_next = -1; /* The id in the next array */
+          int number_of_minimums = 0; /* Number of time the value is reached */
           double min_supply_over_beta = Double.MAX_VALUE, supply, beta_at_minimum = 0;
           Double beta;
           for (int out = 0; out < next_cells.length; out++) {
@@ -747,14 +754,12 @@ public class SO_Optimizer extends Adjoint<State> {
             }
           }
           assert !Double.isInfinite(min_supply_over_beta);
-          if (demand == min_supply_over_beta)
-            number_of_minimums++;
 
           double flow_out;
           if (demand < min_supply_over_beta) {
             flow_out = demand;
             for (int c = 0; c < C + 1; c++) {
-              partial_density = cell_info.partial_densities.get(c);
+              Double partial_density = cell_info.partial_densities.get(c);
               if (partial_density == null)
                 partial_density = 0.0;
 
@@ -763,7 +768,7 @@ public class SO_Optimizer extends Adjoint<State> {
               /* Derivative with respect to partial densities */
               if (total_density != 0) {
                 j = x_block_size * k + (C + 1) * in_id + c;
-                value = flow_out * (total_density - partial_density)
+                double value = flow_out * (total_density - partial_density)
                     / (total_density * total_density);
                 assert Numerical.validNumber(value);
                 result.setQuick(i, j, value);
@@ -774,6 +779,7 @@ public class SO_Optimizer extends Adjoint<State> {
                */
               j = x_block_size * k + demand_supply_position + in_id * 2;
 
+              double value;
               if (total_density != 0)
                 value = partial_density / total_density;
               else
@@ -785,7 +791,7 @@ public class SO_Optimizer extends Adjoint<State> {
             assert total_density != 0;
             flow_out = min_supply_over_beta;
             for (int c = 0; c < C + 1; c++) {
-              partial_density = cell_info.partial_densities.get(c);
+              Double partial_density = cell_info.partial_densities.get(c);
               if (partial_density == null)
                 partial_density = 0.0;
 
@@ -793,10 +799,11 @@ public class SO_Optimizer extends Adjoint<State> {
 
               /* Derivative with respect to partial densities */
               j = x_block_size * k + (C + 1) * in_id + c;
-              value = flow_out * (total_density - partial_density)
+              double value = flow_out * (total_density - partial_density)
                   / (total_density * total_density);
               assert Numerical.validNumber(value);
-              result.setQuick(i, j, value);
+              if (value != 0)
+                result.setQuick(i, j, value);
 
               /*
                * Derivative with respect to supply and aggregate split ratio
@@ -820,7 +827,8 @@ public class SO_Optimizer extends Adjoint<State> {
                 value = -flow_out * partial_density
                     / total_density / beta_at_minimum;
                 assert Numerical.validNumber(value);
-                result.setQuick(i, j, value);
+                if (value != 0)
+                  result.setQuick(i, j, value);
               }
             }
           } else {
@@ -862,7 +870,7 @@ public class SO_Optimizer extends Adjoint<State> {
 
             /* For the first incoming road in_1 */
             /* Derivative terms with respect to the partial densities */
-            partial_density = state.profiles[k].getCell(in_1).partial_densities
+            Double partial_density = state.profiles[k].getCell(in_1).partial_densities
                 .get(c);
             if (partial_density == null)
               partial_density = 0.0;
@@ -890,7 +898,7 @@ public class SO_Optimizer extends Adjoint<State> {
                   * (C + 1) + c;
               j = x_block_size * k + in_1 * (C + 1) + c;
 
-              value = f_in_1_out * (total_density1 - partial_density)
+              double value = f_in_1_out * (total_density1 - partial_density)
                   / (total_density1 * total_density1);
               result.setQuick(i, j, value);
 
@@ -944,7 +952,7 @@ public class SO_Optimizer extends Adjoint<State> {
                   * (C + 1) + c;
               j = x_block_size * k + in_2 * (C + 1) + c;
 
-              value = f_in_2_out * (total_density2 - partial_density)
+              double value = f_in_2_out * (total_density2 - partial_density)
                   / (total_density2 * total_density2);
               result.setQuick(i, j, value);
 

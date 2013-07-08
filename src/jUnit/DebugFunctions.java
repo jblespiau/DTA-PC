@@ -35,8 +35,10 @@ public final class DebugFunctions {
    */
   public static boolean compareTable(double[][] t1, double[][] t2, double error) {
 
-    assert (t1.length == t2.length);
-    assert (t1[0].length == t2[0].length);
+    assert (t1.length == t2.length) : "Comparison between tables of different sizes: "
+        + t1.length + " and " + t2.length;
+    assert (t1[0].length == t2[0].length) : "Comparison between tables of different sizes"
+        + t1[0].length + " and " + t2[0].length;
     boolean result = true;
     int nb_differences = 0;
     for (int i = 0; i < t1.length; i++) {
