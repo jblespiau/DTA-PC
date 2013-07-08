@@ -49,23 +49,23 @@ public class SO_Optimizer extends Adjoint<State> {
 
   /* Control Vector U */
   /* Total size of a block for one time step of the control */
-  private int temporal_control_block_size;
+  protected int temporal_control_block_size;
 
   /* State Vector X */
   /* Size of a block describing all the densities for a given time step */
-  private int size_density_block;
+  protected int size_density_block;
   /* Size of a block describing all the supply/demand at one time step */
-  private int size_demand_suply_block;
+  protected int size_demand_suply_block;
   /* Size of the block describing all the Aggregate SR at one time sate */
-  private int size_aggregate_split_ratios;
+  protected int size_aggregate_split_ratios;
   /* Size of a block describing out-flows */
-  private int size_f_out_block;
+  protected int size_f_out_block;
   /* Total size of the description of a profile for a given time step */
-  private int x_block_size;
-  private int demand_supply_position;
-  private int aggregate_split_ratios_position;
-  private int f_out_position;
-  private int f_in_position;
+  protected int x_block_size;
+  protected int demand_supply_position;
+  protected int aggregate_split_ratios_position;
+  protected int f_out_position;
+  protected int f_in_position;
 
   /* Constraints Vector H */
   /* Size of a block describing the Mass Conversation constraints */
@@ -1117,7 +1117,7 @@ public class SO_Optimizer extends Adjoint<State> {
 
     SparseDoubleMatrix1D result = new SparseDoubleMatrix1D(T * x_block_size);
 
-    /* We put 1 when we derivate along a partial density */
+    /* We put 1 when we derivate with respect to a partial density */
     int block_position;
     for (int k = 0; k < T; k++) {
       block_position = k * x_block_size;
@@ -1200,6 +1200,7 @@ public class SO_Optimizer extends Adjoint<State> {
     for (int i = 0; i < control.length; i++)
       if (control[i] < 0)
         return Double.MAX_VALUE;
+
     return objective(forwardSimulate(control), control);
   }
 

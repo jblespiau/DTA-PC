@@ -4,9 +4,16 @@ import dta_solver.adjointMethod.GradientDescentOptimizer;
 
 public abstract class GradientDescentMethod {
 
-  protected int maxIterations = 100;
+  protected int maxIterations = 50;
   protected LineSearchMethod lineSearch;
   protected boolean verbose = true;
+
+  public GradientDescentMethod() {
+  }
+
+  public GradientDescentMethod(int maxIterations) {
+    this.maxIterations = maxIterations;
+  }
 
   public abstract double[] solve(GradientDescentOptimizer function);
 

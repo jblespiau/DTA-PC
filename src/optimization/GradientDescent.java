@@ -1,6 +1,5 @@
 package optimization;
 
-import io.InputOutput;
 import dta_solver.adjointMethod.GradientDescentOptimizer;
 
 public class GradientDescent extends GradientDescentMethod {
@@ -13,6 +12,11 @@ public class GradientDescent extends GradientDescentMethod {
     lineSearch = new BackTrackingLineSearch();
   }
 
+  public GradientDescent(int maxIterations) {
+    super(maxIterations);
+    lineSearch = new BackTrackingLineSearch();
+  }
+
   @Override
   public double[] solve(GradientDescentOptimizer function) {
     double[] control = function.getStartingPoint();
@@ -22,7 +26,7 @@ public class GradientDescent extends GradientDescentMethod {
         "\n***************************\n" +
             " Gradient descent launched \n" +
             "***************************\n");
-    for (int iteration = 0; iteration < maxIterations; iteration++) {
+    for (int iteration = 1; iteration <= maxIterations; iteration++) {
       if (verbose) {
         System.out.print("Iteration " + iteration + " | Cost: "
             + function.objective(control) + "\n");

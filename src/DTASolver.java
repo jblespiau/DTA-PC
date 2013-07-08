@@ -1,10 +1,10 @@
 import optimization.GradientDescent;
 import optimization.GradientDescentMethod;
-import io.InputOutput;
 import generalNetwork.graph.DisplayGUI;
 import generalNetwork.graph.EditorGUI;
 import generalNetwork.state.State;
 
+import dta_solver.SOPC_Optimizer;
 import dta_solver.SO_OptimizerByFiniteDifferences;
 import dta_solver.SO_Optimizer;
 import dta_solver.Simulator;
@@ -17,6 +17,7 @@ public class DTASolver {
   public static void main(String[] args) {
     // EditorGUI e = new EditorGUI();
     optimizationExampleByFiniteDifferences();
+    optimizationExampleWithHomeMadeGradient();
     // printExample();
   }
 
@@ -58,6 +59,25 @@ public class DTASolver {
     optimizer.printFullControl();
   }
 
+  public static void optimizationExampleWithHomeMadeGradient() {
+    /* Share of the compliant flow */
+    double alpha = 1;
+    boolean debug = false;
+    String network_file = "graphs/TwoParallelPath.json";
+    String data_file = "graphs/TwoParallelPathData.json";
+
+    Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
+
+    int maxIter = 3;
+    SOPC_Optimizer optimizer = new SOPC_Optimizer(maxIter, simulator);
+
+    GradientDescentMethod homemade_test = new GradientDescent(maxIter);
+    double[] result = homemade_test.solve(optimizer);
+    System.out.println("Final control");
+    for (int i = 0; i < result.length; i++)
+      System.out.println(result[i]);
+  }
+
   public static void optimizationExampleByFiniteDifferences() {
     /* Share of the compliant flow */
     double alpha = 1;
@@ -66,11 +86,11 @@ public class DTASolver {
 
     Simulator simulator = new Simulator(network_file, data_file, alpha, false);
 
-    int maxIter = 2;
+    int maxIter = 3;
     SO_OptimizerByFiniteDifferences optimizer = new SO_OptimizerByFiniteDifferences(
         maxIter, simulator);
 
-    GradientDescentMethod homemade_test = new GradientDescent();
+    GradientDescentMethod homemade_test = new GradientDescent(maxIter);
     double[] result = homemade_test.solve(optimizer);
     System.out.println("Final control");
     for (int i = 0; i < result.length; i++)
