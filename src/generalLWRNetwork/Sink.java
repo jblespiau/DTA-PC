@@ -123,4 +123,9 @@ class Sink extends Cell {
     assert (false);
     return Double.MAX_VALUE;
   }
+
+  @Override
+  public boolean isBuffer() {
+    return false;
+  }
 }

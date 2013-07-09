@@ -245,4 +245,9 @@ public class RoadChunk extends Cell {
   public boolean isSink() {
     return false;
   }
+
+  @Override
+  public boolean isBuffer() {
+    return false;
+  }
 }

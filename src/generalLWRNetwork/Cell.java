@@ -27,6 +27,8 @@ public abstract class Cell {
 
   abstract public boolean isSink();
 
+  abstract public boolean isBuffer();
+
   abstract public String toString();
 
   public abstract void print();
@@ -43,7 +45,8 @@ public abstract class Cell {
 
   abstract public double getDemand(double total_density, double delta_t);
 
-  abstract public double getDerivativeDemand(double total_density, double delta_t);;
+  abstract public double getDerivativeDemand(double total_density,
+      double delta_t);
 
   abstract public double getSupply(double total_density);
 
