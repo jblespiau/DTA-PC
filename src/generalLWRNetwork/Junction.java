@@ -145,7 +145,7 @@ public class Junction {
 
       if (next_info.supply < previous_info.demand) {
         flow = next_info.supply;
-        j_info.set_supply_limited();
+        j_info.set_supply_limited(next[0].getUniqueId());
       } else if (next_info.supply > previous_info.demand) {
         flow = previous_info.demand;
         j_info.set_demand_limited();
@@ -227,6 +227,7 @@ public class Junction {
       /* We compute flow_out(in_id,k) */
       double flow_out = demand;
       boolean is_single_minimum = true;
+      int limiting_supply = -1;
       while (iterator_beta.hasNext()) {
         beta_entry = iterator_beta.next();
         i_j = beta_entry.getKey();
@@ -248,6 +249,7 @@ public class Junction {
         } else if (flow_out > supply) {
           /* In this case, this supply is limiting the flow */
           is_single_minimum = true;
+          limiting_supply = i_j.outgoing;
           flow_out = supply;
         } else {
           /*
@@ -262,8 +264,10 @@ public class Junction {
       if (is_single_minimum) {
         if (flow_out == demand)
           j_info.set_demand_limited();
-        else
-          j_info.set_supply_limited();
+        else {
+          assert limiting_supply != -1;
+          j_info.set_supply_limited(limiting_supply);
+        }
       }
       /*
        * We register the total out-flow at the junction (easy because only one
@@ -316,7 +320,7 @@ public class Junction {
         flow = demand1 + demand2;
         j_info.set_demand_limited();
       } else if (demand1 + demand2 > next_info.supply) {
-        j_info.set_supply_limited();
+        j_info.set_supply_limited(next[0].getUniqueId());
         flow = next_info.supply;
       } else
         flow = next_info.supply;
@@ -338,6 +342,7 @@ public class Junction {
       }
       flow_2 = flow - flow_1;
 
+      //TODO: define supply and demand limitied out of the physical set
       /* We register the total out-flow at the junction */
       j_info.putFlowOut(prev[0], flow_1);
       j_info.putFlowOut(prev[1], flow_2);

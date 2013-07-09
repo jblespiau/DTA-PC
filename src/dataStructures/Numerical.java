@@ -8,6 +8,9 @@ public class Numerical {
 
   private static double epsilon = 0.0001;
 
+  /**
+   * @return True is the number is not NaN nor +/- infinity
+   */
   static public boolean validNumber(double a) {
     return !(Double.isInfinite(a) || Double.isNaN(a));
   }

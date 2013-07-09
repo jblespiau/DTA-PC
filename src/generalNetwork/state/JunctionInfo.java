@@ -19,6 +19,7 @@ public class JunctionInfo {
    */
   protected boolean is_supply_limited = false;
   protected boolean is_demand_limited = false;
+  protected int limiting_supply = -1;
   protected HashMap<Integer, Double> flow_out;
 
   protected JunctionInfo(int prev) {
@@ -68,8 +69,9 @@ public class JunctionInfo {
     return is_supply_limited;
   }
 
-  public void set_supply_limited() {
+  public void set_supply_limited(int limiting_supply) {
     this.is_supply_limited = true;
+    this.limiting_supply = limiting_supply;
   }
 
   public boolean is_demand_limited() {
@@ -78,6 +80,14 @@ public class JunctionInfo {
 
   public void set_demand_limited() {
     this.is_demand_limited = true;
+  }
+
+  public int getLimiting_supply() {
+    return limiting_supply;
+  }
+
+  private void setLimiting_supply(int limiting_supply) {
+    this.limiting_supply = limiting_supply;
   }
 
   public void putFlowOut(Cell in, double value) {
@@ -95,4 +105,5 @@ public class JunctionInfo {
     else
       return result.doubleValue();
   }
+
 }
