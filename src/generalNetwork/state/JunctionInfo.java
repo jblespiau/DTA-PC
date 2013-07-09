@@ -1,5 +1,6 @@
 package generalNetwork.state;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
@@ -10,10 +11,23 @@ import generalLWRNetwork.Junction;
 
 public class JunctionInfo {
 
-  private LinkedHashMap<PairCells, Double> aggregate_split_ratios;
+  protected LinkedHashMap<PairCells, Double> aggregate_split_ratios;
+  /*
+   * Be careful that we use the fact that the default value is false. If you
+   * want to change this, you will have to make sure the rest of the code is
+   * still correct
+   */
+  protected boolean is_supply_limited = false;
+  protected boolean is_demand_limited = false;
+  protected HashMap<Integer, Double> flow_out;
+
+  protected JunctionInfo(int prev) {
+    flow_out = new HashMap<Integer, Double>(prev);
+  }
 
   public JunctionInfo(int prev, int next) {
     aggregate_split_ratios = new LinkedHashMap<PairCells, Double>(prev * next);
+    flow_out = new HashMap<Integer, Double>(prev);
   }
 
   public JunctionInfo(Junction j) {
@@ -48,5 +62,37 @@ public class JunctionInfo {
 
   public double size() {
     return aggregate_split_ratios.size();
+  }
+
+  public boolean is_supply_limited() {
+    return is_supply_limited;
+  }
+
+  public void set_supply_limited() {
+    this.is_supply_limited = true;
+  }
+
+  public boolean is_demand_limited() {
+    return is_demand_limited;
+  }
+
+  public void set_demand_limited() {
+    this.is_demand_limited = true;
+  }
+
+  public void putFlowOut(Cell in, double value) {
+    flow_out.put(in.getUniqueId(), value);
+  }
+
+  public void putFlowOut(int in_cell_id, double value) {
+    flow_out.put(in_cell_id, value);
+  }
+
+  public double getFlowOut(int in_cell_id) {
+    Double result = flow_out.get(in_cell_id);
+    if (result == null)
+      return 0.0;
+    else
+      return result.doubleValue();
   }
 }

@@ -122,6 +122,8 @@ public class Junction {
 
   /**
    * @brief Solve the flows at the junction
+   * @details It must also fill in the junction info with the flow, the supply
+   *          or demand constrained state and the aggregate split ratios
    * @param p
    * @param time_step
    * @param junction_sr
@@ -135,26 +137,28 @@ public class Junction {
     JunctionInfo j_info = new JunctionInfo(prev.length, next.length);
     p.putJunction(unique_id, j_info);
 
-    double flow;
     // 1x1 Junctions
     if (prev.length == 1 && next.length == 1) {
       CellInfo previous_info = p.getCell(prev[0]);
       CellInfo next_info = p.getCell(next[0]);
+      double flow;
+
+      if (next_info.supply < previous_info.demand) {
+        flow = next_info.supply;
+        j_info.set_supply_limited();
+      } else if (next_info.supply > previous_info.demand) {
+        flow = previous_info.demand;
+        j_info.set_demand_limited();
+      } else {
+        flow = previous_info.demand;
+      }
 
       j_info.putAggregateSR(prev[0], next[0], 1.0);
+      j_info.putFlowOut(prev[0], flow);
 
-      flow = Math.min(next_info.supply, previous_info.demand);
-      /*
-       * For debug
-       * 
-       * System.out.println("Flow in Junction 1 at time step " + time_step
-       * + ": " + flow);
-       * System.out.println("Previous cellInfo ");
-       * previous_info.print();
-       * }
-       */
       previous_info.updateOutFlows(flow);
       next_info.updateInFlows(previous_info.out_flows, next[0].isSink());
+
       // 1xN junctions
     } else if (prev.length == 1) {
 
@@ -169,10 +173,10 @@ public class Junction {
        * Then we compute flow_out (in_id,c,k) and flow_in(j,c,k)
        */
 
-      double flow_out = cell_i.demand;
+      double demand = cell_i.demand;
 
       /* If there is no no demand, there is no flow-out and in */
-      if (flow_out == 0)
+      if (demand == 0)
         return;
 
       /*
@@ -221,6 +225,8 @@ public class Junction {
       double beta_ij_dividedby_density;
 
       /* We compute flow_out(in_id,k) */
+      double flow_out = demand;
+      boolean is_single_minimum = true;
       while (iterator_beta.hasNext()) {
         beta_entry = iterator_beta.next();
         i_j = beta_entry.getKey();
@@ -234,10 +240,36 @@ public class Junction {
             + beta_entry.getValue() + ")";
         assert beta_ij_dividedby_density >= 0;
 
-        flow_out = Math.min(flow_out,
-            p.getCell(cells[i_j.outgoing]).supply
-                / beta_ij_dividedby_density);
+        double supply = p.getCell(cells[i_j.outgoing]).supply
+            / beta_ij_dividedby_density;
+
+        if (flow_out < supply) {
+          /* In this case this supply is not limiting the flow */
+        } else if (flow_out > supply) {
+          /* In this case, this supply is limiting the flow */
+          is_single_minimum = true;
+          flow_out = supply;
+        } else {
+          /*
+           * In that case, 2 supplies or the demand and one supply are both
+           * limiting the flow
+           */
+          is_single_minimum = false;
+        }
       }
+
+      /* We determine if the junction is supply or demand limited */
+      if (is_single_minimum) {
+        if (flow_out == demand)
+          j_info.set_demand_limited();
+        else
+          j_info.set_supply_limited();
+      }
+      /*
+       * We register the total out-flow at the junction (easy because only one
+       * incomming linkg
+       */
+      j_info.putFlowOut(in_id, flow_out);
 
       /* Then we compute the partial flow-out and flow int */
       iterator_partial_densities =
@@ -278,7 +310,17 @@ public class Junction {
 
       double demand1 = prev1.demand;
       double demand2 = prev2.demand;
-      flow = Math.min(demand1 + demand2, next_info.supply);
+      double flow;
+      /* We determine if the junction is supply or demand limited */
+      if (demand1 + demand2 < next_info.supply) {
+        flow = demand1 + demand2;
+        j_info.set_demand_limited();
+      } else if (demand1 + demand2 > next_info.supply) {
+        j_info.set_supply_limited();
+        flow = next_info.supply;
+      } else
+        flow = next_info.supply;
+
       if (flow == 0)
         return;
 
@@ -286,7 +328,7 @@ public class Junction {
       Double P2 = priorities.get(prev[1].getUniqueId());
       assert P1 != null && P2 != null : "In 2x1 solving, we didn't found the priority for both roads";
 
-      Double flow_1, flow_2;
+      double flow_1, flow_2;
       if (P1 * (flow - demand1) > P2 * demand1) {
         flow_1 = demand1;
       } else if (P1 * demand2 < P2 * (flow - demand2)) {
@@ -295,6 +337,10 @@ public class Junction {
         flow_1 = P1 / (P1 + P2) * flow;
       }
       flow_2 = flow - flow_1;
+
+      /* We register the total out-flow at the junction */
+      j_info.putFlowOut(prev[0], flow_1);
+      j_info.putFlowOut(prev[1], flow_2);
 
       assert flow_1 <= demand1;
       assert flow_2 <= demand2;
