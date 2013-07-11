@@ -39,7 +39,7 @@ public class SO_Optimizer extends Adjoint<State> {
   /* Number of compliant commodities */
   protected int C;
   protected Cell[] cells;
-  private Junction[] junctions;
+  protected Junction[] junctions;
   protected Origin[] sources;
   protected Destination[] destinations;
   /* Number of origins */
@@ -502,18 +502,28 @@ public class SO_Optimizer extends Adjoint<State> {
       for (int cell_id = 0; cell_id < cells.length; cell_id++) {
         sub_block_position = cell_id * 2;
         i = block_upper_position + sub_block_position;
+        Cell in_cell = cells[cell_id];
         double total_density = state.profiles[k].getCell(cell_id).total_density;
 
+        /*
+         * In the case of zero density, we should not say that the demand is
+         * dependent of the partial densities. See the adjoint equations.
+         * In that case, the derivative of the supply is also zero.
+         */
+        if (total_density == 0)
+          continue;
         for (int c = 0; c < C + 1; c++) {
+
           // Demand first
           result.setQuick(i,
               x_block_size * k + cell_id * (C + 1) + c,
               cells[cell_id].getDerivativeDemand(total_density, delta_t));
 
           // Then supply
-          result.setQuick(i + 1,
-              x_block_size * k + cell_id * (C + 1) + c,
-              cells[cell_id].getDerivativeSupply(total_density));
+          /* There is no derivative term with respect to the supply for buffers */
+          if (in_cell.isBuffer())
+            result.setQuick(i + 1, x_block_size * k + cell_id * (C + 1) + c,
+                cells[cell_id].getDerivativeSupply(total_density));
         }
       }
     }
@@ -672,6 +682,14 @@ public class SO_Optimizer extends Adjoint<State> {
                   / (total_density * total_density);
               assert Numerical.validNumber(value);
               result.setQuick(i, j, value);
+            } else {
+              /*
+               * If the density is zero, any increase of a partial density will
+               * increase the corresponding flow by v_i
+               */
+              j = x_block_size * k + (C + 1) * prev_id + c;
+              result.setQuick(i, j, cells[prev_id].getDerivativeDemand(0,
+                  delta_t));
             }
 
             /* Derivative terms with respect to supply/demand */
@@ -681,8 +699,8 @@ public class SO_Optimizer extends Adjoint<State> {
               j = x_block_size * k + demand_supply_position + 2 * prev_id;
 
               double value;
-              if (demand == 0) /* Special case where the derivative is 1 */
-                value = 1;
+              if (demand == 0)
+                continue;
               else
                 value = partial_density / total_density;
               assert Numerical.validNumber(value);
@@ -783,7 +801,8 @@ public class SO_Optimizer extends Adjoint<State> {
               if (total_density != 0)
                 value = partial_density / total_density;
               else
-                value = 1;
+                /* Special case where the derivative is not used */
+                value = 66;
               assert Numerical.validNumber(value);
               result.setQuick(i, j, value);
             }

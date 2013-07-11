@@ -59,8 +59,8 @@ public class SystemOptimalTest {
     optimizer.printSizes();
     control = optimizer.getControl();
 
-    System.out.println("Control");
-    InputOutput.printTable(control);
+    // System.out.println("Control");
+    // InputOutput.printTable(control);
     System.out.println("Full control");
     optimizer.printFullControl();
 
@@ -86,7 +86,6 @@ public class SystemOptimalTest {
     double[][] dhdu = optimizer.dhdu(state, control).toArray();
     double[][] correct = correctdHdu(simulator, state);
     assertTrue(DebugFunctions.compareTable(dhdu, correct));
-    System.out.println("Checking of dH/du: OK");
   }
 
   private double[][] correctdHdu(Simulator simu, State state) {
@@ -107,7 +106,6 @@ public class SystemOptimalTest {
     double[] djdu = optimizer.djdu(state, control).toArray();
     double[] correct = new double[djdu.length];
     assertTrue(DebugFunctions.compareTable(djdu, correct));
-    System.out.println("Checking of dJ/du: OK");
   }
 
   /**
@@ -119,7 +117,6 @@ public class SystemOptimalTest {
     double[] djdx = optimizer.djdx(state, control).toArray();
     double[] correct = correctdJdx(simulator, state);
     assertTrue(DebugFunctions.compareTable(djdx, correct));
-    System.out.println("Checking of dJ/dx: OK");
   }
 
   private double[] correctdJdx(Simulator simu, State state) {
@@ -136,52 +133,102 @@ public class SystemOptimalTest {
   @Test
   public void testGradient() {
 
-    System.out.println("Lambda: ");
-    /* Be aware that the lambda given by the adjointVector is -lambda */
-    DoubleMatrix1D lambda1D = optimizer.adjointVector(state, control);
-    double[] lambda = lambda1D.toArray();
-    double[] correct_lambda = new double[lambda.length];
-    for (int i = 0; i < lambda.length; i++) {
-      if (correct_lambda[i] != lambda[i]) {
-        optimizer.informationIndexInX(i);
-        System.out.println(": " + -lambda[i]);
+    boolean verbose = false;
+
+    if (verbose) {
+      System.out.println("Lambda by the adjoint (inverting dH/dx) ");
+      /* Be aware that the lambda given by the adjointVector is -lambda */
+      DoubleMatrix1D lambda1D = optimizer.adjointVector(state, control);
+      double[] lambda = lambda1D.toArray();
+      double[] correct_lambda = new double[lambda.length];
+      for (int i = 0; i < lambda.length; i++) {
+        if (correct_lambda[i] != lambda[i]) {
+          informationIndexInX(i);
+          System.out.println(": " + -lambda[i]);
+        }
       }
     }
 
-    double[] gradient = new double[control.length];
-    optimizer.gradient(gradient, control);
-    System.out.println("Gradient by the adjoint");
-    System.out.println("Gradient[0]: " + gradient[0]);
-    System.out.println("Gradient[1]: " + gradient[1]);
+    System.out.println();
+    System.out.println("Gradient computed by solving the adjoint equations"
+        + " directly");
+    double[] gradient = optimizer.gradientByAdjointMethod(state, control);
+    for (int i = 0; i < gradient.length; i++) {
+      if (gradient[i] != 0) {
+        System.out.println("Gradient[" + i + "]: " + gradient[i]);
+      }
+    }
+    System.out.println();
+
     System.out.println("Gradient by finite differencices");
     double[] exact_gradient = new double[control.length];
-    exactOptimizer.gradient(exact_gradient, control);
-    System.out.println("Gradient[0]: " + exact_gradient[0]);
-    System.out.println("Gradient[1]: " + exact_gradient[1]);
+    exactOptimizer.notProjectedGradient(exact_gradient, control);
+    for (int i = 0; i < exact_gradient.length; i++) {
+      if (exact_gradient[i] != 0)
+        System.out.println("Gradient[" + i + "]: " + exact_gradient[i]);
+    }
+    System.out.println();
+
+    double[] projected_gradient = new double[control.length];
+    optimizer.gradient(projected_gradient, control);
+    System.out.println("Projected gradient by the adjoint");
+    for (int i = 0; i < projected_gradient.length; i++) {
+      if (projected_gradient[i] != 0)
+        System.out.println("Gradient[" + i + "]: " + projected_gradient[i]);
+    }
+    System.out.println();
+
+    System.out.println("Projected gradient by finite differencices");
+    double[] projected_exact_gradient = new double[control.length];
+    exactOptimizer.gradient(projected_exact_gradient, control);
+    for (int i = 0; i < projected_exact_gradient.length; i++) {
+      if (projected_exact_gradient[i] != 0)
+        System.out.println("Gradient[" + i + "]: " + projected_exact_gradient[i]);
+    }
     // InputOutput.printTable(gradient);
     // [k=1]Supply in cell 3
 
-    int index = 60 + demand_supply_position + 2 * 1;
-    double[][] dhdx = optimizer.dhdx(state, control).toArray();
-    System.out.print("Non zero terms in the derivatives with respect to ");
-    optimizer.informationIndexInX(index);
-    System.out.println();
-    for (int i = 0; i < dhdx.length; i++) {
-      if (dhdx[i][index] != 0) {
-        optimizer.informationIndexInX(i);
-        System.out.println(": " + dhdx[i][index]);
+    boolean print_info = false;
+    if (print_info) {
+      int index = 0 * 60 + f_out_position + 3 * 0 + 1;
+      double[][] dhdx = optimizer.dhdx(state, control).toArray();
+      System.out.print("Non zero terms in the derivatives with respect to ");
+      informationIndexInX(index);
+      System.out.println();
+      for (int i = 0; i < dhdx.length; i++) {
+        if (dhdx[i][index] != 0) {
+          informationIndexInX(i);
+          System.out.println(": " + dhdx[i][index]);
+        }
       }
     }
 
+    if (verbose) {
+      System.out.println("**********************");
+      double[] lambda = optimizer
+          .lambdaByAdjointMethod(state, control)
+          .toArray();
+      System.out.println("Lambda computed by solving the adjoint equation");
+      for (int i = 0; i < lambda.length; i++) {
+        if (0 != lambda[i]) {
+          informationIndexInX(i);
+          System.out.println(": " + lambda[i]);
+        }
+      }
+    }
+
+    for (int i = 0; i < gradient.length; i++)
+      assert Numerical.close(gradient[i], exact_gradient[i], 10E-3);
   }
 
-  @Test
-  public void testdHdx() {
-    double[][] dhdx = optimizer.dhdx(state, control).toArray();
-    SparseCCDoubleMatrix2D correct_dhdx = correctDhdx(simulator, state);
-    // assertTrue(compareTable(dhdx, correct_dhdx.toArray()));
-    System.out.println("Checking of dH/dx: OK");
-  }
+  /*
+   * @Test
+   * public void testdHdx() {
+   * double[][] dhdx = optimizer.dhdx(state, control).toArray();
+   * SparseCCDoubleMatrix2D correct_dhdx = correctDhdx(simulator, state);
+   * // assertTrue(compareTable(dhdx, correct_dhdx.toArray()));
+   * }
+   */
 
   private SparseCCDoubleMatrix2D correctDhdx(Simulator simu, State state) {
     SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(T
@@ -460,10 +507,10 @@ public class SystemOptimalTest {
               + ") from t1 (" + t1[i][j] + ") and t2 (" + t2[i][j] + ")");
           System.out.print("dH:");
           System.out.println();
-          optimizer.informationIndexInX(i);
+          informationIndexInX(i);
           System.out.println();
           System.out.print("dx:");
-          optimizer.informationIndexInX(j);
+          informationIndexInX(j);
           System.out.println();
         }
       }
@@ -472,7 +519,7 @@ public class SystemOptimalTest {
     return result;
   }
 
-  public void informationIndexInXhhh(int i) {
+  public void informationIndexInX(int i) {
     int x_block_size = 60;
     int time_step = i / x_block_size;
     int C = 2;
@@ -485,35 +532,27 @@ public class SystemOptimalTest {
     assert (f_out_position == 30);
     assert (f_in_position == 45);
 
-    System.out.print("[k=" + time_step + "]");
     int remaining = i % x_block_size;
-    if (remaining < demand_supply_position) {
-      int cell_id = remaining / (C + 1);
-      int c = (remaining % (C + 1));
-      System.out.println("Partial density of commodity " + c + " in cell "
-          + (cell_id));
-    } else if (remaining < aggregate_split_ratios_position) {
-      int cell_id = (remaining - demand_supply_position) / 2;
-      int is_supply = (remaining % 2);
-      if (is_supply == 1)
-        System.out.println("Demand in cell " + (cell_id));
-      else
-        System.out.println("Supply in cell " + (cell_id));
-    } else if (remaining < f_out_position) {
-      int cell_id = (remaining - aggregate_split_ratios_position) / (C + 1);
-      int c = (remaining % (C + 1));
-      System.out
-          .println("Aggregate split ratio");
-    } else if (remaining < f_in_position) {
-      int cell_id = (remaining - f_out_position) / (C + 1);
-      int c = (remaining % (C + 1));
-      System.out
-          .println("Flow-out of commodity " + c + " in cell " + (cell_id));
-    } else {
-      int cell_id = (remaining - f_in_position) / (C + 1);
-      int c = (remaining % (C + 1));
-      System.out
-          .println("Flow-in of commodity " + c + " in cell " + (cell_id));
+    if (remaining >= aggregate_split_ratios_position
+        && remaining < f_out_position) {
+
+      int aggregate = remaining % aggregate_split_ratios_position;
+      if (aggregate == 0) {
+        System.out.print("[k=" + time_step + "] Aggregate split ratio 0->1");
+      } else if (aggregate == 1) {
+        System.out.print("[k=" + time_step + "] Aggregate split ratio 1->4");
+      } else if (aggregate == 2) {
+        System.out.print("[k=" + time_step + "] Aggregate split ratio 2->4");
+      } else if (aggregate == 3) {
+        System.out.print("[k=" + time_step + "] Aggregate split ratio 3->0");
+      } else if (aggregate == 4) {
+        System.out.print("[k=" + time_step + "] Aggregate split ratio 3->2");
+      } else {
+        assert false;
+      }
+    }
+    else {
+      optimizer.informationIndexInX(i);
     }
   }
 }

@@ -16,7 +16,14 @@ public class DTASolver {
    */
   public static void main(String[] args) {
     // EditorGUI e = new EditorGUI();
+    System.out.println("*****************************************");
+    System.out.println(" Gradient descent by finite differences  ");
+    System.out.println("*****************************************");
     optimizationExampleByFiniteDifferences();
+
+    System.out.println("*****************************************");
+    System.out.println(" Gradient descent by the adjoint method  ");
+    System.out.println("*****************************************");
     optimizationExampleWithHomeMadeGradient();
     // printExample();
   }
@@ -68,7 +75,7 @@ public class DTASolver {
 
     Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
 
-    int maxIter = 3;
+    int maxIter = 150;
     SOPC_Optimizer optimizer = new SOPC_Optimizer(maxIter, simulator);
 
     GradientDescentMethod homemade_test = new GradientDescent(maxIter);
@@ -86,7 +93,7 @@ public class DTASolver {
 
     Simulator simulator = new Simulator(network_file, data_file, alpha, false);
 
-    int maxIter = 3;
+    int maxIter = 50;
     SO_OptimizerByFiniteDifferences optimizer = new SO_OptimizerByFiniteDifferences(
         maxIter, simulator);
 

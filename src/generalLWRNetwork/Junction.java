@@ -162,22 +162,23 @@ public class Junction {
       // 1xN junctions
     } else if (prev.length == 1) {
 
-      /* JunctionInfo j_info is used to saves the beta(in_id, j, c) */
+      /* JunctionInfo j_info is used to saves the aggregate split ratios */
       /* in_id is the id of the single incoming link */
       int in_id = prev[0].getUniqueId();
       CellInfo cell_i = p.getCell(prev[0]);
 
       /*
        * We first compute flow_out_(in_id, k) =
-       * min ({supply_j / beta(in_id,j) when beta(in_id,j) > 0}, demand(in_id)
+       * min ({supply_j / beta(in_id,j) when beta(in_id,j) > 0}, demand(in_id))
        * Then we compute flow_out (in_id,c,k) and flow_in(j,c,k)
        */
-
       double demand = cell_i.demand;
 
       /* If there is no no demand, there is no flow-out and in */
-      if (demand == 0)
+      if (demand == 0) {
+        j_info.set_demand_limited();
         return;
+      }
 
       /*
        * Computation of kapa =
@@ -342,7 +343,7 @@ public class Junction {
       }
       flow_2 = flow - flow_1;
 
-      //TODO: define supply and demand limitied out of the physical set
+      // TODO: define supply and demand limitied out of the physical set
       /* We register the total out-flow at the junction */
       j_info.putFlowOut(prev[0], flow_1);
       j_info.putFlowOut(prev[1], flow_2);

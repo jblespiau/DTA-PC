@@ -35,9 +35,6 @@ public class GradientDescent extends GradientDescentMethod {
       /* Line search */
       /* Update x = x * t * delta_x; and J(x) */
       function.gradient(gradient, control);
-      System.out.println("Gradient used in the descent");
-      for (int i = 0; i < gradient.length; i++)
-        System.out.println(gradient[i]);
       control = lineSearch.lineSearch(control, gradient, function);
 
       /* Stopping condition */

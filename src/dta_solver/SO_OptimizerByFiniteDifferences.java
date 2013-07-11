@@ -71,6 +71,18 @@ public class SO_OptimizerByFiniteDifferences extends SO_Optimizer {
     return objective;
   }
 
+  public void notProjectedGradient(double[] gradient_f, double[] control) {
+    double deviation = 0.001;
+    double value = objective222(control);
+    for (int i = 0; i < control.length; i++) {
+      double[] modified_control = Arrays.copyOf(control, control.length);
+      modified_control[i] = modified_control[i] + deviation;
+
+      double result = objective222(modified_control);
+      gradient_f[i] = (result - value) / deviation;
+    }
+  }
+
   /**
    * @brief Fill in the gradient with the values of the gradient
    * @param gradient_f
@@ -89,18 +101,9 @@ public class SO_OptimizerByFiniteDifferences extends SO_Optimizer {
       double result = objective222(modified_control);
       gradient[i] = (result - value) / deviation;
     }
-    // System.out.println("Control");
-    // for (int i = 0; i < gradient.length; i++)
-    // System.out.println(control[i]);
-    System.out.println("Gradient (" + gradient.length + ")");
-    for (int i = 0; i < gradient.length; i++)
-      System.out.println(gradient[i]);
 
     /* We project the gradient on the feasible space */
     projectGradient(gradient_f, gradient);
-    // System.out.println("Projected gradient");
-    // for (int i = 0; i < gradient_f.length; i++)
-    // System.out.println(gradient_f[i]);
   }
 
   private void projectGradient(double[] gradient_f, double[] init_gradient) {
