@@ -19,12 +19,20 @@ public class DTASolver {
     System.out.println("*****************************************");
     System.out.println(" Gradient descent by finite differences  ");
     System.out.println("*****************************************");
+    long startTime = System.currentTimeMillis();
     optimizationExampleByFiniteDifferences();
+    long endTime = System.currentTimeMillis();
+    long searchTime = endTime - startTime;
+    System.out.println("Time (ms): " + searchTime);
 
     System.out.println("*****************************************");
     System.out.println(" Gradient descent by the adjoint method  ");
     System.out.println("*****************************************");
+    startTime = System.currentTimeMillis();
     optimizationExampleWithHomeMadeGradient();
+    endTime = System.currentTimeMillis();
+    searchTime = endTime - startTime;
+    System.out.println("Time (ms): " + searchTime);
     // printExample();
   }
 
@@ -75,7 +83,7 @@ public class DTASolver {
 
     Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
 
-    int maxIter = 150;
+    int maxIter = 50;
     SOPC_Optimizer optimizer = new SOPC_Optimizer(maxIter, simulator);
 
     GradientDescentMethod homemade_test = new GradientDescent(maxIter);
