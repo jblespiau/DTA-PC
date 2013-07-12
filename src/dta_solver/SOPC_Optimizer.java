@@ -10,8 +10,8 @@ import generalNetwork.state.internalSplitRatios.JunctionSplitRatios;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleFactory1D;
 import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
+import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
 import cern.colt.matrix.tdouble.impl.SparseCCDoubleMatrix2D;
-import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix1D;
 import dataStructures.Numerical;
 
 public class SOPC_Optimizer extends SO_Optimizer {
@@ -91,7 +91,7 @@ public class SOPC_Optimizer extends SO_Optimizer {
 
   public DoubleMatrix1D lambdaByAdjointMethod(State state, double[] control) {
 
-    DoubleMatrix1D lambda = new SparseDoubleMatrix1D(T * x_block_size);
+    DoubleMatrix1D lambda = new DenseDoubleMatrix1D(T * x_block_size);
     double delta_t = simulator.time_discretization.getDelta_t();
     IntertemporalSplitRatios internal_SR =
         simulator.lwr_network.getInternal_split_ratios();
