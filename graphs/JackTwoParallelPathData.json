@@ -1,0 +1,64 @@
+{
+  "max_time_step": 10,
+  "delta_t": 1,
+  "demands": [
+    {
+      "origin_id": 0,
+      "demand": [
+        1,
+        1,
+        1,
+        0.0
+      ]
+    }
+  ],
+  "non_compliant_split_ratios": [
+    {
+      "node_id" : 0,
+      "split_ratios" : [
+        {
+          "k": 0,
+          "in_id": -1,
+          "out_id": 0,
+          "c": 0,
+          "beta": 0.428
+        },
+        {
+          "k": 0,
+          "in_id": -1,
+          "out_id": 2,
+          "c": 0,
+          "beta": 0.572
+        },
+        {
+          "k": 1,
+          "in_id": -1,
+          "out_id": 0,
+          "c": 0,
+          "beta": 0.142
+        },
+        {
+          "k": 1,
+          "in_id": -1,
+          "out_id": 2,
+          "c": 0,
+          "beta": 0.857
+        },
+        {
+          "k": 2,
+          "in_id": -1,
+          "out_id": 0,
+          "c": 0,
+          "beta": 0.142
+        },
+        {
+          "k": 2,
+          "in_id": -1,
+          "out_id": 2,
+          "c": 0,
+          "beta": 0.857
+        }
+      ]
+    }
+  ]
+}

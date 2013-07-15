@@ -1,7 +1,10 @@
 package dta_solver;
 
+import generalLWRNetwork.Cell;
+import generalLWRNetwork.Destination;
 import generalLWRNetwork.DiscretizedGraph;
 import generalLWRNetwork.LWR_network;
+import generalLWRNetwork.Origin;
 import generalNetwork.data.Json_data;
 import generalNetwork.data.demand.Demands;
 import generalNetwork.data.demand.DemandsFactory;
@@ -93,9 +96,7 @@ public class Simulator {
      * Initialization of a physical set for the control split-ratios at the
      * origins
      */
-    System.out.print("Initializing split-ratios at the origins...");
     initializSplitRatios();
-    System.out.println("Done");
 
     if (debug)
       System.out.println(splits.toString());
@@ -236,5 +237,35 @@ public class Simulator {
             nb_steps,
             discretized_graph.sources, alpha);
     System.out.println("Done");
+  }
+  
+  /**
+   * @brief Computes the objective function:
+   *        \sum_(i,c,k) \rho(i,c,k)
+   *        - \sum_{origin o} epsilon2 * ln(\sum \rho(o,c,k) - 1)
+   * @details
+   *          The condition \beta >= 0 is already put in the solver (in
+   *          AdjointJVM/org.wsj/Optimizers.scala) do there is only one barrier
+   *          in J
+   */
+  public double objective(State state) {
+    double objective = 0;
+    int T = time_discretization.getNb_steps();
+    Cell[] cells = lwr_network.getCells();
+    Destination[] destinations = lwr_network.getSinks();
+    
+    /*
+     * To compute the sum of the densities ON the network, we add the density of
+     * all the cells and then remove the density of the sinks
+     */
+    for (int k = 0; k < T; k++) {
+      for (int cell_id = 0; cell_id < cells.length; cell_id++)
+        objective += state.profiles[k].getCell(cell_id).total_density;
+
+      for (int d = 0; d < destinations.length; d++)
+        objective -= state.profiles[k].getCell(destinations[d].getUniqueId()).total_density;
+    }
+
+    return objective;
   }
 }

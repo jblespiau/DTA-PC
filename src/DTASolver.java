@@ -17,13 +17,18 @@ public class DTASolver {
   public static void main(String[] args) {
     // EditorGUI e = new EditorGUI();
     System.out.println("*****************************************");
-    System.out.println(" Gradient descent by finite differences  ");
+    System.out.println(" FULL SO ");
     System.out.println("*****************************************");
+    optimizationFullSO();
+
+    // System.out.println("*****************************************");
+    // System.out.println(" Gradient descent by finite differences  ");
+    // System.out.println("*****************************************");
     long startTime = System.currentTimeMillis();
-    optimizationExampleByFiniteDifferences();
+    // optimizationExampleByFiniteDifferences();
     long endTime = System.currentTimeMillis();
     long searchTime = endTime - startTime;
-    System.out.println("Time (ms): " + searchTime);
+    // System.out.println("Time (ms): " + searchTime);
 
     System.out.println("*****************************************");
     System.out.println(" Gradient descent by the adjoint method  ");
@@ -34,6 +39,19 @@ public class DTASolver {
     searchTime = endTime - startTime;
     System.out.println("Time (ms): " + searchTime);
     // printExample();
+
+    System.out.println("*****************************************");
+    System.out.println(" FULL UE ");
+    System.out.println("*****************************************");
+    
+    String network_file = "graphs/JackTwoParallelPath.json";
+    String data_file = "graphs/JackTwoParallelPathDataFullUE.json";
+
+    Simulator simulator = new Simulator(network_file, data_file, 10E-9, false);
+    SOPC_Optimizer optimizer = new SOPC_Optimizer(1, simulator);
+    double[] control = optimizer.getControl();
+    State state = optimizer.forwardSimulate(control, true);
+    System.out.println("Value of the full UE: " + optimizer.objective(state, control));
   }
 
   public static void printExample() {
@@ -76,14 +94,14 @@ public class DTASolver {
 
   public static void optimizationExampleWithHomeMadeGradient() {
     /* Share of the compliant flow */
-    double alpha = 1;
-    boolean debug = false;
-    String network_file = "graphs/TwoParallelPath.json";
-    String data_file = "graphs/TwoParallelPathData.json";
+    double alpha = 0.7;
+    boolean debug = true;
+    String network_file = "graphs/JackTwoParallelPath.json";
+    String data_file = "graphs/JackTwoParallelPathData.json";
 
     Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
 
-    int maxIter = 50;
+    int maxIter = 100;
     SOPC_Optimizer optimizer = new SOPC_Optimizer(maxIter, simulator);
 
     GradientDescentMethod homemade_test = new GradientDescent(maxIter);
@@ -91,15 +109,40 @@ public class DTASolver {
     System.out.println("Final control");
     for (int i = 0; i < result.length; i++)
       System.out.println(result[i]);
+    optimizer.printFullControl();
+    optimizer.forwardSimulate(result, true);
+  }
+
+  public static void optimizationFullSO() {
+    /* Share of the compliant flow */
+    double alpha = 1;
+    boolean debug = false;
+    String network_file = "graphs/JackTwoParallelPath.json";
+    String data_file = "graphs/JackTwoParallelPathData.json";
+
+    Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
+
+    int maxIter = 100;
+    SOPC_Optimizer optimizer = new SOPC_Optimizer(maxIter, simulator);
+
+    GradientDescentMethod homemade_test = new GradientDescent(maxIter);
+    double[] result = homemade_test.solve(optimizer);
+    System.out.println("Final control");
+    for (int i = 0; i < result.length; i++)
+      System.out.println(result[i]);
+
+    System.out.println("State");
+    State state = optimizer.forwardSimulate(result, true);
+
   }
 
   public static void optimizationExampleByFiniteDifferences() {
     /* Share of the compliant flow */
-    double alpha = 1;
-    String network_file = "graphs/TwoParallelPath.json";
-    String data_file = "graphs/TwoParallelPathData.json";
+    double alpha = 0.7;
+    String network_file = "graphs/JackTwoParallelPath.json";
+    String data_file = "graphs/JackTwoParallelPathData.json";
 
-    Simulator simulator = new Simulator(network_file, data_file, alpha, false);
+    Simulator simulator = new Simulator(network_file, data_file, alpha, true);
 
     int maxIter = 50;
     SO_OptimizerByFiniteDifferences optimizer = new SO_OptimizerByFiniteDifferences(
