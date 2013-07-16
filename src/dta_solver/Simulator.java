@@ -93,9 +93,7 @@ public class Simulator {
      * Initialization of a physical set for the control split-ratios at the
      * origins
      */
-    System.out.print("Initializing split-ratios at the origins...");
     initializSplitRatios();
-    System.out.println("Done");
 
     if (debug)
       System.out.println(splits.toString());
