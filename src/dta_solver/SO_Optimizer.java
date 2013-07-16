@@ -175,7 +175,11 @@ public class SO_Optimizer extends Adjoint<State> {
    */
   public double[] getControl() {
 
-    assert alpha != 0 : "The share of the compliant commodities is zero. No optimization possible";
+    if (alpha == 0) {
+      System.out.println("The share of the compliant commodities is zero."
+          + "No optimization possible. Aborting");
+      System.exit(1);
+    }
     IntertemporalOriginsSplitRatios splits = simulator.splits;
 
     /* For every time steps there are C compliant flows */

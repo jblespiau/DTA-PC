@@ -51,7 +51,7 @@ public class IntertemporalOriginSplitRatios {
 
     int time_step = split_ratios.length;
     // Adding the non-compliant split ratios
-    if (alpha != 0)
+    if (alpha != 1)
       for (int k = 0; k < time_step; k++)
         add(k, 0, 1.0 - alpha);
 

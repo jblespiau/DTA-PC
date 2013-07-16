@@ -1,7 +1,14 @@
 package dta_solver;
 
+import io.InputOutput;
+
+import java.util.Iterator;
+
+import generalLWRNetwork.Cell;
+import generalLWRNetwork.Destination;
 import generalLWRNetwork.DiscretizedGraph;
 import generalLWRNetwork.LWR_network;
+import generalLWRNetwork.Origin;
 import generalNetwork.data.Json_data;
 import generalNetwork.data.demand.Demands;
 import generalNetwork.data.demand.DemandsFactory;
@@ -204,7 +211,7 @@ public class Simulator {
 
     int nb_steps = time_discretization.getNb_steps();
     System.out
-    .print("Initializing physical split-ratios at the origins...");
+        .print("Initializing physical split-ratios at the origins...");
     splits =
         IntertemporalOriginsSplitRatios.defaultPhysicalSplitRatios(
             nb_steps,
@@ -234,5 +241,94 @@ public class Simulator {
             nb_steps,
             discretized_graph.sources, alpha);
     System.out.println("Done");
+  }
+
+  /**
+   * @brief Return the 1x(C+O)*T= matrix representing the compliant and
+   *        non-compliant commodities where C is the number of compliant
+   *        commodities and 0 the number of origins
+   * @details There are T blocks of size (C+O). The i-th block contains the
+   *          controls at time step i.
+   */
+  private double[] getFullControl() {
+
+    int T = time_discretization.getNb_steps();
+    int C = lwr_network.getNb_compliantCommodities();
+    Origin[] sources = lwr_network.getSources();
+    int O = sources.length;
+    int temporal_control_block_size = C;
+
+    /* For every time steps there are C compliant flows, and O non compliant */
+    double[] control = new double[T * (C + 1)];
+
+    int index_in_control = 0;
+    int commodity;
+    Double split_ratio;
+    for (int orig = 0; orig < O; orig++) {
+      for (int k = 0; k < T; k++) {
+        split_ratio = splits.get(sources[orig], k).get(0);
+        if (split_ratio != null) {
+          control[k * temporal_control_block_size + index_in_control] = split_ratio;
+        }
+      }
+      index_in_control++;
+
+      Iterator<Integer> it = sources[orig]
+          .getCompliant_commodities()
+          .iterator();
+      while (it.hasNext()) {
+        commodity = it.next();
+        for (int k = 0; k < T; k++) {
+          split_ratio = splits.get(sources[orig], k).get(commodity);
+          if (split_ratio != null) {
+            control[k * temporal_control_block_size + index_in_control] = split_ratio;
+          }
+        }
+        index_in_control++;
+      }
+    }
+    return control;
+  }
+
+  public void printFullControl() {
+    int C = lwr_network.getNb_compliantCommodities();
+    InputOutput.printControl(getFullControl(), C + 1);
+  }
+
+  /**
+   * @details This function imposes that the control is physical (every split
+   *          ratio is positive)
+   */
+  public double objective() {
+    return objective(partialRun());
+  }
+
+  /**
+   * @brief Computes the objective function:
+   *        \sum_(i,c,k) \rho(i,c,k)
+   *        - \sum_{origin o} epsilon2 * ln(\sum \rho(o,c,k) - 1)
+   * @details
+   *          The condition \beta >= 0 is already put in the solver (in
+   *          AdjointJVM/org.wsj/Optimizers.scala) do there is only one barrier
+   *          in J
+   */
+  public double objective(State state) {
+    double objective = 0;
+
+    Cell[] cells = lwr_network.getCells();
+    Destination[] destinations = lwr_network.getSinks();
+    int T = time_discretization.getNb_steps();
+    /*
+     * To compute the sum of the densities ON the network, we add the density of
+     * all the cells and then remove the density of the sinks
+     */
+    for (int k = 0; k < T; k++) {
+      for (int cell_id = 0; cell_id < cells.length; cell_id++)
+        objective += state.profiles[k].getCell(cell_id).total_density;
+
+      for (int d = 0; d < destinations.length; d++)
+        objective -= state.profiles[k].getCell(destinations[d].getUniqueId()).total_density;
+    }
+    return objective;
   }
 }
