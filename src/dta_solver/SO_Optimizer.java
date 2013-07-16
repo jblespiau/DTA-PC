@@ -1253,27 +1253,6 @@ public class SO_Optimizer extends Adjoint<State> {
       for (int d = 0; d < destinations.length; d++)
         objective -= state.profiles[k].getCell(destinations[d].getUniqueId()).total_density;
     }
-
-    double[] origin_demands;
-
-    for (int orig = 0; orig < O; orig++) {
-      origin_demands = simulator.origin_demands.get(sources[orig]);
-      for (int k = 0; k < T; k++)
-        /* If the demand is null, there is no need to set up a barrier */
-        if (origin_demands[k] != 0) {
-          double diff = state.sum_of_split_ratios[orig][k] - 1;
-
-          // if (diff < 0) {
-          // System.out.println("Sum of the split ratio at one origin - 1 is "
-          // + diff + ". Should be > 0. Aborting.");
-          // assert false;
-          // }
-          objective -= epsilon * Math.log(diff);
-          // assert Numerical.validNumber(objective) :
-          // "Invalid objective function";
-        }
-    }
-
     return objective;
   }
 
