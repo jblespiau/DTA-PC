@@ -1,8 +1,12 @@
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+
 import optimization.GradientDescent;
 import optimization.GradientDescentMethod;
 import generalNetwork.graph.DisplayGUI;
 import generalNetwork.graph.EditorGUI;
 import generalNetwork.state.State;
+import graphics.GUI;
 
 import dta_solver.SOPC_Optimizer;
 import dta_solver.SO_OptimizerByFiniteDifferences;
@@ -16,26 +20,27 @@ public class DTASolver {
    */
   public static void main(String[] args) {
     // EditorGUI e = new EditorGUI();
-    // reportExample();
+    reportExample();
 
-    System.out.println("*****************************************");
-    System.out.println(" Gradient descent by finite differences  ");
-    System.out.println("*****************************************");
-    long startTime = System.currentTimeMillis();
-    optimizationExampleByFiniteDifferences();
-    long endTime = System.currentTimeMillis();
-    long searchTime = endTime - startTime;
-    System.out.println("Time (ms): " + searchTime);
-
-    System.out.println("*****************************************");
-    System.out.println(" Gradient descent by the adjoint method  ");
-    System.out.println("*****************************************");
-    startTime = System.currentTimeMillis();
-    optimizationExampleWithHomeMadeGradient();
-    endTime = System.currentTimeMillis();
-    searchTime = endTime - startTime;
-    System.out.println("Time (ms): " + searchTime);
-
+    /*
+     * System.out.println("*****************************************");
+     * System.out.println(" Gradient descent by finite differences  ");
+     * System.out.println("*****************************************");
+     * long startTime = System.currentTimeMillis();
+     * optimizationExampleByFiniteDifferences();
+     * long endTime = System.currentTimeMillis();
+     * long searchTime = endTime - startTime;
+     * System.out.println("Time (ms): " + searchTime);
+     * 
+     * System.out.println("*****************************************");
+     * System.out.println(" Gradient descent by the adjoint method  ");
+     * System.out.println("*****************************************");
+     * startTime = System.currentTimeMillis();
+     * optimizationExampleWithHomeMadeGradient();
+     * endTime = System.currentTimeMillis();
+     * searchTime = endTime - startTime;
+     * System.out.println("Time (ms): " + searchTime);
+     */
     // printExample();
   }
 
@@ -128,7 +133,7 @@ public class DTASolver {
 
     Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
 
-    int maxIter = 1150;
+    int maxIter = 70;
     SOPC_Optimizer optimizer = new SOPC_Optimizer(maxIter, simulator);
 
     GradientDescentMethod homemade_test = new GradientDescent(maxIter);
@@ -136,5 +141,11 @@ public class DTASolver {
     System.out.println("Final control");
     for (int i = 0; i < result.length; i++)
       System.out.println(result[i]);
+
+    JFreeChart display = ((GradientDescent) homemade_test).getChart();
+    GUI g = new GUI();
+    ChartPanel chartPanel = new ChartPanel(display);
+    g.setContentPane(chartPanel);
+    g.setVisible(true);
   }
 }
