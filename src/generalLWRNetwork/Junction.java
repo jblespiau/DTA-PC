@@ -335,8 +335,10 @@ public class Junction {
 
       double flow_1, flow_2;
       if (P1 * (flow - demand1) > P2 * demand1) {
+        j_info.setPriority_2x1_demand(prev[0].getUniqueId());
         flow_1 = demand1;
       } else if (P1 * demand2 < P2 * (flow - demand2)) {
+        j_info.setPriority_2x1_demand(prev[1].getUniqueId());
         flow_1 = flow - demand2;
       } else {
         flow_1 = P1 / (P1 + P2) * flow;
@@ -402,7 +404,7 @@ public class Junction {
         }
       }
     } else {
-      System.out.println("Only 1x1 and 1xN junctions are working for now");
+      System.out.println("Only 1x1, 1xN and 1x2 junctions are working for now");
       System.exit(1);
     }
   }

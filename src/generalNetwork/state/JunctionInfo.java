@@ -20,6 +20,7 @@ public class JunctionInfo {
   protected boolean is_supply_limited = false;
   protected boolean is_demand_limited = false;
   protected int limiting_supply = -1;
+  protected int priority_2x1_demand = -1;
   protected HashMap<Integer, Double> flow_out;
 
   protected JunctionInfo(int prev) {
@@ -88,6 +89,14 @@ public class JunctionInfo {
 
   private void setLimiting_supply(int limiting_supply) {
     this.limiting_supply = limiting_supply;
+  }
+
+  public int getPriority_2x1_demand() {
+    return priority_2x1_demand;
+  }
+
+  public void setPriority_2x1_demand(int priority_2x1_demand) {
+    this.priority_2x1_demand = priority_2x1_demand;
   }
 
   public void putFlowOut(Cell in, double value) {
