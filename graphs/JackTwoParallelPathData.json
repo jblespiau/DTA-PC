@@ -1,10 +1,17 @@
 {
-  "max_time_step": 10,
+  "max_time_step": 20,
   "delta_t": 1,
   "demands": [
     {
       "origin_id": 0,
       "demand": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
         1,
         1,
         1,
