@@ -16,6 +16,8 @@ public class DTASolver {
    */
   public static void main(String[] args) {
     // EditorGUI e = new EditorGUI();
+    // reportExample();
+
     System.out.println("*****************************************");
     System.out.println(" Gradient descent by finite differences  ");
     System.out.println("*****************************************");
@@ -33,6 +35,7 @@ public class DTASolver {
     endTime = System.currentTimeMillis();
     searchTime = endTime - startTime;
     System.out.println("Time (ms): " + searchTime);
+
     // printExample();
   }
 
@@ -83,7 +86,7 @@ public class DTASolver {
 
     Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
 
-    int maxIter = 50;
+    int maxIter = 150;
     SOPC_Optimizer optimizer = new SOPC_Optimizer(maxIter, simulator);
 
     GradientDescentMethod homemade_test = new GradientDescent(maxIter);
@@ -104,6 +107,29 @@ public class DTASolver {
     int maxIter = 50;
     SO_OptimizerByFiniteDifferences optimizer = new SO_OptimizerByFiniteDifferences(
         maxIter, simulator);
+
+    GradientDescentMethod homemade_test = new GradientDescent(maxIter);
+    double[] result = homemade_test.solve(optimizer);
+    System.out.println("Final control");
+    for (int i = 0; i < result.length; i++)
+      System.out.println(result[i]);
+  }
+
+  public static void reportExample() {
+    System.out.println("*****************************************");
+    System.out.println("   Optimization by the adjoint method    ");
+    System.out.println("*****************************************");
+
+    /* Share of the compliant flow */
+    double alpha = 1;
+    boolean debug = false;
+    String network_file = "graphs/ReportExample.json";
+    String data_file = "graphs/ReportExampleData.json";
+
+    Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
+
+    int maxIter = 1150;
+    SOPC_Optimizer optimizer = new SOPC_Optimizer(maxIter, simulator);
 
     GradientDescentMethod homemade_test = new GradientDescent(maxIter);
     double[] result = homemade_test.solve(optimizer);

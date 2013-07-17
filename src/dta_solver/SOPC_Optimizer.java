@@ -342,9 +342,9 @@ public class SOPC_Optimizer extends SO_Optimizer {
             System.exit(1);
           }
         } else {
-          System.out.println("The junction " + j_id + " at time step " + k
-              + " is neither demand nor supply limited. Aborting.");
-          System.exit(1);
+          System.out.println("[Critical]The junction " + j_id + " at time step " + k
+              + " is neither demand nor supply limited. Adjoint descent not defined !");
+          //System.exit(1);
         }
       }
     }
