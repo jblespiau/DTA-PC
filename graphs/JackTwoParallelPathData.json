@@ -1,5 +1,5 @@
 {
-  "max_time_step": 20,
+  "max_time_step": 55,
   "delta_t": 1,
   "demands": [
     {

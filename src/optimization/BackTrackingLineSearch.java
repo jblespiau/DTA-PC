@@ -16,7 +16,7 @@ public class BackTrackingLineSearch implements LineSearchMethod {
   }
 
   public BackTrackingLineSearch() {
-    this(0.3, 0.8);
+    this(0.3, 0.9);
     //this(0.25, 0.4);
   }
 

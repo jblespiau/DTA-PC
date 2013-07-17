@@ -29,21 +29,22 @@ public class DTASolver {
     long endTime = System.currentTimeMillis();
     long searchTime = endTime - startTime;
     // System.out.println("Time (ms): " + searchTime);
-
-    System.out.println("*****************************************");
-    System.out.println(" Gradient descent by the adjoint method  ");
-    System.out.println("*****************************************");
-    startTime = System.currentTimeMillis();
-    optimizationExampleWithHomeMadeGradient();
-    endTime = System.currentTimeMillis();
-    searchTime = endTime - startTime;
-    System.out.println("Time (ms): " + searchTime);
+    /*
+     * System.out.println("*****************************************");
+     * System.out.println(" SO-DTA-PC by the adjoint (30% compliant)");
+     * System.out.println("*****************************************");
+     * startTime = System.currentTimeMillis();
+     * optimizationExampleWithHomeMadeGradient();
+     * endTime = System.currentTimeMillis();
+     * searchTime = endTime - startTime;
+     * System.out.println("Time (ms): " + searchTime);
+     */
     // printExample();
 
     System.out.println("*****************************************");
     System.out.println(" FULL UE ");
     System.out.println("*****************************************");
-    
+
     String network_file = "graphs/JackTwoParallelPath.json";
     String data_file = "graphs/JackTwoParallelPathDataFullUE.json";
 
@@ -51,7 +52,8 @@ public class DTASolver {
     SOPC_Optimizer optimizer = new SOPC_Optimizer(1, simulator);
     double[] control = optimizer.getControl();
     State state = optimizer.forwardSimulate(control, true);
-    System.out.println("Value of the full UE: " + optimizer.objective(state, control));
+    System.out.println("Value of the full UE: "
+        + optimizer.objective(state, control));
   }
 
   public static void printExample() {
@@ -94,7 +96,7 @@ public class DTASolver {
 
   public static void optimizationExampleWithHomeMadeGradient() {
     /* Share of the compliant flow */
-    double alpha = 0.7;
+    double alpha = 0.3;
     boolean debug = true;
     String network_file = "graphs/JackTwoParallelPath.json";
     String data_file = "graphs/JackTwoParallelPathData.json";
@@ -105,6 +107,7 @@ public class DTASolver {
     SOPC_Optimizer optimizer = new SOPC_Optimizer(maxIter, simulator);
 
     GradientDescentMethod homemade_test = new GradientDescent(maxIter);
+
     double[] result = homemade_test.solve(optimizer);
     System.out.println("Final control");
     for (int i = 0; i < result.length; i++)
@@ -124,6 +127,11 @@ public class DTASolver {
 
     int maxIter = 100;
     SOPC_Optimizer optimizer = new SOPC_Optimizer(maxIter, simulator);
+    System.out.println("*****************************************");
+    System.out.println(" Initial state ");
+    System.out.println("*****************************************");
+    double[] init = optimizer.getControl();
+    State begin = optimizer.forwardSimulate(init, true);
 
     GradientDescentMethod homemade_test = new GradientDescent(maxIter);
     double[] result = homemade_test.solve(optimizer);
