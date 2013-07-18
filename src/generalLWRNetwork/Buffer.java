@@ -116,8 +116,8 @@ public class Buffer extends Cell {
       density = density - delta_t * out_flow;
       // TODO: Check if negative densities are normals
       if (density < 0 && Numerical.equals(density, 0, 10E-6)) {
-        System.out.println("Warning: Negative density in a buffer (" + density
-            + "). Rouding up to 0");
+        //System.out.println("Warning: Negative density in a buffer (" + density
+        //    + "). Rouding up to 0");
         density = 0.0;
       }
       assert density >= 0 : "Negative density(" + density + ") in a buffer";
