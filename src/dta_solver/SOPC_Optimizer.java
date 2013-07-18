@@ -242,9 +242,10 @@ public class SOPC_Optimizer extends SO_Optimizer {
         int nb_prev = in_links.length;
         int nb_next = out_links.length;
 
-        if (junction_info.is_demand_limited()) {
-          // 1xN junctions
-          if (nb_prev == 1) {
+        // 1xN junctions
+        if (nb_prev == 1) {
+          if (junction_info.is_demand_limited()) {
+
             int limiting_demand_id = in_links[0].getUniqueId();
             double total_density = state.get(k).getCell(limiting_demand_id).total_density;
 
@@ -255,96 +256,101 @@ public class SOPC_Optimizer extends SO_Optimizer {
               assert Numerical.validNumber(value);
               lambda.set(rho(k, limiting_demand_id, c), value);
             }
-          } else {
-            System.out.println("Case not handled yet");
-            System.exit(1);
-          }
-        } else if (junction_info.is_supply_limited()) {
-          int limiting_outgoing_link_id = junction_info.getLimiting_supply();
-          Cell limiting_outgoing_link = cells[limiting_outgoing_link_id];
-          // 1xN junctions
-          if (nb_prev == 1) {
 
-            int in_cell_id = in_links[0].getUniqueId();
-            CellInfo in_cell = state.get(k).getCell(in_cell_id);
-            double total_density = in_cell.total_density;
-            assert total_density != 0;
-            double value = 0;
+          } else if (junction_info.is_supply_limited()) {
+            int limiting_outgoing_link_id = junction_info.getLimiting_supply();
+            Cell limiting_outgoing_link = cells[limiting_outgoing_link_id];
+            // 1xN junctions
+            if (nb_prev == 1) {
 
-            Double aggr_beta = junction_info.getAggregateSR(in_cell_id,
-                limiting_outgoing_link_id);
-            assert (aggr_beta != 0 && aggr_beta != null);
+              int in_cell_id = in_links[0].getUniqueId();
+              CellInfo in_cell = state.get(k).getCell(in_cell_id);
+              double total_density = in_cell.total_density;
+              assert total_density != 0;
+              double value = 0;
 
-            /* We compute the upstream effect */
-            for (int c = 0; c < (C + 1); c++) {
-              Double partial_density = in_cell.partial_densities.get(c);
+              Double aggr_beta = junction_info.getAggregateSR(in_cell_id,
+                  limiting_outgoing_link_id);
+              assert (aggr_beta != 0 && aggr_beta != null);
 
-              if (partial_density == null)
-                continue;
-              value += partial_density / total_density / aggr_beta *
-                  lambda.get(f_out(k, in_cell_id, c));
-            }
-            double limiting_density = state
-                .get(k)
-                .getCell(limiting_outgoing_link).total_density;
-            double backspeed = limiting_outgoing_link
-                .getDerivativeSupply(limiting_density);
+              /* We compute the upstream effect */
+              for (int c = 0; c < (C + 1); c++) {
+                Double partial_density = in_cell.partial_densities.get(c);
 
-            value = backspeed * value;
-
-            for (int c = 0; c < (C + 1); c++) {
-              lambda.set(rho(k, limiting_outgoing_link_id, c),
-                  lambda.get(rho(k, limiting_outgoing_link_id, c)) + value);
-            }
-
-            /* We compute the downstream effect */
-            double supply = junction_info.getFlowOut(in_cell_id) * aggr_beta;
-            double rho_aggrSR = total_density * aggr_beta;
-            /* Update of rho(k, in_cell_id, c) */
-            for (int c = 0; c < (C + 1); c++) {
-
-              for (int c2 = 0; c2 < (C + 1); c2++) {
-                Double partial_density = in_cell.partial_densities.get(c2);
-                double tmp_value = 0;
                 if (partial_density == null)
-                  partial_density = 0.0;
+                  continue;
+                value += partial_density / total_density / aggr_beta *
+                    lambda.get(f_out(k, in_cell_id, c));
+              }
+              double limiting_density = state
+                  .get(k)
+                  .getCell(limiting_outgoing_link).total_density;
+              double backspeed = limiting_outgoing_link
+                  .getDerivativeSupply(limiting_density);
 
-                JunctionSplitRatios JSR = internal_SR.get(k, j_id);
-                double SR;
-                if (JSR == null) {
-                  SR = 1;
-                } else {
-                  Double res = JSR.get(in_cell_id, limiting_outgoing_link_id,
-                      c);
-                  if (res == null)
-                    SR = 0;
-                  else
-                    SR = res.doubleValue();
-                }
-                if (c2 == c) {
-                  tmp_value =
-                      (total_density * aggr_beta) - partial_density * SR;
-                } else {
-                  tmp_value = -partial_density * SR;
-                }
+              value = backspeed * value;
 
-                tmp_value *= supply / (total_density * aggr_beta)
-                    / (total_density * aggr_beta);
-                assert Numerical.validNumber(tmp_value);
-                lambda.set(rho(k, in_cell_id, c),
-                    lambda.get(rho(k, in_cell_id, c)) + tmp_value
-                        * lambda.get(f_out(k, in_cell_id, c2)));
+              for (int c = 0; c < (C + 1); c++) {
+                lambda.set(rho(k, limiting_outgoing_link_id, c),
+                    lambda.get(rho(k, limiting_outgoing_link_id, c)) + value);
               }
 
+              /* We compute the downstream effect */
+              double supply = junction_info.getFlowOut(in_cell_id) * aggr_beta;
+              double rho_aggrSR = total_density * aggr_beta;
+              /* Update of rho(k, in_cell_id, c) */
+              for (int c = 0; c < (C + 1); c++) {
+
+                for (int c2 = 0; c2 < (C + 1); c2++) {
+                  Double partial_density = in_cell.partial_densities.get(c2);
+                  double tmp_value = 0;
+                  if (partial_density == null)
+                    partial_density = 0.0;
+
+                  JunctionSplitRatios JSR = internal_SR.get(k, j_id);
+                  double SR;
+                  if (JSR == null) {
+                    SR = 1;
+                  } else {
+                    Double res = JSR.get(in_cell_id, limiting_outgoing_link_id,
+                        c);
+                    if (res == null)
+                      SR = 0;
+                    else
+                      SR = res.doubleValue();
+                  }
+                  if (c2 == c) {
+                    tmp_value =
+                        (total_density * aggr_beta) - partial_density * SR;
+                  } else {
+                    tmp_value = -partial_density * SR;
+                  }
+
+                  tmp_value *= supply / (total_density * aggr_beta)
+                      / (total_density * aggr_beta);
+                  assert Numerical.validNumber(tmp_value);
+                  lambda.set(rho(k, in_cell_id, c),
+                      lambda.get(rho(k, in_cell_id, c)) + tmp_value
+                          * lambda.get(f_out(k, in_cell_id, c2)));
+                }
+
+              }
+            } else {
+              System.out.println("Case not handled yet");
+              System.exit(1);
             }
           } else {
-            System.out.println("Case not handled yet");
-            System.exit(1);
+            System.out
+                .println("[Critical]The junction "
+                    + j_id
+                    + " at time step "
+                    + k
+                    + " is neither demand nor supply limited. Adjoint descent not defined !");
+            // System.exit(1);
           }
         } else {
-          System.out.println("[Critical]The junction " + j_id + " at time step " + k
-              + " is neither demand nor supply limited. Adjoint descent not defined !");
-          //System.exit(1);
+          System.out.println("Case not handled yet");
+          System.exit(1);
         }
       }
     }
