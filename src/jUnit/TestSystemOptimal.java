@@ -22,7 +22,7 @@ import dta_solver.Simulator;
  * @brief Used to test the SO find by the gradient descent
  * 
  */
-public class SystemOptimalTest {
+public class TestSystemOptimal {
 
   static private Simulator simulator;
   private static SOPC_Optimizer optimizer;

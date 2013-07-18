@@ -149,9 +149,7 @@ public class EditorPanel extends JPanel implements MouseListener, KeyListener {
     Iterator<GraphDestination> destination_it = graph.destinations.iterator();
     GraphDestination destination;
     while (destination_it.hasNext()) {
-
       destination = destination_it.next();
-      System.out.println("Destination" + destination.id);
       drawNode(graphics2D, graph.nodes.get(destination.id), Color.blue);
     }
   }
