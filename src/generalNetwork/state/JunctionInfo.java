@@ -115,4 +115,13 @@ public class JunctionInfo {
       return result.doubleValue();
   }
 
+  @Override
+  public String toString() {
+    return "JunctionInfo [aggregate_split_ratios=" + aggregate_split_ratios
+        + ", is_supply_limited=" + is_supply_limited + ", is_demand_limited="
+        + is_demand_limited + ", limiting_supply=" + limiting_supply
+        + ", priority_2x1_demand=" + priority_2x1_demand + ", flow_out="
+        + flow_out + "]";
+  }
+
 }

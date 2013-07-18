@@ -340,13 +340,195 @@ public class SOPC_Optimizer extends SO_Optimizer {
               System.exit(1);
             }
           } else {
-            System.out
-                .println("[Critical]The junction "
-                    + j_id
-                    + " at time step "
-                    + k
-                    + " is neither demand nor supply limited. Adjoint descent not defined !");
-            // System.exit(1);
+            printAlert(j_id, k);
+            //System.out.println(junction_info.toString());
+          }
+          // 2x1 junctions
+        } else if (nb_prev == 2 && nb_next == 1) {
+
+          int demand_priority = junction_info.getPriority_2x1_demand();
+
+          // The junction exactly respects the priority constraint
+          if (demand_priority == -1) {
+            if (junction_info.is_demand_limited()) {
+
+              int[] list = new int[] { in_links[0].getUniqueId(),
+                  in_links[1].getUniqueId() };
+              // We compute the downstream cost for the links
+              for (int i = 0; i < 2; i++) {
+                int id = list[i];
+                CellInfo info = state
+                    .get(k)
+                    .getCell(id);
+                double total_density = info.total_density;
+                double coefficient = cells[id].getDerivativeDemand(
+                    total_density,
+                    delta_t);
+                if (coefficient != 0)
+                  for (int c = 0; c < (C + 1); c++) {
+                    lambda.set(rho(k, id, c),
+                        lambda.get(rho(k, id, c)) + coefficient
+                            * lambda.get(f_out(k, id, c)));
+                  }
+              }
+
+            } else if (junction_info.is_supply_limited()) {
+
+              int[] list = new int[] { in_links[0].getUniqueId(),
+                  in_links[1].getUniqueId() };
+              // We compute the downstream cost for the incoming links
+              for (int i = 0; i < 2; i++) {
+                int id = list[i];
+                CellInfo info = state
+                    .get(k)
+                    .getCell(id);
+                double total_density = info.total_density;
+                if (total_density == 0) {
+                  System.out
+                      .println("Strange behavior. Look at SOPC for 2x1 junctions");
+                  System.exit(1);
+                }
+                double flow = junction_info.getFlowOut(id);
+
+                double common_value = 0;
+                for (int c = 0; c < (C + 1); c++) {
+                  Double partial_density = info.partial_densities.get(c);
+                  if (partial_density == null || partial_density == 0)
+                    continue;
+                  common_value += partial_density / total_density
+                      * lambda.get(f_out(k, id, c));
+                }
+
+                for (int c = 0; c < (C + 1); c++) {
+                  lambda.set(rho(k, id, c),
+                      lambda.get(rho(k, id, c)) +
+                          flow / total_density *
+                          (lambda.get(f_out(k, id, c)) - common_value));
+                }
+              }
+
+              // We compute the upsteam cost for the outgoing link
+              int out_id = out_links[0].getUniqueId();
+              double coefficient = cells[out_id].getDerivativeSupply(state
+                  .get(k)
+                  .getCell(out_id).total_density);
+              if (coefficient == 0)
+                continue;
+
+              double value = 0;
+              for (int i = 0; i < 2; i++) {
+                int id = list[i];
+                CellInfo info = state
+                    .get(k)
+                    .getCell(id);
+                double total_density = info.total_density;
+                Double priority = junctions[j_id].getPriority(id);
+                assert total_density != 0 && priority != 0
+                    && priority != null;
+
+                for (int c = 0; c < (C + 1); c++) {
+                  Double partial_density = info.partial_densities.get(c);
+                  if (partial_density == null || partial_density == 0)
+                    continue;
+                  value += partial_density * priority / total_density
+                      * lambda.get(f_out(k, id, c));
+                }
+              }
+              value *= coefficient;
+
+              for (int c = 0; c < (C + 1); c++) {
+                lambda.set(rho(k, out_id, c),
+                    lambda.get(rho(k, out_id, c)) + value);
+              }
+            } else
+              printAlert(j_id, k);
+
+          } else {
+            // The junction does not respect the priority constraint and link
+            // demand_priority has its demand fulfilled while the other one has
+            // not
+            if (junction_info.is_demand_limited()) {
+
+              int[] list = new int[] { in_links[0].getUniqueId(),
+                  in_links[1].getUniqueId() };
+              // We compute the downstream cost for the links
+              for (int i = 0; i < 2; i++) {
+                int id = list[i];
+                CellInfo info = state
+                    .get(k)
+                    .getCell(id);
+                double total_density = info.total_density;
+                double coefficient = cells[id].getDerivativeDemand(
+                    total_density,
+                    delta_t);
+                if (coefficient != 0)
+                  for (int c = 0; c < (C + 1); c++) {
+                    lambda.set(rho(k, id, c),
+                        lambda.get(rho(k, id, c)) + coefficient
+                            * lambda.get(f_out(k, id, c)));
+                  }
+              }
+            } else if (junction_info.is_supply_limited()) {
+
+              int not_satisfied_link = -1;
+              if (demand_priority == in_links[0].getUniqueId())
+                not_satisfied_link = in_links[1].getUniqueId();
+              else if (demand_priority == in_links[1].getUniqueId())
+                not_satisfied_link = in_links[0].getUniqueId();
+              else {
+                System.out.println("Illegal not satisfied link");
+                System.exit(1);
+              }
+
+              CellInfo info = state
+                  .get(k)
+                  .getCell(not_satisfied_link);
+              double total_density = info.total_density;
+
+              double value = 0;
+              for (int c = 0; c < (C + 1); c++) {
+                Double partial_density = info.partial_densities.get(c);
+                if (partial_density == null || partial_density == 0)
+                  continue;
+                value += partial_density / total_density
+                    * lambda.get(f_out(k, not_satisfied_link, c));
+              }
+
+              // We compute the downstream cost for the incoming links
+              double coef = cells[demand_priority].getDerivativeDemand(state
+                  .get(k)
+                  .getCell(demand_priority).total_density,
+                  delta_t);
+              for (int c = 0; c < (C + 1); c++) {
+                lambda.set(rho(k, demand_priority, c),
+                    lambda.get(rho(k, demand_priority, c)) +
+                        coef
+                        * (lambda.get(f_out(k, demand_priority, c)) - value));
+              }
+              coef = junction_info.getFlowOut(not_satisfied_link) /
+                  state
+                      .get(k)
+                      .getCell(not_satisfied_link).total_density;
+              assert (Numerical.validNumber(coef));
+
+              for (int c = 0; c < (C + 1); c++) {
+                lambda.set(rho(k, demand_priority, c), lambda.get(rho(k,
+                    not_satisfied_link, c))
+                    + coef
+                    * (lambda.get(f_out(k, not_satisfied_link, c)) - value));
+              }
+
+              // We compute the upsteam cost for the outgoing link
+              int out_id = out_links[0].getUniqueId();
+
+              coef = cells[out_id].getDerivativeSupply(state.get(k).getCell(
+                  out_id).total_density);
+              for (int c = 0; c < (C + 1); c++) {
+                lambda.set(rho(k, out_id, c),
+                    lambda.get(rho(k, out_id, c)) + coef * value);
+              }
+            } else
+              printAlert(j_id, k);
           }
         } else {
           System.out.println("Case not handled yet");
@@ -356,6 +538,15 @@ public class SOPC_Optimizer extends SO_Optimizer {
     }
 
     return lambda;
+  }
+
+  private void printAlert(int j_id, int k) {
+    System.out
+        .println("[Critical]The junction "
+            + j_id
+            + " at time step "
+            + k
+            + " is neither demand nor supply limited. Adjoint descent not defined !");
   }
 
   public double[] gradientByAdjointMethod(State state, double[] control) {

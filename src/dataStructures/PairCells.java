@@ -40,4 +40,9 @@ public class PairCells {
       return false;
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "(incoming=" + incoming + ", outgoing=" + outgoing + ")";
+  }
 }
