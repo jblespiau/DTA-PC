@@ -18,14 +18,15 @@ public abstract class Adjoint<T extends JavaSystemState> implements
   DenseDoubleAlgebra dAlg = new DenseDoubleAlgebra();
   /** Maximum number of iterations */
   private int maxIter = 100;
+
   /** The Optimizer which has to be an IpOpt object for now */
-  private IpOptOptimizer ipOptOptimizer;
+  // private IpOptOptimizer ipOptOptimizer;
 
   public Adjoint(int maxIter) {
     algebra = new SparseDoubleAlgebra();
     dAlg = new DenseDoubleAlgebra();
     this.maxIter = maxIter;
-    ipOptOptimizer = new IpOptOptimizer(this);
+    // ipOptOptimizer = new IpOptOptimizer(this);
   }
 
   public abstract SparseCCDoubleMatrix2D dhdx(T state, double[] control);
@@ -75,24 +76,26 @@ public abstract class Adjoint<T extends JavaSystemState> implements
     int n = getStartingPoint().length;
     // solver.fn = f
     // solver.u0 = startPoint
-    ipOptOptimizer.create(n, 0, 0, 0, Ipopt.C_STYLE);
-
-    ipOptOptimizer.setStringOption(Ipopt.KEY_MU_STRATEGY, "adaptive");
-    ipOptOptimizer.setStringOption(Ipopt.KEY_HESSIAN_APPROXIMATION,
-        "limited-memory");
-    ipOptOptimizer.setIntegerOption(Ipopt.KEY_MAX_ITER, maxIter);
-
-    int status = ipOptOptimizer.OptimizeNLP();
-    System.out.println("status");
-    System.out.println(status);
-
-    if (status <= 0 || status >= 0)
-      return ipOptOptimizer.getState();
-    else {
-      System.out.println("Status != 0");
-      return null;
-    }
-
+    /*
+     * ipOptOptimizer.create(n, 0, 0, 0, Ipopt.C_STYLE);
+     * 
+     * ipOptOptimizer.setStringOption(Ipopt.KEY_MU_STRATEGY, "adaptive");
+     * ipOptOptimizer.setStringOption(Ipopt.KEY_HESSIAN_APPROXIMATION,
+     * "limited-memory");
+     * ipOptOptimizer.setIntegerOption(Ipopt.KEY_MAX_ITER, maxIter);
+     * 
+     * int status = ipOptOptimizer.OptimizeNLP();
+     * System.out.println("status");
+     * System.out.println(status);
+     * 
+     * if (status <= 0 || status >= 0)
+     * return ipOptOptimizer.getState();
+     * else {
+     * System.out.println("Status != 0");
+     * return null;
+     * }
+     */
+    return null;
   }
 
   /*
