@@ -1,0 +1,144 @@
+{
+  "nb_nodes": 3,
+  "nb_links": 3,
+  "nb_paths": 0,
+  "nb_origins": 1,
+  "nb_destinations": 1,
+  "nodes": [
+    {
+      "unique_id": 0,
+      "incoming": [],
+      "outgoing": [
+        0,
+        1
+      ],
+      "incoming_priorities": null
+    },
+    {
+      "unique_id": 1,
+      "incoming": [
+        0,
+        1
+      ],
+      "outgoing": [
+        2
+      ],
+      "incoming_priorities": [
+      0.5,
+      0.5
+      ]
+      
+    },
+    {
+      "unique_id": 2,
+      "x": 150,
+      "y": 141,
+      "incoming": [
+        2
+      ],
+      "outgoing": [3,4],
+      "incoming_priorities": null
+    }
+    ,
+    {
+      "unique_id": 3,
+      "x": 150,
+      "y": 141,
+      "incoming": [
+        3,
+        4
+      ],
+      "outgoing": [],
+      "incoming_priorities": null
+    }
+  ],
+  "links": [
+    {
+      "unique_id": 0,
+      "l": 1,
+      "v": 1.0,
+      "w": 1.0,
+      "F_max": 0.501,
+      "jam_density": 4.0
+    },
+    {
+      "unique_id": 1,
+      "l": 1,
+      "v": 1.0,
+      "w": 1.0,
+      "F_max": 1.5,
+      "jam_density": 4.0
+    },
+    {
+      "unique_id": 2,
+      "l": 1,
+      "v": 1.0,
+      "w": 1.0,
+      "F_max": 3,
+      "jam_density": 6.0
+    },
+    {
+      "unique_id": 3,
+      "l": 1,
+      "v": 1.0,
+      "w": 1.0,
+      "F_max": 1.5,
+      "jam_density": 4.0
+    }
+    ,
+    {
+      "unique_id": 4,
+      "l": 1,
+      "v": 1.0,
+      "w": 1.0,
+      "F_max": 0.5,
+      "jam_density": 4.0
+    }
+  ],
+  "paths": [
+   {
+      "unique_id": 0,
+      "path": [
+        0,
+        2,
+        3
+      ]
+    },
+    {
+      "unique_id": 1,
+      "path": [
+        0,
+        2,
+        4
+      ]
+    },
+    {
+      "unique_id": 2,
+      "path": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "unique_id": 3,
+      "path": [
+        1,
+        2,
+        4
+      ]
+    }
+    ],
+  "origins": [
+    {
+      "id": 0,
+      "type": "SingleBuffer"
+    }
+  ],
+  "destinations": [
+    {
+      "id": 3,
+      "type": "SingleJunction"
+    }
+  ]
+}
