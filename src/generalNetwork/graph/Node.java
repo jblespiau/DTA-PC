@@ -82,10 +82,19 @@ public class Node {
      */
     boolean priority_needed = (outgoing.length != 0)
         && (incoming.length > outgoing.length);
-    assert !priority_needed
-        || incoming_priorities.length == incoming.length : "[Node" + unique_id
-        + "]In a junction " + incoming.length + "x" + outgoing.length
-        + ", you need to specify N priorities";
+    if (priority_needed) {
+      if (incoming_priorities == null) {
+        System.out.println("In node " + unique_id
+            + " the priorities are missing. Aborting!");
+        System.exit(1);
+      }
+      if (incoming_priorities.length != incoming.length) {
+        System.out.println("[Node" + unique_id
+            + "]In a junction " + incoming.length + "x" + outgoing.length
+            + ", you need to specify N priorities");
+        System.exit(1);
+      }
+    }
 
     List<Link> incoming_l = new ArrayList<Link>(incoming.length);
     List<Link> outgoing_l = new ArrayList<Link>(outgoing.length);
