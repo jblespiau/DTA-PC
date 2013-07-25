@@ -19,6 +19,7 @@ public class GradientDescent extends GradientDescentMethod {
 
   /* The stopping criteria is || dJ/dx ||_2 < gradient_condition */
   private double gradient_condition = 10E-5;
+
   /* Table of the cost for all the iterations of the descent for the a graph */
   private double[] TTT;
 
@@ -87,6 +88,14 @@ public class GradientDescent extends GradientDescentMethod {
     if (tmp < gradient_condition)
       System.out.println("Gradient condition: " + tmp);
     return tmp < gradient_condition;
+  }
+
+  public double getGradient_condition() {
+    return gradient_condition;
+  }
+
+  public void setGradient_condition(double gradient_condition) {
+    this.gradient_condition = gradient_condition;
   }
 
   public JFreeChart getChart() {

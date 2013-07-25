@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import dataStructures.Numerical;
 import dataStructures.PairCells;
 
 /**
@@ -337,7 +338,7 @@ public class Junction {
       if (P1 * (flow - demand1) > P2 * demand1) {
         j_info.setPriority_2x1_demand(prev[0].getUniqueId());
         flow_1 = demand1;
-      } else if (P1 * demand2 < P2 * (flow - demand2)) {
+      } else if (P2 * (flow - demand2) > P1 * demand2) {
         j_info.setPriority_2x1_demand(prev[1].getUniqueId());
         flow_1 = flow - demand2;
       } else {
@@ -350,8 +351,8 @@ public class Junction {
       j_info.putFlowOut(prev[0], flow_1);
       j_info.putFlowOut(prev[1], flow_2);
 
-      assert flow_1 <= demand1;
-      assert flow_2 <= demand2;
+      assert Numerical.lessThan(flow_1,demand1, 10E-5): " we shoudl have " + flow_1 + " <= " + demand1;
+      assert Numerical.lessThan(flow_2,demand2, 10E-5) : " we shoudl have " + flow_2 + " <= " + demand2;
       /* Computing the partial out-flow for the first incoming link */
       if (flow_1 != 0) {
         Iterator<Entry<Integer, Double>> iterator_partial_densities =

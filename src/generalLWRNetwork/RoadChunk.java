@@ -4,6 +4,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
+import dataStructures.Numerical;
+
 /**
  * @class OrdinaryCell
  * @brief An OrdinaryCell represent a chunk of road that can be defined with a
@@ -227,7 +229,7 @@ public class RoadChunk extends Cell {
       commodity = entry.getKey();
       out_flow = entry.getValue();
       density = result.get(commodity) - delta_t / length * out_flow;
-      assert density >= 0 : "The density should be positive." +
+      assert Numerical.greaterThan(density, 0, 10E-10) : "The density should be positive." +
           "Initial density: " + result.get(commodity) +
           " Out-flow: " + out_flow +
           " delta_t: " + delta_t +

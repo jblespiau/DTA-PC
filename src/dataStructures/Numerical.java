@@ -100,10 +100,23 @@ public class Numerical {
   }
 
   /**
-   * @return an optimistic (a >= b) (if a is nearly greater, it returns true)
+   * @return an optimistic (a <= b)
    */
-  static boolean greaterThan(double a, double b) {
-    return a + epsilon > b;
+  static public boolean lessThan(double a, double b, double epsilon) {
+    if (b != 0)
+      return a <= b * (1 + epsilon);
+    else
+      return a <= epsilon;
+  }
+
+  /**
+   * @return an optimistic (a >= b)
+   */
+  static public boolean greaterThan(double a, double b, double epsilon) {
+    if (b != 0)
+      return a >= b * (1 - epsilon);
+    else
+      return a >= -epsilon;
   }
 
   static double getEpsilon() {
