@@ -341,7 +341,7 @@ public class SOPC_Optimizer extends SO_Optimizer {
             }
           } else {
             printAlert(j_id, k);
-            //System.out.println(junction_info.toString());
+            // System.out.println(junction_info.toString());
           }
           // 2x1 junctions
         } else if (nb_prev == 2 && nb_next == 1) {
@@ -372,8 +372,10 @@ public class SOPC_Optimizer extends SO_Optimizer {
                   }
               }
 
-            } else if (junction_info.is_supply_limited()) {
-
+            } else {
+              if (!junction_info.is_supply_limited()) {
+                printAlert(j_id, k);
+              }
               int[] list = new int[] { in_links[0].getUniqueId(),
                   in_links[1].getUniqueId() };
               // We compute the downstream cost for the incoming links
@@ -440,8 +442,7 @@ public class SOPC_Optimizer extends SO_Optimizer {
                 lambda.set(rho(k, out_id, c),
                     lambda.get(rho(k, out_id, c)) + value);
               }
-            } else
-              printAlert(j_id, k);
+            }
 
           } else {
             // The junction does not respect the priority constraint and link
@@ -468,8 +469,10 @@ public class SOPC_Optimizer extends SO_Optimizer {
                             * lambda.get(f_out(k, id, c)));
                   }
               }
-            } else if (junction_info.is_supply_limited()) {
-
+            } else {
+              if (!junction_info.is_supply_limited()) {
+                printAlert(j_id, k);
+              }
               int not_satisfied_link = -1;
               if (demand_priority == in_links[0].getUniqueId())
                 not_satisfied_link = in_links[1].getUniqueId();
@@ -527,8 +530,7 @@ public class SOPC_Optimizer extends SO_Optimizer {
                 lambda.set(rho(k, out_id, c),
                     lambda.get(rho(k, out_id, c)) + coef * value);
               }
-            } else
-              printAlert(j_id, k);
+            }
           }
         } else {
           System.out.println("Case not handled yet");
@@ -546,7 +548,7 @@ public class SOPC_Optimizer extends SO_Optimizer {
             + j_id
             + " at time step "
             + k
-            + " is neither demand nor supply limited. Adjoint descent not defined !");
+            + " is neither demand nor supply limited. Adjoint descent not defined ! Supply limited applied.");
   }
 
   public double[] gradientByAdjointMethod(State state, double[] control) {

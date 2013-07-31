@@ -20,8 +20,8 @@ public class DTASolver {
    */
   public static void main(String[] args) {
     // EditorGUI e = new EditorGUI();
-    reportExample();
-
+    // reportExample();
+    complexExample();
     /*
      * System.out.println("*****************************************");
      * System.out.println(" Gradient descent by finite differences  ");
@@ -31,14 +31,15 @@ public class DTASolver {
      * long endTime = System.currentTimeMillis();
      * long searchTime = endTime - startTime;
      * System.out.println("Time (ms): " + searchTime);
-     * 
+     */
+    /*
      * System.out.println("*****************************************");
      * System.out.println(" Gradient descent by the adjoint method  ");
      * System.out.println("*****************************************");
-     * startTime = System.currentTimeMillis();
+     * long startTime = System.currentTimeMillis();
      * optimizationExampleWithHomeMadeGradient();
-     * endTime = System.currentTimeMillis();
-     * searchTime = endTime - startTime;
+     * long endTime = System.currentTimeMillis();
+     * long searchTime = endTime - startTime;
      * System.out.println("Time (ms): " + searchTime);
      */
     // printExample();
@@ -86,8 +87,10 @@ public class DTASolver {
     /* Share of the compliant flow */
     double alpha = 1;
     boolean debug = false;
-    String network_file = "graphs/TwoParallelPath.json";
-    String data_file = "graphs/TwoParallelPathData.json";
+    // String network_file = "graphs/TwoParallelPath.json";
+    // String data_file = "graphs/TwoParallelPathData.json";
+    String network_file = "JUnitTests/2x1JunctionNetwork.json";
+    String data_file = "JUnitTests/2x1JunctionNetworkData.json";
 
     Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
 
@@ -114,6 +117,25 @@ public class DTASolver {
         maxIter, simulator);
 
     GradientDescentMethod homemade_test = new GradientDescent(maxIter);
+    double[] result = homemade_test.solve(optimizer);
+    System.out.println("Final control");
+    for (int i = 0; i < result.length; i++)
+      System.out.println(result[i]);
+  }
+
+  public static void complexExample() {
+    /* Share of the compliant flow */
+    double alpha = 1;
+    String network_file = "graphs/ComplexNetwork.json";
+    String data_file = "graphs/ComplexNetworkData.json";
+
+    Simulator simulator = new Simulator(network_file, data_file, alpha, true);
+
+    int maxIter = 80;
+    SOPC_Optimizer optimizer = new SOPC_Optimizer(maxIter, simulator);
+
+    GradientDescent homemade_test = new GradientDescent(maxIter);
+    homemade_test.setGradient_condition(10E-9);
     double[] result = homemade_test.solve(optimizer);
     System.out.println("Final control");
     for (int i = 0; i < result.length; i++)
