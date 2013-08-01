@@ -250,17 +250,25 @@ public class RoadChunk extends Cell {
       entry = iterator_out_flows.next();
       commodity = entry.getKey();
       out_flow = entry.getValue();
-      density = result.get(commodity) - delta_t / length * out_flow;
-      assert Numerical.greaterThan(density, 0, 10E-10) : "The density should be positive."
-          +
-          "Initial density: " + result.get(commodity) +
-          " Out-flow: " + out_flow +
-          " delta_t: " + delta_t +
-          " gives a new density of " + density;
-      if (density == 0)
+      double value = result.get(commodity) - delta_t / length * out_flow;
+
+      if (value < 0) {
+        if (Numerical.greaterThan(value, 0, 10E-10)) {
+          if (Preprocessor.ZERO_ROUND_NOTIFICATION)
+            System.out.println("[Notification] Negative partial density ("
+                + value + ") rounded up to 0.");
+          value = 0;
+        } else {
+          System.err.println("[Critical] Negative density: " + value
+              + ". Aborting");
+          System.exit(1);
+        }
+      }
+
+      if (value == 0)
         result.remove(commodity);
       else
-        result.put(commodity, density);
+        result.put(commodity, value);
     }
 
     return result;
