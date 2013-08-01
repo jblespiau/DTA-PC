@@ -4,6 +4,9 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
+import dataStructures.Numerical;
+import dataStructures.Preprocessor;
+
 /**
  * @class Sink
  * @brief Represent a Sink with no bottleneck (supply is infinite)
@@ -97,14 +100,29 @@ class Sink extends Cell {
       in_flow = f_in.getValue();
 
       density = result.get(commodity);
+      double value;
       if (density == null) {
-        density = delta_t * in_flow;
+        value = delta_t * in_flow;
       } else {
-        density = density + delta_t * in_flow;
+        value = density + delta_t * in_flow;
       }
-      assert density >= 0 : "Zero density in a buffer";
 
-      result.put(commodity, density);
+      if (value < 0) {
+        if (Numerical.greaterThan(value, 0, 10E-10)) {
+          if (Preprocessor.ZERO_ROUND_NOTIFICATION)
+            System.out.println("[Notification] Negative partial density ("
+                + value + ") rounded up to 0.");
+          value = 0;
+        } else {
+          System.err.println("[Critical] Negative density: " + value
+              + ". Aborting");
+          System.exit(1);
+        }
+      }
+
+      assert value >= 0 : "Negative density(" + value + ") in a sink";
+
+      result.put(commodity, value);
     }
     return result;
   }

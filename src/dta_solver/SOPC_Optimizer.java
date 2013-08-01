@@ -291,6 +291,7 @@ public class SOPC_Optimizer extends SO_Optimizer {
 
               value = backspeed * value;
               assert Numerical.validNumber(value);
+              assert Numerical.validNumber(value);
               for (int c = 0; c < (C + 1); c++) {
                 lambda.set(rho(k, limiting_outgoing_link_id, c),
                     lambda.get(rho(k, limiting_outgoing_link_id, c)) + value);
@@ -374,10 +375,8 @@ public class SOPC_Optimizer extends SO_Optimizer {
                   }
               }
 
-            } else {
-              if (!junction_info.is_supply_limited()) {
-                printAlert(j_id, k);
-              }
+            } else if (junction_info.is_supply_limited()) {
+
               int[] list = new int[] { in_links[0].getUniqueId(),
                   in_links[1].getUniqueId() };
               // We compute the downstream cost for the incoming links
@@ -409,6 +408,7 @@ public class SOPC_Optimizer extends SO_Optimizer {
                       * lambda.get(f_out(k, id, c));
                 }
 
+                assert Numerical.validNumber(common_value);
                 for (int c = 0; c < (C + 1); c++) {
                   lambda.set(rho(k, id, c),
                       lambda.get(rho(k, id, c)) +
@@ -450,6 +450,8 @@ public class SOPC_Optimizer extends SO_Optimizer {
                 lambda.set(rho(k, out_id, c),
                     lambda.get(rho(k, out_id, c)) + value);
               }
+            } else {
+                printAlert(j_id, k);
             }
 
           } else {
@@ -478,10 +480,8 @@ public class SOPC_Optimizer extends SO_Optimizer {
                             * lambda.get(f_out(k, id, c)));
                   }
               }
-            } else {
-              if (!junction_info.is_supply_limited()) {
-                printAlert(j_id, k);
-              }
+            } else if (junction_info.is_supply_limited()) {
+
               int not_satisfied_link = -1;
               if (demand_priority == in_links[0].getUniqueId())
                 not_satisfied_link = in_links[1].getUniqueId();
@@ -540,6 +540,8 @@ public class SOPC_Optimizer extends SO_Optimizer {
                 lambda.set(rho(k, out_id, c),
                     lambda.get(rho(k, out_id, c)) + coef * value);
               }
+            } else {
+              printAlert(j_id, k);
             }
           }
         } else {
@@ -553,7 +555,7 @@ public class SOPC_Optimizer extends SO_Optimizer {
   }
 
   private void printAlert(int j_id, int k) {
-    System.out
+    System.err
         .println("[Critical]The junction "
             + j_id
             + " at time step "
