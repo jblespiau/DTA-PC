@@ -110,9 +110,9 @@ public class RoadChunk extends Cell {
           + "the initial density " + densities.next()
           + " must be greater than 0";
     }
-    assert v <= length / delta_t : "Cell " + u_id + ": CLF condition " + v
+    assert delta_t * v <= length : "Cell " + u_id + ": CLF condition " + v
         + " <= " + length + " / " + delta_t + " not respected";
-    assert w <= length / delta_t : "Cell " + u_id + ": CLF condition " + w
+    assert w * delta_t <= length : "Cell " + u_id + ": CLF condition " + w
         + " <= " + length + " / " + delta_t + " not respected";
     if (v != length / delta_t)
       System.out
