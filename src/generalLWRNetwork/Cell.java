@@ -41,16 +41,18 @@ public abstract class Cell {
 
   abstract public double getLength();
 
-  abstract public double getJamDensity();
+  abstract public double getJamDensity(int time_step);
 
-  abstract public double getDemand(double total_density, double delta_t);
-
-  abstract public double getDerivativeDemand(double total_density,
+  abstract public double getDemand(double total_density, int time_step,
       double delta_t);
 
-  abstract public double getSupply(double total_density);
+  abstract public double getDerivativeDemand(double total_density,
+      int time_step,
+      double delta_t);
 
-  abstract public double getDerivativeSupply(double total_density);
+  abstract public double getSupply(double total_density, int time_step);
+
+  abstract public double getDerivativeSupply(double total_density, int time_step);
 
   abstract public LinkedHashMap<Integer, Double> getUpdatedDensity(
       LinkedHashMap<Integer, Double> densities,

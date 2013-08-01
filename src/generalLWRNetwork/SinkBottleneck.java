@@ -14,7 +14,7 @@ class SinkBottleneck extends Sink {
   }
 
   @Override
-  public double getSupply(double density) {
+  public double getSupply(double density, int time_step) {
     return bottleneck_capacity;
   }
 

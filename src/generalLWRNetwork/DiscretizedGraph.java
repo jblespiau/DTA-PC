@@ -63,7 +63,7 @@ public class DiscretizedGraph {
     /* Discretize all the links */
     link_to_cells = new LinkPair[graph_links.length];
     for (int i = 0; i < graph_links.length; i++) {
-      link_to_cells[i] = discretizeLink(graph_links[i], delta_t);
+      link_to_cells[i] = discretizeLink(graph_links[i], time_steps, delta_t);
     }
 
     /* Transform Nodes into Junctions */
@@ -151,7 +151,7 @@ public class DiscretizedGraph {
    * @details It add 1x1 junctions between the cells and all those junctions are
    *          added in new_junctions
    */
-  private LinkPair discretizeLink(Link link, double delta_t) {
+  private LinkPair discretizeLink(Link link, int nb_time_steps, double delta_t) {
     LinkPair result = new LinkPair();
 
     double length = link.l;
@@ -168,7 +168,7 @@ public class DiscretizedGraph {
     Junction current_j = null, previous_j = null;
     int i;
     for (i = 0; i < nb_cell_to_build - 1; i++) {
-      cell = new RoadChunk(v * delta_t, v, w, F_max, jam_density);
+      cell = new RoadChunk(v * delta_t, v, w, F_max, jam_density, nb_time_steps);
       new_cells.add(cell);
       if (i == 0) {
         result.begin = cell;
@@ -187,7 +187,7 @@ public class DiscretizedGraph {
       cell.setNext(current_j);
 
     // Last cell (or unique cell) of the link
-    cell = new RoadChunk(v * delta_t, v, w, F_max, jam_density);
+    cell = new RoadChunk(v * delta_t, v, w, F_max, jam_density, nb_time_steps);
     new_cells.add(cell);
     if (i == 0) {
       result.begin = cell;

@@ -90,15 +90,15 @@ public class StatePanel extends JPanel {
           head_x = link.to.x;
           head_y = link.to.y;
         }
-        double lambda = (p.getCell(tmp).total_density / tmp.getJamDensity());
+        double lambda = (p.getCell(tmp).total_density / tmp.getJamDensity(0));
         double magic_coef = 0.4;
         float green = (float) 0.3;
         float red = 1;
         float color = green;
         RoadChunk rc = (RoadChunk) tmp;
-        if (rc.isCongested(p.getCell(tmp).total_density)) {
+        if (rc.isCongested(p.getCell(tmp).total_density, 0)) {
           color = red;
-          lambda = (p.getCell(tmp).total_density / tmp.getJamDensity());
+          lambda = (p.getCell(tmp).total_density / tmp.getJamDensity(0));
         }
         graphics2D.setPaint(
             Color.getHSBColor((float) color,

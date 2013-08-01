@@ -33,22 +33,23 @@ public class Buffer extends Cell {
   }
 
   @Override
-  public double getDemand(double density, double delta_t) {
+  public double getDemand(double density, int time_step, double delta_t) {
     return density / delta_t;
   }
 
   @Override
-  public double getDerivativeDemand(double total_density, double delta_t) {
+  public double getDerivativeDemand(double total_density, int time_step,
+      double delta_t) {
     return 1.0 / delta_t;
   }
 
   @Override
-  public double getSupply(double density) {
+  public double getSupply(double density, int time_step) {
     return 0;
   }
 
   @Override
-  public double getDerivativeSupply(double total_density) {
+  public double getDerivativeSupply(double total_density, int time_step) {
     return 0;
   }
 
@@ -116,8 +117,9 @@ public class Buffer extends Cell {
       density = density - delta_t * out_flow;
       // TODO: Check if negative densities are normals
       if (density < 0 && Numerical.equals(density, 0, 10E-6)) {
-        //System.out.println("Warning: Negative density in a buffer (" + density
-        //    + "). Rouding up to 0");
+        // System.out.println("Warning: Negative density in a buffer (" +
+        // density
+        // + "). Rouding up to 0");
         density = 0.0;
       }
       assert density >= 0 : "Negative density(" + density + ") in a buffer";
@@ -147,7 +149,7 @@ public class Buffer extends Cell {
   }
 
   @Override
-  public double getJamDensity() {
+  public double getJamDensity(int time_step) {
     assert (false);
     return Double.MAX_VALUE;
   }

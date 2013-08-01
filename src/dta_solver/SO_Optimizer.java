@@ -520,13 +520,13 @@ public class SO_Optimizer extends Adjoint<State> {
           // Demand first
           result.setQuick(i,
               x_block_size * k + cell_id * (C + 1) + c,
-              cells[cell_id].getDerivativeDemand(total_density, delta_t));
+              cells[cell_id].getDerivativeDemand(total_density, k, delta_t));
 
           // Then supply
           /* There is no derivative term with respect to the supply for buffers */
           if (in_cell.isBuffer())
             result.setQuick(i + 1, x_block_size * k + cell_id * (C + 1) + c,
-                cells[cell_id].getDerivativeSupply(total_density));
+                cells[cell_id].getDerivativeSupply(total_density, k));
         }
       }
     }
@@ -691,7 +691,7 @@ public class SO_Optimizer extends Adjoint<State> {
                * increase the corresponding flow by v_i
                */
               j = x_block_size * k + (C + 1) * prev_id + c;
-              result.setQuick(i, j, cells[prev_id].getDerivativeDemand(0,
+              result.setQuick(i, j, cells[prev_id].getDerivativeDemand(0, k,
                   delta_t));
             }
 
