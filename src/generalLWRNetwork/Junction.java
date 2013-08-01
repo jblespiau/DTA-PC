@@ -214,8 +214,8 @@ public class Junction {
         assert (partial_density != null);
         if (partial_density == 0)
           continue;
-        assert partial_density >= 0 : "Partial densities should be positive "
-            + partial_density;
+        assert partial_density >= 0 : "Partial densities should be positive: "
+            + partial_density + ", in cell " + in_id;
         for (int out = 0; out < next.length; out++) {
           out_id = next[out].getUniqueId();
           beta_ijc = junction_sr.get(in_id, out_id, commodity);
@@ -363,14 +363,14 @@ public class Junction {
       }
       flow_2 = flow - flow_1;
 
-      // TODO: define supply and demand limitied out of the physical set
+      // TODO: define supply and demand limited out of the physical set
       /* We register the total out-flow at the junction */
       j_info.putFlowOut(prev[0], flow_1);
       j_info.putFlowOut(prev[1], flow_2);
 
-      assert Numerical.lessThan(flow_1, demand1, 10E-5) : " we shoudl have "
+      assert Numerical.lessThan(flow_1, demand1, 10E-5) : " we should have "
           + flow_1 + " <= " + demand1;
-      assert Numerical.lessThan(flow_2, demand2, 10E-5) : " we shoudl have "
+      assert Numerical.lessThan(flow_2, demand2, 10E-5) : " we should have "
           + flow_2 + " <= " + demand2;
       /* Computing the partial out-flow for the first incoming link */
       if (flow_1 != 0) {
