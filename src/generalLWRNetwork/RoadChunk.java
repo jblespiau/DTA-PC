@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 import dataStructures.Numerical;
+import dataStructures.Preprocessor;
 
 /**
  * @class OrdinaryCell
@@ -216,9 +217,19 @@ public class RoadChunk extends Cell {
 
       if (density == null)
         density = 0.0;
-
-      result.put(commodity, density + delta_t / length * in_flow);
-
+      double value = density + delta_t / length * in_flow;
+      if (value < 0) {
+        if (Numerical.greaterThan(value, 0, 10E-10)) {
+          if (Preprocessor.ZERO_ROUND_NOTIFICATION)
+            System.out.println("[Notification] Negative partial density ("
+                + value + ") rounded up to 0.");
+        } else {
+          System.err.println("[Critical] Negative density: " + value
+              + ". Aborting");
+          System.exit(1);
+        }
+      }
+      result.put(commodity, value);
     }
 
     Iterator<Entry<Integer, Double>> iterator_out_flows = out_flows
@@ -229,7 +240,8 @@ public class RoadChunk extends Cell {
       commodity = entry.getKey();
       out_flow = entry.getValue();
       density = result.get(commodity) - delta_t / length * out_flow;
-      assert Numerical.greaterThan(density, 0, 10E-10) : "The density should be positive." +
+      assert Numerical.greaterThan(density, 0, 10E-10) : "The density should be positive."
+          +
           "Initial density: " + result.get(commodity) +
           " Out-flow: " + out_flow +
           " delta_t: " + delta_t +
