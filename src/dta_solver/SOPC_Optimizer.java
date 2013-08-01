@@ -551,7 +551,7 @@ public class SOPC_Optimizer extends SO_Optimizer {
             + j_id
             + " at time step "
             + k
-            + " is neither demand nor supply limited. Adjoint descent not defined ! Supply limited applied.");
+            + " is neither demand nor supply limited. Adjoint descent not defined !");
   }
 
   public double[] gradientByAdjointMethod(State state, double[] control) {
