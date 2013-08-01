@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 import dataStructures.Numerical;
+import dataStructures.Preprocessor;
 
 /**
  * @class EntryCell
@@ -113,17 +114,24 @@ public class Buffer extends Cell {
       if (density == null && out_flow == 0)
         continue;
 
-      density = density - delta_t * out_flow;
-      // TODO: Check if negative densities are normals
-      if (density < 0 && Numerical.equals(density, 0, 10E-6)) {
-        //System.out.println("Warning: Negative density in a buffer (" + density
-        //    + "). Rouding up to 0");
-        density = 0.0;
+      double value = density - delta_t * out_flow;
+
+      if (value < 0) {
+        if (Numerical.greaterThan(value, 0, 10E-10)) {
+          if (Preprocessor.ZERO_ROUND_NOTIFICATION)
+            System.out.println("[Notification] Negative partial density ("
+                + value + ") rounded up to 0.");
+          value = 0;
+        } else {
+          System.err.println("[Critical] Negative density: " + value
+              + ". Aborting");
+          System.exit(1);
+        }
       }
-      assert density >= 0 : "Negative density(" + density + ") in a buffer";
+      assert value >= 0 : "Negative density(" + value + ") in a buffer";
 
       if (density != 0) {
-        result.put(commodity, density);
+        result.put(commodity, value);
       } else {
         result.remove(commodity);
       }

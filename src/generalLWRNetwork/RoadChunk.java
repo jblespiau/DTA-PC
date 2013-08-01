@@ -223,6 +223,7 @@ public class RoadChunk extends Cell {
           if (Preprocessor.ZERO_ROUND_NOTIFICATION)
             System.out.println("[Notification] Negative partial density ("
                 + value + ") rounded up to 0.");
+          value = 0;
         } else {
           System.err.println("[Critical] Negative density: " + value
               + ". Aborting");
