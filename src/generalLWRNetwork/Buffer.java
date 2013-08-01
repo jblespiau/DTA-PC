@@ -13,7 +13,7 @@ import dataStructures.Numerical;
  *        limited in-flow
  * 
  */
-public class Buffer extends Cell {
+class Buffer extends Cell {
 
   private Junction next;
 

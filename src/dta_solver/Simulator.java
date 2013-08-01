@@ -28,6 +28,10 @@ public class Simulator {
   /* Share of the compliant flow */
   private double alpha;
 
+  private Simulator(double alpha) {
+    this.alpha = alpha;
+  }
+
   protected Simulator(int delta_t, int nb_steps) {
     time_discretization = new Discretization(delta_t, nb_steps);
   }
@@ -123,6 +127,10 @@ public class Simulator {
     }
   }
 
+  static public Simulator emptyObject(double alpha) {
+    return new Simulator(alpha);
+  }
+
   protected State run() {
     return run(true);
   }
@@ -215,7 +223,7 @@ public class Simulator {
     splits =
         IntertemporalOriginsSplitRatios.defaultPhysicalSplitRatios(
             nb_steps,
-            discretized_graph.sources, alpha);
+            lwr_network.sources, alpha);
     System.out.println("Done");
   }
 

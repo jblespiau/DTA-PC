@@ -30,6 +30,14 @@ public class Junction {
     next = null;
   }
 
+  public Junction(int incoming, int outgoing) {
+    unique_id = NetworkUIDFactory.getId_junctions();
+    if (incoming > 0)
+      prev = new Cell[incoming];
+    if (outgoing > 0)
+      next = new Cell[outgoing];
+  }
+
   /**
    * @brief Create a junction that does NOT need any priority vector
    * @param predecessor
@@ -86,6 +94,13 @@ public class Junction {
     while (prev[i] != null)
       i++;
     prev[i] = c;
+  }
+
+  public void addNext(Cell c) {
+    int i = 0;
+    while (next[i] != null)
+      i++;
+    next[i] = c;
   }
 
   @Override
@@ -199,7 +214,8 @@ public class Junction {
         assert (partial_density != null);
         if (partial_density == 0)
           continue;
-
+        assert partial_density >= 0 : "Partial densities should be positive "
+            + partial_density;
         for (int out = 0; out < next.length; out++) {
           out_id = next[out].getUniqueId();
           beta_ijc = junction_sr.get(in_id, out_id, commodity);
@@ -234,13 +250,14 @@ public class Junction {
         beta_entry = iterator_beta.next();
         i_j = beta_entry.getKey();
         /* Computation of beta(i, j) by dividing by density(i,k) */
+        assert density_i >= 0;
+        assert beta_entry.getValue() >= 0 : "Negative value in Junction ("
+            + beta_entry.getValue() + ")";
         beta_ij_dividedby_density = beta_entry.getValue() / density_i;
 
         j_info.put(i_j, beta_ij_dividedby_density);
 
         assert i_j.incoming == in_id;
-        assert beta_entry.getValue() >= 0 : "Negative value in Junction ("
-            + beta_entry.getValue() + ")";
         assert beta_ij_dividedby_density >= 0;
 
         double supply = p.getCell(cells[i_j.outgoing]).supply
@@ -351,8 +368,10 @@ public class Junction {
       j_info.putFlowOut(prev[0], flow_1);
       j_info.putFlowOut(prev[1], flow_2);
 
-      assert Numerical.lessThan(flow_1,demand1, 10E-5): " we shoudl have " + flow_1 + " <= " + demand1;
-      assert Numerical.lessThan(flow_2,demand2, 10E-5) : " we shoudl have " + flow_2 + " <= " + demand2;
+      assert Numerical.lessThan(flow_1, demand1, 10E-5) : " we shoudl have "
+          + flow_1 + " <= " + demand1;
+      assert Numerical.lessThan(flow_2, demand2, 10E-5) : " we shoudl have "
+          + flow_2 + " <= " + demand2;
       /* Computing the partial out-flow for the first incoming link */
       if (flow_1 != 0) {
         Iterator<Entry<Integer, Double>> iterator_partial_densities =

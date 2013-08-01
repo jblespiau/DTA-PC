@@ -69,6 +69,10 @@ public class Origin {
     return compliant_commodities;
   }
 
+  public void setCompliant_commodities(LinkedList<Integer> compliant_commodities) {
+    this.compliant_commodities = compliant_commodities;
+  }
+
   /**
    * @brief Inject the demand in the current profile
    * @param previous_profile

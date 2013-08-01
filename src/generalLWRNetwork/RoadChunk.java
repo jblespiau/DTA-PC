@@ -226,8 +226,17 @@ public class RoadChunk extends Cell {
 
       if (density == null)
         density = 0.0;
-
-      result.put(commodity, density + delta_t / length * in_flow);
+      double value = density + delta_t / length * in_flow;
+      if (value < 0)
+        if (Numerical.greaterThan(value, 0, 10E-10)) {
+          System.err.println("[Notification] Negative density (" + value
+              + ")rounded up to 0");
+          value = 0;
+        } else {
+          System.err.println("[Critical Error] Negative density :" + value);
+          System.exit(1);
+        }
+      result.put(commodity, value);
 
     }
 

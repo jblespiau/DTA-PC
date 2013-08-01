@@ -46,6 +46,14 @@ public class DiscretizedGraph {
   public IntertemporalSplitRatios split_ratios;
   int nb_paths;
 
+  private DiscretizedGraph() {
+
+  }
+
+  public static DiscretizedGraph emptyObject() {
+    return new DiscretizedGraph();
+  }
+
   public DiscretizedGraph(Graph g, double delta_t, int time_steps) {
     graph_nodes = g.getNodes();
     graph_links = g.getLinks();

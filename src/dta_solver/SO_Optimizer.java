@@ -145,7 +145,7 @@ public class SO_Optimizer extends Adjoint<State> {
 
     assert (H_block_size == x_block_size);
     /* Initialization of the split ratios for the Optimizer */
-    simulator.initializeSplitRatiosForOptimizer();
+    //simulator.initializeSplitRatiosForOptimizer();
   }
 
   public void printSizes() {

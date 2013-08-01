@@ -8,17 +8,36 @@ import generalNetwork.state.internalSplitRatios.IntertemporalSplitRatios;
 import generalNetwork.state.internalSplitRatios.JunctionSplitRatios;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.ListIterator;
 
 public class LWR_network {
 
   private Cell[] cells;
   private Junction[] junctions;
-  private Origin[] sources;
+  public Origin[] sources;
   private Destination[] sinks;
 
   private IntertemporalSplitRatios internal_split_ratios;
   private int nb_compliant_commodities;
+
+  public LWR_network(LinkedList<Cell> cells_list,
+      LinkedList<Junction> junction_list, Origin[] sources,
+      Destination[] sinks, IntertemporalSplitRatios internal_split_ratios,
+      int nb_compliant_commodities) {
+    this.cells = new Cell[cells_list.size()];
+    for (int i = 0; i < cells.length; i++)
+      cells[i] = cells_list.get(i);
+    this.junctions = new Junction[junction_list.size()];
+    for (int i = 0; i < junctions.length; i++)
+      junctions[i] = junction_list.get(i);
+    this.sources = sources;
+    this.sinks = sinks;
+    this.internal_split_ratios = internal_split_ratios;
+    this.nb_compliant_commodities = nb_compliant_commodities;
+
+    check();
+  }
 
   /**
    * @brief Take a DiscretizedGraph and create the LWR_network compact

@@ -227,6 +227,7 @@ public class SOPC_Optimizer extends SO_Optimizer {
           double value = cells[cell_id].getLength();
           if (k < T - 1)
             value += lambda.get(rho(k + 1, cell_id, c));
+          assert Numerical.validNumber(value);
           lambda.set(rho(k, cell_id, c), value);
         }
       }
@@ -289,7 +290,7 @@ public class SOPC_Optimizer extends SO_Optimizer {
                   .getDerivativeSupply(limiting_density, k);
 
               value = backspeed * value;
-
+              assert Numerical.validNumber(value);
               for (int c = 0; c < (C + 1); c++) {
                 lambda.set(rho(k, limiting_outgoing_link_id, c),
                     lambda.get(rho(k, limiting_outgoing_link_id, c)) + value);
@@ -387,9 +388,15 @@ public class SOPC_Optimizer extends SO_Optimizer {
                     .getCell(id);
                 double total_density = info.total_density;
                 if (total_density == 0) {
-                  System.out
-                      .println("Strange behavior. Look at SOPC for 2x1 junctions");
-                  System.exit(1);
+                  if (junction_info.is_supply_limited()) {
+
+                    System.out
+                        .println("Strange behavior in j=" + j_id
+                            + " at time step " + k
+                            + ". Look at SOPC for 2x1 junctions.");
+                   // System.exit(1);
+                    continue;
+                  }
                 }
                 double flow = junction_info.getFlowOut(id);
 
@@ -461,7 +468,7 @@ public class SOPC_Optimizer extends SO_Optimizer {
                     .getCell(id);
                 double total_density = info.total_density;
                 double coefficient = cells[id].getDerivativeDemand(
-                    total_density, 
+                    total_density,
                     k,
                     delta_t);
                 if (coefficient != 0)
