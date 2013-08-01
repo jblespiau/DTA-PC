@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
 import dataStructures.Numerical;
+import dataStructures.Preprocessor;
 
 /**
  * @class OrdinaryCell
@@ -227,17 +228,18 @@ public class RoadChunk extends Cell {
       if (density == null)
         density = 0.0;
       double value = density + delta_t / length * in_flow;
-      if (value < 0)
+      if (value < 0) {
         if (Numerical.greaterThan(value, 0, 10E-10)) {
-          System.err.println("[Notification] Negative density (" + value
-              + ")rounded up to 0");
-          value = 0;
+          if (Preprocessor.ZERO_ROUND_NOTIFICATION)
+            System.out.println("[Notification] Negative partial density ("
+                + value + ") rounded up to 0.");
         } else {
-          System.err.println("[Critical Error] Negative density :" + value);
+          System.err.println("[Critical] Negative density: " + value
+              + ". Aborting");
           System.exit(1);
         }
+      }
       result.put(commodity, value);
-
     }
 
     Iterator<Entry<Integer, Double>> iterator_out_flows = out_flows
