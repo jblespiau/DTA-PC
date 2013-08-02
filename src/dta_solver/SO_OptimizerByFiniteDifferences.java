@@ -31,53 +31,17 @@ public class SO_OptimizerByFiniteDifferences extends SOPC_Optimizer {
       if (control[i] < 0)
         assert false : "Negative control " + control[i];
     State state = forwardSimulate(control);
-    // System.out.println("Control asked in the objective function");
-    // for (int i = 0; i < control.length; i++)
-    // System.out.println(control[i]);
-    double objective = 0;
-    /*
-     * To compute the sum of the densities ON the network, we add the density of
-     * all the cells and then remove the density of the sinks
-     */
-    for (int k = 0; k < T; k++) {
-      for (int cell_id = 0; cell_id < cells.length; cell_id++)
-        objective += state.profiles[k].getCell(cell_id).total_density;
-
-      for (int d = 0; d < destinations.length; d++)
-        objective -= state.profiles[k].getCell(destinations[d].getUniqueId()).total_density;
-    }
-    return objective;
-  }
-
-  public double objective222(double[] control) {
-    /* Inforces control[i] >= 0, \forall i */
-    for (int i = 0; i < control.length; i++)
-      if (control[i] < 0)
-        assert false;
-    State state = forwardSimulate(control);
-    double objective = 0;
-    /*
-     * To compute the sum of the densities ON the network, we add the density of
-     * all the cells and then remove the density of the sinks
-     */
-    for (int k = 0; k < T; k++) {
-      for (int cell_id = 0; cell_id < cells.length; cell_id++)
-        objective += state.profiles[k].getCell(cell_id).total_density;
-
-      for (int d = 0; d < destinations.length; d++)
-        objective -= state.profiles[k].getCell(destinations[d].getUniqueId()).total_density;
-    }
-    return objective;
+    return simulator.objective(state);
   }
 
   public void notProjectedGradient(double[] gradient_f, double[] control) {
     double deviation = 0.001;
-    double value = objective222(control);
+    double value = objective(control);
     for (int i = 0; i < control.length; i++) {
       double[] modified_control = Arrays.copyOf(control, control.length);
       modified_control[i] = modified_control[i] + deviation;
 
-      double result = objective222(modified_control);
+      double result = objective(modified_control);
       gradient_f[i] = (result - value) / deviation;
     }
   }
@@ -91,13 +55,13 @@ public class SO_OptimizerByFiniteDifferences extends SOPC_Optimizer {
    */
   public void gradient(double[] gradient_f, double[] control) {
     double deviation = 0.001;
-    double value = objective222(control);
+    double value = objective(control);
     double[] gradient = new double[gradient_f.length];
     for (int i = 0; i < control.length; i++) {
       double[] modified_control = Arrays.copyOf(control, control.length);
       modified_control[i] = modified_control[i] + deviation;
 
-      double result = objective222(modified_control);
+      double result = objective(modified_control);
       gradient[i] = (result - value) / deviation;
     }
 

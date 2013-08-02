@@ -324,10 +324,12 @@ public class Simulator {
      */
     for (int k = 0; k < T; k++) {
       for (int cell_id = 0; cell_id < cells.length; cell_id++)
-        objective += state.profiles[k].getCell(cell_id).total_density;
+        objective += state.profiles[k].getCell(cell_id).total_density
+            * cells[cell_id].getLength();
 
       for (int d = 0; d < destinations.length; d++)
-        objective -= state.profiles[k].getCell(destinations[d].getUniqueId()).total_density;
+        objective -= state.profiles[k].getCell(destinations[d].getUniqueId()).total_density
+            * cells[destinations[d].getUniqueId()].getLength();
     }
     return objective;
   }
