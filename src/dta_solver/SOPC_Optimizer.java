@@ -386,8 +386,9 @@ public class SOPC_Optimizer extends SO_Optimizer {
                     .getCell(id);
                 double total_density = info.total_density;
                 if (total_density == 0) {
-                  System.out
-                      .println("Strange behavior. Look at SOPC for 2x1 junctions");
+                  System.err.println("[Critical]Junction " + j_id
+                      + " at time step " + k
+                      + " is supply limited and has zero flow");
                   System.exit(1);
                 }
                 double flow = junction_info.getFlowOut(id);
@@ -444,7 +445,7 @@ public class SOPC_Optimizer extends SO_Optimizer {
                     lambda.get(rho(k, out_id, c)) + value);
               }
             } else {
-                printAlert(j_id, k);
+              printAlert(j_id, k);
             }
 
           } else {
@@ -489,6 +490,12 @@ public class SOPC_Optimizer extends SO_Optimizer {
                   .getCell(not_satisfied_link);
               double total_density = info.total_density;
 
+              if (total_density == 0) {
+                System.err.println("[Critical]Junction " + j_id
+                    + " at time step " + k
+                    + " is supply limited and has zero flow");
+                System.exit(1);
+              }
               double value = 0;
               for (int c = 0; c < (C + 1); c++) {
                 Double partial_density = info.partial_densities.get(c);
