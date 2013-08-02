@@ -816,4 +816,16 @@ public class SOPC_Optimizer implements GradientDescentOptimizer {
 
     return result;
   }
+  
+  public void printProperties(State state) {
+    System.out.println("[Printing properties of the given state]");
+    System.out.println("Total split ratios at the origins through time steps:");
+    for (int o = 0; o < O; o++) {
+      System.out.print("[Origin " + o + "]");
+      for (int k = 0; k < T; k++)
+        System.out.print(" " + state.sum_of_split_ratios[o][k] + " ");
+      System.out.println();
+
+    }
+  }
 }
