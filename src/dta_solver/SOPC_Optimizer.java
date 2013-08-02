@@ -1,10 +1,15 @@
 package dta_solver;
 
+import java.util.Iterator;
+
 import generalLWRNetwork.Cell;
+import generalLWRNetwork.Destination;
 import generalLWRNetwork.Junction;
+import generalLWRNetwork.Origin;
 import generalNetwork.state.CellInfo;
 import generalNetwork.state.JunctionInfo;
 import generalNetwork.state.State;
+import generalNetwork.state.externalSplitRatios.IntertemporalOriginsSplitRatios;
 import generalNetwork.state.internalSplitRatios.IntertemporalSplitRatios;
 import generalNetwork.state.internalSplitRatios.JunctionSplitRatios;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
@@ -13,25 +18,194 @@ import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
 import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
 import cern.colt.matrix.tdouble.impl.SparseCCDoubleMatrix2D;
 import dataStructures.Numerical;
+import dta_solver.adjointMethod.GradientDescentOptimizer;
 
-public class SOPC_Optimizer extends SO_Optimizer {
+public class SOPC_Optimizer implements GradientDescentOptimizer {
 
-  public SOPC_Optimizer(int maxIter, Simulator simu) {
-    super(maxIter, simu);
+  protected Simulator simulator;
+
+  /* Share of the compliant commodities */
+  private double alpha;
+  /* Total number of time steps */
+  protected int T;
+  /* Number of compliant commodities */
+  protected int C;
+  protected Cell[] cells;
+  protected Junction[] junctions;
+  protected Origin[] sources;
+  protected Destination[] destinations;
+  /* Number of origins */
+  protected int O;
+  /* Number of destinations */
+  private int S;
+
+  /* Control Vector U */
+  /* Total size of a block for one time step of the control */
+  protected int temporal_control_block_size;
+
+  /* State Vector X */
+  /* Size of a block describing all the densities for a given time step */
+  protected int size_density_block;
+  /* Size of a block describing all the supply/demand at one time step */
+  protected int size_demand_suply_block;
+  /* Size of the block describing all the Aggregate SR at one time sate */
+  protected int size_aggregate_split_ratios;
+  /* Size of a block describing out-flows */
+  protected int size_f_out_block;
+  /* Total size of the description of a profile for a given time step */
+  protected int x_block_size;
+  protected int demand_supply_position;
+  protected int aggregate_split_ratios_position;
+  protected int f_out_position;
+  protected int f_in_position;
+
+  public SOPC_Optimizer(Simulator simulator) {
+    this.simulator = simulator;
+
+    alpha = simulator.getAlpha();
+    T = simulator.time_discretization.getNb_steps();
+    C = simulator.lwr_network.getNb_compliantCommodities();
+    cells = simulator.lwr_network.getCells();
+    junctions = simulator.lwr_network.getJunctions();
+    sources = simulator.lwr_network.getSources();
+    destinations = simulator.lwr_network.getSinks();
+    O = sources.length;
+    S = destinations.length;
+
+    /* For every time steps there are C compliant flows, and O non compliant */
+    temporal_control_block_size = C;
+
+    /* State Vector X */
+    /* Size of a block describing all the densities for a given time step */
+    size_density_block = cells.length * (C + 1);
+    /* Size of a block describing all the supply/demand at one time step */
+    size_demand_suply_block = 2 * cells.length;
+    /* Size of the block describing all the Aggregate SR at one time sate */
+    Junction junction;
+    int tmp_nb_aggregate_split_ratios = 0;
+    for (int j = 0; j < junctions.length; j++) {
+      junction = junctions[j];
+      tmp_nb_aggregate_split_ratios +=
+          junction.getPrev().length * junction.getNext().length;
+    }
+    size_aggregate_split_ratios = tmp_nb_aggregate_split_ratios;
+    /* Size of a block describing out-flows or in-flows */
+    size_f_out_block = size_density_block;
+    /* Total size of the description of a profile for a given time step */
+    x_block_size = (3 * (C + 1) + 2) * cells.length
+        + size_aggregate_split_ratios;
+
+    demand_supply_position = size_density_block;
+    aggregate_split_ratios_position =
+        demand_supply_position + size_demand_suply_block;
+    f_out_position =
+        aggregate_split_ratios_position + size_aggregate_split_ratios;
+    f_in_position = f_out_position + size_f_out_block;
 
     simulator.initializSplitRatios();
   }
 
   /**
-   * @brief Computes the derivative dJ/dU
-   * @details
-   *          The condition \beta >= 0 is already put in the solver (in
-   *          AdjointJVM/org.wsj/Optimizers.scala) do there is only one barrier
-   *          in J
+   * @brief Forward simulate after having loaded the external split ratios for
+   *        compliant commodities
+   * @details For now we even put the zero split ratios because we never clear
+   *          the split ratios
    */
+  public State forwardSimulate(double[] control) {
+    return forwardSimulate(control, false);
+  }
+
+  public State forwardSimulate(double[] control, boolean debug) {
+
+    IntertemporalOriginsSplitRatios splits = simulator.splits;
+
+    int index_in_control = 0;
+    int commodity, coordinate;
+    double[][] sum_of_split_ratios = new double[O][T];
+    for (int orig = 0; orig < O; orig++) {
+
+      Iterator<Integer> it = sources[orig]
+          .getCompliant_commodities()
+          .iterator();
+      while (it.hasNext()) {
+        commodity = it.next();
+        for (int k = 0; k < T; k++) {
+          /*
+           * Mapping between splits.get(sources[orig], k).get(commodity) and
+           * U[k * C + index_in_control]
+           */
+          coordinate = k * temporal_control_block_size + index_in_control;
+          // TODO: Check this !
+          /*
+           * assert control[coordinate] >= 0 : "The " + coordinate
+           * + "-th control (" + control[coordinate] + ") should be positive";
+           */
+          splits.get(sources[orig], k).
+              put(commodity, control[coordinate] * alpha);
+          sum_of_split_ratios[orig][k] += control[coordinate];
+        }
+        index_in_control++;
+      }
+
+    }
+    State state = simulator.run(debug);
+    /* At the end we add the sum of the split ratios at the state */
+    state.sum_of_split_ratios = sum_of_split_ratios;
+
+    return state;
+  }
+
+  /**
+   * @brief Return the 1x(C*T) matrix representing the control where
+   *        C is the number of compliant commodities
+   * @details There are T blocks of size C. The i-th block contains the
+   *          controls at time step i.
+   */
+  public double[] getControl() {
+
+    if (alpha == 0) {
+      System.out.println("The share of the compliant commodities is zero."
+          + "No optimization possible. Aborting");
+      System.exit(1);
+    }
+    IntertemporalOriginsSplitRatios splits = simulator.splits;
+
+    /* For every time steps there are C compliant flows */
+    double[] control = new double[T * temporal_control_block_size];
+
+    int index_in_control = 0;
+    int commodity;
+    Double split_ratio;
+    for (int orig = 0; orig < O; orig++) {
+      Iterator<Integer> it = sources[orig]
+          .getCompliant_commodities()
+          .iterator();
+      while (it.hasNext()) {
+        commodity = it.next();
+        for (int k = 0; k < T; k++) {
+          /*
+           * Mapping between splits.get(sources[orig], k).get(commodity) and
+           * U[k*(C + sources.length) + index_in_control]
+           */
+          split_ratio = splits.get(sources[orig], k).get(commodity);
+          if (split_ratio != null)
+            // The sum of the split ratios at the control should be equal to 1
+            // for a given origin
+            control[k * temporal_control_block_size + index_in_control] = split_ratio
+                / alpha;
+          assert split_ratio / alpha >= 0 : "We are exporting a negative control";
+
+        }
+        index_in_control++;
+      }
+    }
+
+    return control;
+  }
+
   @Override
-  public DoubleMatrix1D djdu(State state, double[] control) {
-    return DoubleFactory1D.dense.make(T * temporal_control_block_size);
+  public double[] getStartingPoint() {
+    return getControl();
   }
 
   /**
@@ -387,15 +561,10 @@ public class SOPC_Optimizer extends SO_Optimizer {
                     .getCell(id);
                 double total_density = info.total_density;
                 if (total_density == 0) {
-                  if (junction_info.is_supply_limited()) {
-
-                    System.out
-                        .println("Strange behavior in j=" + j_id
-                            + " at time step " + k
-                            + ". Look at SOPC for 2x1 junctions.");
-                   // System.exit(1);
-                    continue;
-                  }
+                  System.err.println("[Critical]Junction " + j_id
+                      + " at time step " + k
+                      + " is supply limited and has zero flow");
+                  System.exit(1);
                 }
                 double flow = junction_info.getFlowOut(id);
 
@@ -451,7 +620,7 @@ public class SOPC_Optimizer extends SO_Optimizer {
                     lambda.get(rho(k, out_id, c)) + value);
               }
             } else {
-                printAlert(j_id, k);
+              printAlert(j_id, k);
             }
 
           } else {
@@ -497,6 +666,12 @@ public class SOPC_Optimizer extends SO_Optimizer {
                   .getCell(not_satisfied_link);
               double total_density = info.total_density;
 
+              if (total_density == 0) {
+                System.err.println("[Critical]Junction " + j_id
+                    + " at time step " + k
+                    + " is supply limited and has zero flow");
+                System.exit(1);
+              }
               double value = 0;
               for (int c = 0; c < (C + 1); c++) {
                 Double partial_density = info.partial_densities.get(c);
@@ -605,5 +780,57 @@ public class SOPC_Optimizer extends SO_Optimizer {
         index += nb_commodities;
       }
     }
+  }
+
+  /**
+   * @brief Computes the derivative dJ/dU
+   * @details
+   *          The condition \beta >= 0 is already put in the solver (in
+   *          AdjointJVM/org.wsj/Optimizers.scala) do there is only one barrier
+   *          in J
+   */
+  public DoubleMatrix1D djdu(State state, double[] control) {
+    return DoubleFactory1D.dense.make(T * temporal_control_block_size);
+  }
+
+  /**
+   * @brief Computes the dH/dU matrix.
+   * @details
+   */
+  public SparseCCDoubleMatrix2D dhdu(State state, double[] control) {
+
+    SparseCCDoubleMatrix2D result = new SparseCCDoubleMatrix2D(
+        x_block_size * T,
+        temporal_control_block_size * T);
+
+    int i, j, index_in_control = 0;
+    int commodity;
+    double[] origin_demands;
+    for (int orig = 0; orig < O; orig++) {
+      origin_demands = simulator.origin_demands.get(sources[orig]);
+
+      Iterator<Integer> it = sources[orig]
+          .getCompliant_commodities()
+          .iterator();
+      while (it.hasNext()) {
+        commodity = it.next();
+        for (int k = 0; k < T; k++) {
+          i = k * x_block_size + sources[orig].getUniqueId() * (C + 1)
+              + commodity;
+          j = k * temporal_control_block_size + index_in_control;
+
+          assert (cells[sources[orig].getUniqueId()].getLength() == 1) : "For now buffers must have a length of 1.0";
+          /*
+           * For now, origin_demands[k] is already a number of vehicle. So we do
+           * not multiply by the time step
+           */
+          double value = origin_demands[k] * alpha;
+          result.setQuick(i, j, value);
+        }
+        index_in_control++;
+      }
+    }
+
+    return result;
   }
 }

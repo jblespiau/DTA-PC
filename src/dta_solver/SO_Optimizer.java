@@ -26,6 +26,13 @@ import dataStructures.Numerical;
 import dataStructures.Triplet;
 import dta_solver.adjointMethod.Adjoint;
 
+/**
+ * @Depreciated
+ * @details Computation of the gradient by the adjoint by inverting dH/dx.
+ *          It is not working since there are some mistakes in the derivative
+ *          terms.
+ *          SOPC_Optimizer is now the working class that should be used
+ */
 public class SO_Optimizer extends Adjoint<State> {
 
   protected Simulator simulator;
