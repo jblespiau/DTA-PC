@@ -14,7 +14,7 @@ import dataStructures.Preprocessor;
  *        limited in-flow
  * 
  */
-class Buffer extends Cell {
+public class Buffer extends Cell {
 
   private Junction next;
 
