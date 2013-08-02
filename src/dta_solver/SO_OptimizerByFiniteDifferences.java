@@ -8,17 +8,16 @@ import org.coinor.Ipopt;
 
 import dta_solver.adjointMethod.IpOptOptimizer;
 
-public class SO_OptimizerByFiniteDifferences extends SO_Optimizer {
+public class SO_OptimizerByFiniteDifferences extends SOPC_Optimizer {
 
   /** Maximum number of iterations */
   private int maxIter = 100;
   /** The Optimizer which has to be an IpOpt object for now */
   private IpOptOptimizer ipOpt;
 
-  public SO_OptimizerByFiniteDifferences(int maxIter, Simulator simu) {
-    super(maxIter, simu);
+  public SO_OptimizerByFiniteDifferences(Simulator simu) {
+    super(simu);
     ipOpt = new IpOptOptimizer(this);
-    this.maxIter = maxIter;
     simulator.initializSplitRatios();
   }
 
@@ -106,7 +105,7 @@ public class SO_OptimizerByFiniteDifferences extends SO_Optimizer {
     projectGradient(gradient_f, gradient);
   }
 
-  private void projectGradient(double[] gradient_f, double[] init_gradient) {
+  public void projectGradient(double[] gradient_f, double[] init_gradient) {
     for (int k = 0; k < T; k++) {
       int index = 0;
       for (int o = 0; o < O; o++) {

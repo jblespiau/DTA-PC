@@ -4,7 +4,6 @@ import org.jfree.chart.JFreeChart;
 import optimization.GradientDescent;
 import optimization.GradientDescentMethod;
 import generalNetwork.graph.DisplayGUI;
-import generalNetwork.graph.EditorGUI;
 import generalNetwork.state.State;
 import graphics.GUI;
 
@@ -95,7 +94,7 @@ public class DTASolver {
     Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
 
     int maxIter = 150;
-    SOPC_Optimizer optimizer = new SOPC_Optimizer(maxIter, simulator);
+    SOPC_Optimizer optimizer = new SOPC_Optimizer(simulator);
 
     GradientDescentMethod homemade_test = new GradientDescent(maxIter);
     double[] result = homemade_test.solve(optimizer);
@@ -114,7 +113,7 @@ public class DTASolver {
 
     int maxIter = 50;
     SO_OptimizerByFiniteDifferences optimizer = new SO_OptimizerByFiniteDifferences(
-        maxIter, simulator);
+        simulator);
 
     GradientDescentMethod homemade_test = new GradientDescent(maxIter);
     double[] result = homemade_test.solve(optimizer);
@@ -132,7 +131,7 @@ public class DTASolver {
     Simulator simulator = new Simulator(network_file, data_file, alpha, true);
 
     int maxIter = 80;
-    SOPC_Optimizer optimizer = new SOPC_Optimizer(maxIter, simulator);
+    SOPC_Optimizer optimizer = new SOPC_Optimizer(simulator);
 
     GradientDescent homemade_test = new GradientDescent(maxIter);
     homemade_test.setGradient_condition(10E-9);
@@ -156,7 +155,7 @@ public class DTASolver {
     Simulator simulator = new Simulator(network_file, data_file, alpha, debug);
 
     int maxIter = 70;
-    SOPC_Optimizer optimizer = new SOPC_Optimizer(maxIter, simulator);
+    SOPC_Optimizer optimizer = new SOPC_Optimizer(simulator);
 
     GradientDescentMethod homemade_test = new GradientDescent(maxIter);
     double[] result = homemade_test.solve(optimizer);
