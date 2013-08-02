@@ -233,21 +233,7 @@ public class SOPC_Optimizer implements GradientDescentOptimizer {
    *          in J
    */
   public double objective(State state, double[] control) {
-    double objective = 0;
-
-    /*
-     * To compute the sum of the densities ON the network, we add the density of
-     * all the cells and then remove the density of the sinks
-     */
-    for (int k = 0; k < T; k++) {
-      for (int cell_id = 0; cell_id < cells.length; cell_id++)
-        objective += state.profiles[k].getCell(cell_id).total_density;
-
-      for (int d = 0; d < destinations.length; d++)
-        objective -= state.profiles[k].getCell(destinations[d].getUniqueId()).total_density;
-    }
-
-    return objective;
+    return simulator.objective(state);
   }
 
   /* Returns the position of rho(i, c)(k) */
