@@ -4,6 +4,11 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
+/**
+ * @class Numerical
+ * @brief Contains all functions dealing with approximated comparison between
+ *        numbers and other numerical functions
+ */
 public class Numerical {
 
   private static double epsilon = 0.0001;
@@ -15,7 +20,12 @@ public class Numerical {
     return !(Double.isInfinite(a) || Double.isNaN(a));
   }
 
-  static public boolean isLowerTrangular(double[][] matrix) {
+  /**
+   * @param matrix
+   *          A square matrix
+   * @return True if the matrix is lower triangular
+   */
+  static public boolean isLowerTriangular(double[][] matrix) {
     for (int i = 0; i < matrix.length; i++)
       for (int j = i + 1; j < matrix.length; j++)
         if (matrix[i][j] != 0)
@@ -24,8 +34,15 @@ public class Numerical {
     return true;
   }
 
+  /**
+   * 
+   * @param matrix
+   *          A square matrix
+   * @return True if the matrix is lower triangular and non singular (i.e. all
+   *         diagonal terms are non zero)
+   */
   static public boolean NonSingularLowerTriangular(double[][] matrix) {
-    if (!isLowerTrangular(matrix))
+    if (!isLowerTriangular(matrix))
       return false;
     if (matrix.length != matrix[0].length)
       return false;
@@ -36,6 +53,16 @@ public class Numerical {
     return true;
   }
 
+  /**
+   * @details if |a| < 10, returns |a-b| < e. Otherwise, returns |(a-b)/a| < e
+   * @param a
+   *          A double
+   * @param b
+   *          A double
+   * @param e
+   *          The error
+   * @return True is a and b are close.
+   */
   static public boolean close(double a, double b, double e) {
     if (Math.abs(a) < 10)
       return Math.abs(a - b) < e;

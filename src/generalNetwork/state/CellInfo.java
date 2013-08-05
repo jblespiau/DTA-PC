@@ -6,11 +6,10 @@ import java.util.Map.Entry;
 import dataStructures.Numerical;
 
 /**
- * @brief Full description of state a cell at a given time step.
+ * @brief Full description of the state of a cell at a given time step.
  * @details The core information is the partial densities for all commodities in
  *          the cell. There is also the demand/supply and out/in-flows that are
- *          used
- *          to compute the next time step.
+ *          used to compute the next time step.
  */
 public class CellInfo {
 

@@ -24,7 +24,7 @@ import generalNetwork.state.externalSplitRatios.IntertemporalOriginsSplitRatios;
  */
 /**
  * @class Simulator
- * @brief Represents a simulatr for a DTA problem (both graphs and conditions)
+ * @brief Represents a simulator for a DTA problem (both graphs and conditions)
  */
 public class Simulator {
 

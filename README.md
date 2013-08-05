@@ -7,6 +7,10 @@ All the code is in java and all dependencies are included.
 
 Don't forget to enable assertions (-ea parameter on the JVM).
 
+Documentation
+-------------
+
+Doxygen can be run to generate the documentation using code comments.
 
 Possible improvements and optimizations
 ---------------------------------------

@@ -2,18 +2,41 @@ package generalNetwork.state;
 
 import generalLWRNetwork.Cell;
 import generalLWRNetwork.Junction;
+import generalLWRNetwork.LWR_network;
 
+/**
+ * @class Profile
+ * @brief Contains all the information of the cells and junctions for a given
+ *        time step
+ */
 public class Profile {
 
+  /** Information for all cells */
   private CellInfo[] profile;
   /* Used to keep the aggregate split ratios */
+  /** Information for all junctions */
   public JunctionInfo[] junction_info;
 
-
+  /**
+   * @brief Creates a new profile describing the state for a network composed of
+   *        the given elements
+   * @param nb_cells
+   *          Number of cells in the network
+   * @param nb_junctions
+   *          Number of junctions in the network
+   */
   public Profile(int nb_cells, int nb_junctions) {
     super();
     profile = new CellInfo[nb_cells];
     junction_info = new JunctionInfo[nb_junctions];
+  }
+
+  /**
+   * @brief Creates a new profile for a given network
+   * @param network
+   */
+  public Profile(LWR_network network) {
+    this(network.getCells().length, network.getJunctions().length);
   }
 
   public CellInfo getCell(int i) {
