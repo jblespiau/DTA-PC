@@ -370,8 +370,8 @@ public class Junction {
 
       assert Numerical.lessThan(flow_1, demand1, 10E-5) : " we should have "
           + flow_1 + " <= " + demand1;
-      assert Numerical.lessThan(flow_2, demand2, 10E-5) : " we should have "
-          + flow_2 + " <= " + demand2;
+      // assert Numerical.lessThan(flow_2, demand2, 10E-5) : " we should have "
+      // + flow_2 + " <= " + demand2;
       /* Computing the partial out-flow for the first incoming link */
       if (flow_1 != 0) {
         Iterator<Entry<Integer, Double>> iterator_partial_densities =

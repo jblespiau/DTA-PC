@@ -6,6 +6,7 @@ import org.jfree.chart.JFreeChart;
 
 import optimization.GradientDescent;
 import optimization.GradientDescentMethod;
+import optimization.LineSearch;
 import generalLWRNetwork.Cell;
 import generalLWRNetwork.Destination;
 import generalLWRNetwork.Junction;
@@ -174,7 +175,7 @@ public class DTASolver {
     NetworkUIDFactory.resetCell_id();
     NetworkUIDFactory.resetJunction_id();
 
-    int nb_time_steps = 10;
+    int nb_time_steps = 18;
     double delta_t = 10;
 
     LinkedList<Cell> cell_list = new LinkedList<Cell>();
@@ -219,10 +220,10 @@ public class DTASolver {
       cell_list.add(cells[i]);
 
     /* Time dependent max flow */
-    cell_6.F_max[2] = 0.000;
-    cell_6.F_max[3] = 0.000;
-    cell_6.F_max[4] = 0.3;
-    cell_6.F_max[5] = 0.3;
+    cell_5.F_max[2] = 0.000;
+    cell_5.F_max[3] = 0.000;
+    cell_5.F_max[4] = 0.3; // 0.3
+    cell_5.F_max[5] = 0.3;// 0.3
 
     /* Linking cells to junctions */
     j_0.addNext(cell_1);
@@ -317,24 +318,42 @@ public class DTASolver {
 
     simulator.origin_demands = origin_demands;
     simulator.initializSplitRatios();
-    
+
     System.out.println(simulator.splits.toString());
-    
+
     /* Checking the requirements on the network */
     System.out
         .print("Checking that the network respect needed requirements...");
     graph.checkConstraints(delta_t);
     System.out.println("Done");
-    
+
     /* Running the simulation */
-    int maxIter = 80;
+    int maxIter = 1000;
     SOPC_Optimizer optimizer = new SOPC_Optimizer(simulator);
 
     GradientDescent homemade_test = new GradientDescent(maxIter);
+    // homemade_test.setLineSearch(new LineSearch());
     homemade_test.setGradient_condition(10E-9);
     double[] result = homemade_test.solve(optimizer);
     System.out.println("Final control");
     for (int i = 0; i < result.length; i++)
       System.out.println(result[i]);
+
+    State final_state = optimizer.forwardSimulate(result, true);
+    optimizer.printProperties(final_state);
+    /*
+     * 
+     * 
+     * double objective = 0;
+     * 
+     * for (int k = 0; k < nb_time_steps; k++) {
+     * for (int cell_id = 0; cell_id < cells.length; cell_id++) {
+     * if (cell_id != 9)
+     * objective += final_state.profiles[k].getCell(cell_id).total_density;
+     * }
+     * }
+     * 
+     * System.out.println("Total objective: " + objective);
+     */
   }
 }

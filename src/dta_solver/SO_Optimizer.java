@@ -152,7 +152,7 @@ public class SO_Optimizer extends Adjoint<State> {
 
     assert (H_block_size == x_block_size);
     /* Initialization of the split ratios for the Optimizer */
-    //simulator.initializeSplitRatiosForOptimizer();
+    // simulator.initializeSplitRatiosForOptimizer();
   }
 
   public void printSizes() {
@@ -1385,5 +1385,36 @@ public class SO_Optimizer extends Adjoint<State> {
     }
     endTime = System.currentTimeMillis();
     System.out.println(averageTime(startTime, endTime, nb_iterations));
+  }
+
+  @Override
+  public double[] projectControl(double[] control) {
+    for (int i = 0; i < control.length; i++)
+      if (control[i] < 0)
+        control[i] = 0;
+
+    for (int k = 0; k < T; k++) {
+      int index = 0;
+      for (int o = 0; o < O; o++) {
+        double sum = 0;
+        int nb_commodities = sources[o].getCompliant_commodities().size();
+        if (nb_commodities == 0) {
+          System.out
+              .println("[Warning] In Computation of the gradient by finite diff. 0 commodities");
+          continue;
+        }
+
+        for (int c = 0; c < nb_commodities; c++) {
+          sum += control[k * C + index + c];
+        }
+        assert sum > 0;
+
+        for (int c = 0; c < nb_commodities; c++)
+          control[k * C + index + c] = control[k * C + index + c]
+              / sum;
+        index += nb_commodities;
+      }
+    }
+    return null;
   }
 }
