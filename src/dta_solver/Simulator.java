@@ -18,14 +18,28 @@ import generalNetwork.state.Profile;
 import generalNetwork.state.State;
 import generalNetwork.state.externalSplitRatios.IntertemporalOriginsSplitRatios;
 
+/**
+ * @package dta_solver
+ * @brief High level components related Dynamic Traffic Assignment
+ */
+/**
+ * @class Simulator
+ * @brief Represents a simulatr for a DTA problem (both graphs and conditions)
+ */
 public class Simulator {
 
+  /** The discretized version of the graph. Should not be used */
   public DiscretizedGraph discretized_graph;
-  public Discretization time_discretization;
-  public Demands origin_demands;
-  public IntertemporalOriginsSplitRatios splits;
+  /** The compact form of the graph */
   public LWR_network lwr_network;
-  /* Share of the compliant flow */
+  /** The time discretization (delta t and number of time steps) */
+  public Discretization time_discretization;
+  /** The value of the demand at the origin for every time steps */
+  public Demands origin_demands;
+  /** The split ratios at the origins (compliant and non compliant agents) */
+  public IntertemporalOriginsSplitRatios splits;
+
+  /** Share of the compliant flow */
   private double alpha;
 
   protected Simulator(int delta_t, int nb_steps) {
@@ -135,6 +149,10 @@ public class Simulator {
     return run(print);
   }
 
+  /**
+   * @brief Run the simulation and returns the state without verbose printing
+   * @return The state profile after the simulation
+   */
   public State partialRun() {
     return run(false);
   }
@@ -195,10 +213,16 @@ public class Simulator {
     return new State(profiles);
   }
 
+  /**
+   * @return The share of the compliant agents
+   */
   public double getAlpha() {
     return alpha;
   }
 
+  /**
+   * @return True if all agents are controlled. False otherwise.
+   */
   public boolean isFullSystemOptimal() {
     return alpha == 1.0;
   }

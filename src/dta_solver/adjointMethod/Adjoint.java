@@ -9,6 +9,11 @@ import cern.colt.matrix.tdouble.impl.SparseCCDoubleMatrix2D;
 import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix1D;
 import cern.jet.math.tdouble.DoubleFunctions;
 
+/**
+ * @package dta_solver.adjointMethod
+ * @depreciated
+ * @brief Not used. It was the code for the adjoint method by inverting dH/dx
+ */
 public abstract class Adjoint<T extends JavaSystemState> implements
     GradientDescentOptimizer {
 

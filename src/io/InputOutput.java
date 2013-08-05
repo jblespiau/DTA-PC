@@ -27,6 +27,10 @@ import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfTemplate;
 import com.lowagie.text.pdf.PdfWriter;
 
+/**
+ * @class io
+ * @brief All functions to handle input and output (files, sys.out)
+ */
 public class InputOutput {
 
   static public void printTable(double[][] table) {
@@ -90,6 +94,12 @@ public class InputOutput {
     formatter.close();
   }
 
+  /**
+   * @brief Returns the writer associated to a file
+   * @param file_name
+   *          The name of the file to open
+   * @return The writer associated to a file
+   */
   static public Writer Writer(String file_name) {
 
     Writer writer = null;
@@ -101,12 +111,26 @@ public class InputOutput {
     return writer;
   }
 
+  /**
+   * @brief Returns the buffered writer associated to a file
+   * @details More efficient that a simple writter since it uses a buffer to
+   *          minimize the system calls
+   * @param file_name
+   *          The name of the file to open
+   * @return The buffered writer associated to a file
+   */
   static public BufferedWriter BufferedWriter(String file_name) {
     BufferedWriter bw = new BufferedWriter(Writer(file_name));
 
     return bw;
   }
 
+  /**
+   * @brief Returns the reader associated to a file
+   * @param file_name
+   *          The name of the file to open
+   * @return The reader associated to a file
+   */
   static public Reader Reader(String file_name) {
 
     Reader reader = null;
@@ -118,6 +142,11 @@ public class InputOutput {
     return reader;
   }
 
+  /**
+   * @brief Close any closeable stream
+   * @param stream
+   *          The closeable object to close
+   */
   static public void close(Closeable stream) {
     try {
       if (stream != null)
@@ -128,7 +157,7 @@ public class InputOutput {
   }
 
   /**
-   * Writes a chart to a a file in PDF format.
+   * @brief Writes a chart to a a file in PDF format.
    */
   public static void writeChartAsPDF(String file_name, JFreeChart chart,
       int width, int height, FontMapper mapper) {
@@ -164,7 +193,7 @@ public class InputOutput {
   }
 
   public static void writeChartAsPDF(String file_name, JFreeChart chart,
-      int width, int height){
+      int width, int height) {
     writeChartAsPDF(file_name, chart, width, height, new DefaultFontMapper());
   }
 }

@@ -1,6 +1,5 @@
 package optimization;
 
-import graphics.Plots;
 import io.InputOutput;
 
 import java.awt.Color;
