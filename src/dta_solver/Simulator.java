@@ -20,7 +20,7 @@ import generalNetwork.state.externalSplitRatios.IntertemporalOriginsSplitRatios;
 
 /**
  * @package dta_solver
- * @brief High level components related Dynamic Traffic Assignment
+ * @brief High level components related to Dynamic Traffic Assignment
  */
 /**
  * @class Simulator

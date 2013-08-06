@@ -8,11 +8,8 @@ import dataStructures.Numerical;
 import dataStructures.Preprocessor;
 
 /**
- * @class EntryCell
- * @brief An EntryCell contains a buffer and an OrdinaryCell. The buffer holds
- *        the cars wanting to go to the cell but which can't because of the
- *        limited in-flow
- * 
+ * @brief The buffer holds the cars wanting to go to the cell but which can't
+ *        because of the limited in-flow
  */
 public class Buffer extends Cell {
 

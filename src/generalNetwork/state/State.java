@@ -5,7 +5,7 @@ import generalNetwork.state.Profile;
 
 /**
  * @package generalNetwork.state
- * @brief Elementes related to the data in a state profile (i.e. state of the network for all time steps)
+ * @brief Elements related to the data in a state profile (i.e. state of the network for all time steps)
  */
 
 /**

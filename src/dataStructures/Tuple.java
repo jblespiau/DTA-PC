@@ -1,5 +1,9 @@
 package dataStructures;
 
+/**
+ * @Depreciated
+ * @brief Used in depreciated code (adjoint method)
+ */
 public final class Tuple<X, Y> {
 
   public Tuple(X val_x, Y val_y) {

@@ -28,7 +28,6 @@ import com.lowagie.text.pdf.PdfTemplate;
 import com.lowagie.text.pdf.PdfWriter;
 
 /**
- * @class io
  * @brief All functions to handle input and output (files, sys.out)
  */
 public class InputOutput {
