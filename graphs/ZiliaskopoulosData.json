@@ -1,0 +1,16 @@
+{
+  "max_time_step": 10,
+  "delta_t": 10,
+  "demands": [
+    {
+      "origin_id": 0,
+      "demand": [
+        0.8,
+        1.6,
+        0.8,
+        0.0
+      ]
+    }
+  ],
+  "non_compliant_split_ratios": null
+}
