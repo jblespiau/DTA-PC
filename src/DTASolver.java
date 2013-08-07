@@ -6,6 +6,7 @@ import org.jfree.chart.JFreeChart;
 
 import optimization.GradientDescent;
 import optimization.GradientDescentMethod;
+import optimization.LineSearch;
 import generalLWRNetwork.Cell;
 import generalLWRNetwork.Destination;
 import generalLWRNetwork.Junction;
@@ -191,8 +192,8 @@ public class DTASolver {
       cell_list.add(cells[i]);
 
     /* Time dependent max flow */
-    cell_5.F_max[2] = 0.000;
-    cell_5.F_max[3] = 0.000;
+    cell_5.F_max[2] = 0;
+    cell_5.F_max[3] = 0;
     cell_5.F_max[4] = 0.3; // 0.3
     cell_5.F_max[5] = 0.3;// 0.3
 
@@ -299,8 +300,8 @@ public class DTASolver {
     System.out.println("Done");
 
     /* Running the simulation */
-    int maxIter = 1000;
-    SOPC_Optimizer optimizer = new SOPC_Optimizer(simulator);
+    int maxIter = 100;
+    SOPC_Optimizer optimizer = new SO_OptimizerByFiniteDifferences(simulator);
 
     GradientDescent homemade_test = new GradientDescent(maxIter);
     // homemade_test.setLineSearch(new LineSearch());
@@ -310,8 +311,8 @@ public class DTASolver {
     for (int i = 0; i < result.length; i++)
       System.out.println(result[i]);
 
-    //State final_state = optimizer.forwardSimulate(result, true);
-    //optimizer.printProperties(final_state);
+    // State final_state = optimizer.forwardSimulate(result, true);
+    // optimizer.printProperties(final_state);
     /*
      * 
      * 

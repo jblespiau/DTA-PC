@@ -28,8 +28,9 @@ public class SO_OptimizerByFiniteDifferences extends SOPC_Optimizer {
   public double objective(double[] control) {
     /* Enforces control[i] >= 0, \forall i */
     for (int i = 0; i < control.length; i++)
-      if (control[i] < 0)
+      if (control[i] < 0) {
         assert false : "Negative control " + control[i];
+      }
     State state = forwardSimulate(control);
     return simulator.objective(state);
   }

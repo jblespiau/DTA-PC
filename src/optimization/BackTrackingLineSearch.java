@@ -33,7 +33,6 @@ public class BackTrackingLineSearch implements LineSearchMethod {
     // for (int i = 0; i < initial_point.length; i++)
     // System.out.println("u("+i+")"+initial_point[i]);
     /* We initialize t such that the first point remain in the feasible set */
-    System.out.println("");
     double t = 1;
     for (int i = 0; i < initial_point.length; i++) {
       if (direction[i] > 0)
@@ -41,7 +40,7 @@ public class BackTrackingLineSearch implements LineSearchMethod {
       else if (direction[i] < 0) {
         t = Math.min(t, (-initial_point[i] / direction[i]));
       }
-      //System.out.println("t:" + t);
+      // System.out.println("t:" + t);
     }
     t *= 0.9999999999;
     double initial_value = function.objective(initial_point);
@@ -53,6 +52,7 @@ public class BackTrackingLineSearch implements LineSearchMethod {
       temporary_position[i] = initial_point[i] + t * direction[i];
 
     double common_value = alpha * scalarProduct(direction, gradient);
+    function.projectControl(temporary_position);
     double temporary_value = function.objective(temporary_position);
 
     while (temporary_value > initial_value + t * common_value) {
