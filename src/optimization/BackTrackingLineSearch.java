@@ -36,16 +36,18 @@ public class BackTrackingLineSearch implements LineSearchMethod {
         t = Math.min(t, (1 - initial_point[i]) / direction[i]);
       else if (direction[i] < 0)
         t = Math.min(t, (-initial_point[i] / direction[i]));
-    t *= 0.999999;
+    t *= 0.9999999999;
     double initial_value = function.objective(initial_point);
 
-    assert t > 0 : "Negative factor in backtracking line search";
+    assert t >= 0 : "Negative factor in backtracking line search";
 
     double[] temporary_position = new double[initial_point.length];
     for (int i = 0; i < temporary_position.length; i++)
       temporary_position[i] = initial_point[i] + t * direction[i];
 
     double common_value = alpha * scalarProduct(direction, gradient);
+    /* In case that the t *= 0.9999999999; is not efficient */
+    function.projectControl(temporary_position);
     double temporary_value = function.objective(temporary_position);
 
     while (temporary_value > initial_value + t * common_value) {
