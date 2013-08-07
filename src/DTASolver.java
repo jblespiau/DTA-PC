@@ -6,7 +6,6 @@ import org.jfree.chart.JFreeChart;
 
 import optimization.GradientDescent;
 import optimization.GradientDescentMethod;
-import optimization.LineSearch;
 import generalLWRNetwork.Cell;
 import generalLWRNetwork.Destination;
 import generalLWRNetwork.Junction;
@@ -18,7 +17,6 @@ import generalNetwork.data.Json_data;
 import generalNetwork.data.demand.Demands;
 import generalNetwork.data.demand.DemandsFactory;
 import generalNetwork.graph.DisplayGUI;
-import generalNetwork.graph.EditorGUI;
 import generalNetwork.graph.json.JsonFactory;
 import generalNetwork.state.State;
 import generalNetwork.state.internalSplitRatios.IntertemporalSplitRatios;
@@ -339,8 +337,8 @@ public class DTASolver {
     for (int i = 0; i < result.length; i++)
       System.out.println(result[i]);
 
-    State final_state = optimizer.forwardSimulate(result, true);
-    optimizer.printProperties(final_state);
+    //State final_state = optimizer.forwardSimulate(result, true);
+    //optimizer.printProperties(final_state);
     /*
      * 
      * 
