@@ -33,7 +33,7 @@ import dta_solver.adjointMethod.Adjoint;
  *          terms.
  *          SOPC_Optimizer is now the working class that should be used
  */
-public class SO_Optimizer extends Adjoint<State> {
+class SO_Optimizer extends Adjoint<State> {
 
   protected Simulator simulator;
 
@@ -1297,7 +1297,7 @@ public class SO_Optimizer extends Adjoint<State> {
   }
 
   @Override
-  public double[] projectControl(double[] control) {
+  public void projectControl(double[] control) {
     for (int i = 0; i < control.length; i++)
       if (control[i] < 0)
         control[i] = 0;
@@ -1324,7 +1324,6 @@ public class SO_Optimizer extends Adjoint<State> {
         index += nb_commodities;
       }
     }
-    return null;
   }
 
   public void printProperties(State state) {
