@@ -818,7 +818,7 @@ public class SOPC_Optimizer implements GradientDescentOptimizer {
   }
 
   @Override
-  public double[] projectControl(double[] control) {
+  public void projectControl(double[] control) {
     for (int i = 0; i < control.length; i++)
       if (control[i] < 0)
         control[i] = 0;
@@ -845,7 +845,6 @@ public class SOPC_Optimizer implements GradientDescentOptimizer {
         index += nb_commodities;
       }
     }
-    return null;
   }
 
   public void printProperties(State state) {

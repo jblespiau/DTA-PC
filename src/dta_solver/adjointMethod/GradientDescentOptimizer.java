@@ -24,5 +24,5 @@ public interface GradientDescentOptimizer {
    */
   public double[] getStartingPoint();
 
-  public double[] projectControl(double[] control);
+  public void projectControl(double[] control);
 }
