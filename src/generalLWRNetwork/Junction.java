@@ -13,7 +13,7 @@ import dataStructures.Numerical;
 import dataStructures.PairCells;
 
 /**
- * @brief Represent a junctions between cells
+ * @brief Represents a junction between cells
  * @details For now we only accept 1*1 junctions
  * 
  */

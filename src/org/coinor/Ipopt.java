@@ -35,6 +35,11 @@ package org.coinor;
 import java.io.File;
 
 /**
+ * @class org.coinor
+ * @brief Linking to the IpOpt library
+ */
+
+/**
  * A Java Native Interface for the Ipopt optimization solver.
  * <p>
  * Ipopt is a solver for large scale nonlinear optimization problems (NLP) with 

@@ -23,6 +23,6 @@ public interface GradientDescentOptimizer {
    * @brief Get a valid point to begin the gradient descent
    */
   public double[] getStartingPoint();
-  
-  public double[] projectControl(double[] control);
+
+  public void projectControl(double[] control);
 }

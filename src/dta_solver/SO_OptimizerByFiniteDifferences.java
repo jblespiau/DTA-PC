@@ -26,7 +26,7 @@ public class SO_OptimizerByFiniteDifferences extends SOPC_Optimizer {
    *          ratio is positive)
    */
   public double objective(double[] control) {
-    /* Inforces control[i] >= 0, \forall i */
+    /* Enforces control[i] >= 0, \forall i */
     for (int i = 0; i < control.length; i++)
       if (control[i] < 0)
         assert false : "Negative control " + control[i];

@@ -146,4 +146,11 @@ public class TestAdjoint extends Adjoint<JUnitState> {
     state.state = new double[(int) U.size()];
     return state;
   }
+
+  @Override
+  public double[] projectControl(double[] control) {
+    System.err.println("Not implemented function in jUnit test");
+    System.exit(1);
+    return null;
+  }
 }

@@ -9,6 +9,12 @@ import dataStructures.PairCells;
 import generalLWRNetwork.Cell;
 import generalLWRNetwork.Junction;
 
+/**
+ * @brief Description of the state of a junction at a given time step
+ * @brief Mainly contains the value of the aggregate split ratios and the state
+ *        of the junction necessary to compute the adjoint equations (i.e.
+ *        supply or limited junction etc)
+ */
 public class JunctionInfo {
 
   protected LinkedHashMap<PairCells, Double> aggregate_split_ratios;
@@ -85,10 +91,6 @@ public class JunctionInfo {
 
   public int getLimiting_supply() {
     return limiting_supply;
-  }
-
-  private void setLimiting_supply(int limiting_supply) {
-    this.limiting_supply = limiting_supply;
   }
 
   public int getPriority_2x1_demand() {

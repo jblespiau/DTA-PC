@@ -8,10 +8,8 @@ import dataStructures.Numerical;
 import dataStructures.Preprocessor;
 
 /**
- * @class OrdinaryCell
- * @brief An OrdinaryCell represent a chunk of road that can be defined with a
- *        fundamental triangular diagram. Be aware that the maximum in-low and
- *        out-flow must be the same
+ * @brief Represents a chunk of road that can be defined with a
+ *        fundamental triangular diagram.
  */
 public class RoadChunk extends Cell {
 

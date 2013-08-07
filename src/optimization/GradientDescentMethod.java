@@ -2,9 +2,20 @@ package optimization;
 
 import dta_solver.adjointMethod.GradientDescentOptimizer;
 
+/**
+ * @package optimization
+ * @brief Contains the definitions of the gradient descent methods
+ */
+
+/**
+ * @class GradientDescentMethod
+ * @brief Abstract definition of a gradient descent
+ */
 public abstract class GradientDescentMethod {
 
+  /** Maximum number of step */
   protected int maxIterations = 50;
+  /** The line search method used in the gradient descent */
   protected LineSearchMethod lineSearch;
   protected boolean verbose = true;
 
@@ -15,6 +26,15 @@ public abstract class GradientDescentMethod {
     this.maxIterations = maxIterations;
   }
 
+  /**
+   * @brief Solve the optimization problem using a gradient descent approach
+   * @details The optimization will stop either when the maximum number of
+   *          iterations is reached, or when other gradient descent specific
+   *          stopping conditions are met
+   * @param function
+   *          The function to minimize
+   * @return The control found by the optimizer that minimize the cost function
+   */
   public abstract double[] solve(GradientDescentOptimizer function);
 
   public int getMaxIterations() {

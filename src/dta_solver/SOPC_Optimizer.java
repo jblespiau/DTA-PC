@@ -821,7 +821,7 @@ public class SOPC_Optimizer implements GradientDescentOptimizer {
   }
 
   @Override
-  public double[] projectControl(double[] control) {
+  public void projectControl(double[] control) {
     for (int i = 0; i < control.length; i++)
       if (control[i] < 0)
         control[i] = 0;
@@ -848,8 +848,8 @@ public class SOPC_Optimizer implements GradientDescentOptimizer {
         index += nb_commodities;
       }
     }
-    return null;
   }
+
     
   public void printProperties(State state) {
     System.out.println("[Printing properties of the given state]");
@@ -860,6 +860,58 @@ public class SOPC_Optimizer implements GradientDescentOptimizer {
         System.out.print(" " + state.sum_of_split_ratios[o][k] + " ");
       System.out.println();
 
+    }
+  }
+
+  public void printSizes() {
+    System.out.println("*******************************************");
+    System.out.println("Total size of X and H: " + T * x_block_size);
+    System.out.println("Details: \n" +
+        "- time steps: " + T + "\n" +
+        "- density_block: " + size_density_block +
+        " : (1 NC + " + C + " compliant commodities )* " + cells.length
+        + " cells\n" +
+        "- demand_supply: " + size_demand_suply_block +
+        " : 2 (for demand, supply) * " + cells.length + " cells)\n" +
+        "- aggregate SR: " + size_aggregate_split_ratios +
+        " (is the sum of the in.size() * out.size() at all junctions)\n" +
+        "- f_out: " + size_density_block +
+        " : (same as the density block)\n" +
+        "- f_ in: " + size_density_block +
+        " : (same as the density block)");
+    System.out.println("*******************************************");
+  }
+
+  public void informationIndexInX(int i) {
+    int time_step = i / x_block_size;
+    System.out.print("[k=" + time_step + "]");
+    int remaining = i % x_block_size;
+    if (remaining < demand_supply_position) {
+      int cell_id = remaining / (C + 1);
+      int c = (remaining % (C + 1));
+      System.out.println("Partial density of commodity " + c + " in cell "
+          + (cell_id));
+    } else if (remaining < aggregate_split_ratios_position) {
+      int cell_id = (remaining - demand_supply_position) / 2;
+      int is_demand = ((remaining - demand_supply_position - cell_id * 2) % 2);
+      if (is_demand == 0)
+        System.out.println("Demand in cell " + (cell_id));
+      else
+        System.out.println("Supply in cell " + (cell_id));
+    } else if (remaining < f_out_position) {
+      int cell_id = (remaining - aggregate_split_ratios_position) / (C + 1);
+      int c = (remaining % (C + 1));
+      System.out.println("Aggregate split ratio");
+    } else if (remaining < f_in_position) {
+      int cell_id = (remaining - f_out_position) / (C + 1);
+      int c = (remaining % (C + 1));
+      System.out
+          .println("Flow-out of commodity " + c + " in cell " + (cell_id));
+    } else {
+      int cell_id = (remaining - f_in_position) / (C + 1);
+      int c = (remaining % (C + 1));
+      System.out
+          .println("Flow-in of commodity " + c + " in cell " + (cell_id));
     }
   }
 }
