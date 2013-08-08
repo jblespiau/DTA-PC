@@ -59,7 +59,8 @@ public class Graph {
     nb_origins = mg.origins.size();
     origins = mg.origins.toArray(new Source[nb_origins]);
     nb_destinations = mg.destinations.size();
-    destinations = mg.destinations.toArray(new GraphDestination[nb_destinations]);
+    destinations =
+        mg.destinations.toArray(new GraphDestination[nb_destinations]);
 
     id_factory = new GraphUIDFactory(nb_links, nb_nodes, nb_paths);
   }
@@ -79,8 +80,7 @@ public class Graph {
       assert paths[i].unique_id == i : "paths[i] should have id i";
       assert paths[i] != null : "Path " + i + "is null";
     }
-    
-    
+
   }
 
   /**
