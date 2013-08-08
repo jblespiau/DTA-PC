@@ -220,14 +220,30 @@ public class MutableGraph {
 
   @Override
   public String toString() {
-    System.out.println("List of nodes:");
+    String result = "List of nodes:\n";
     for (int i = 0; i < nodes.size(); i++) {
-      System.out.println(nodes.get(i).toString());
+      result += nodes.get(i).toString() + "\n";
     }
-    System.out.println("List of links:");
+    result += "List of links:\n";
     for (int i = 0; i < links.size(); i++) {
-      System.out.println(links.get(i).toString());
+      result += links.get(i).toString() + "\n";
     }
-    return super.toString();
+    return result;
+  }
+
+  public Node getNode(int i) {
+    return nodes.get(i);
+  }
+
+  public Link getLink(int i) {
+    return links.get(i);
+  }
+
+  public int sizeNode() {
+    return nodes.size();
+  }
+
+  public int sizeLink() {
+    return links.size();
   }
 }

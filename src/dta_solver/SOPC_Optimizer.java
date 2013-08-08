@@ -18,6 +18,7 @@ import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
 import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
 import cern.colt.matrix.tdouble.impl.SparseCCDoubleMatrix2D;
 import dataStructures.Numerical;
+import dataStructures.Preprocessor;
 import dta_solver.adjointMethod.GradientDescentOptimizer;
 
 public class SOPC_Optimizer implements GradientDescentOptimizer {
@@ -913,5 +914,30 @@ public class SOPC_Optimizer implements GradientDescentOptimizer {
       System.out
           .println("Flow-in of commodity " + c + " in cell " + (cell_id));
     }
+  }
+
+  /**
+   * @return True if the network is empty at the last time step
+   */
+  public boolean networkEmpties(State state) {
+    int last_time_step = state.profiles.length - 1;
+    assert last_time_step == T;
+    for (int i = 0; i < cells.length; i++) {
+      if (!cells[i].isSink()) {
+        double total_density =
+            state.profiles[last_time_step].getCell(cells[i]).total_density;
+        if (total_density > 0) {
+          if (Preprocessor.WARNING_STRICLY_EMPTY) {
+            System.err.println("[Warning] Cell " + i
+                + " is not emptied at the last time step: " + total_density);
+          }
+
+          if (total_density > 10E-10)
+            return false;
+        }
+      }
+    }
+
+    return true;
   }
 }
