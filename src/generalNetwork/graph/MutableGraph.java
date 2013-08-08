@@ -217,4 +217,17 @@ public class MutableGraph {
   public Link getLastAddedLink() {
     return links.lastElement();
   }
+
+  @Override
+  public String toString() {
+    System.out.println("List of nodes:");
+    for (int i = 0; i < nodes.size(); i++) {
+      System.out.println(nodes.get(i).toString());
+    }
+    System.out.println("List of links:");
+    for (int i = 0; i < links.size(); i++) {
+      System.out.println(links.get(i).toString());
+    }
+    return super.toString();
+  }
 }
