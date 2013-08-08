@@ -162,7 +162,8 @@ public class Node {
   @Override
   public String toString() {
     return "Node [(J" + unique_id + ") incoming="
-        + Arrays.toString(incoming) + ", outgoing=" + Arrays.toString(outgoing)
+        + Arrays.toString(incoming_links.toArray())
+        + ", outgoing=" + Arrays.toString(outgoing_links.toArray())
         + ", incoming_priorities=" + Arrays.toString(incoming_priorities)
         + ", priorities=" + priorities + "]";
   }
