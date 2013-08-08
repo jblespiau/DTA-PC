@@ -192,4 +192,29 @@ public class MutableGraph {
     assert (result != null);
     return result;
   }
+
+  /**
+   * @brief Checks that nodes[i].id = i and links[i].id = i
+   * @return
+   */
+  public boolean check() {
+    for (int i = 0; i < nodes.size(); i++) {
+      if (nodes.get(i).getUnique_id() != i)
+        return false;
+    }
+
+    for (int i = 0; i < links.size(); i++) {
+      if (links.get(i).getUnique_id() != i)
+        return false;
+    }
+    return true;
+  }
+
+  public Node getLastAddedNode() {
+    return nodes.lastElement();
+  }
+
+  public Link getLastAddedLink() {
+    return links.lastElement();
+  }
 }
