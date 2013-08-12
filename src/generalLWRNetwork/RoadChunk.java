@@ -171,6 +171,10 @@ public class RoadChunk extends Cell {
     return initial_densities;
   }
 
+  public void addInitialDensity(int commodity, double value) {
+    initial_densities.put(commodity, value);
+  }
+
   @Override
   public double getLength() {
     return length;
