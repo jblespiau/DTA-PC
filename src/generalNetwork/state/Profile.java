@@ -102,4 +102,19 @@ public class Profile {
 
     return true;
   }
+
+  /**
+   * @brief Copy the profile with only the densities information
+   * @return
+   */
+  public Profile copy() {
+    int cells_length = this.profile.length;
+    int junctions_length = this.junction_info.length;
+    Profile result = new Profile(cells_length,
+        junctions_length);
+    for (int i = 0; i < cells_length; i++)
+      result.profile[i] = this.profile[i].copy();
+
+    return result;
+  }
 }
