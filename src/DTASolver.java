@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Vector;
 
 import org.apache.commons.io.FileUtils;
 import org.jfree.chart.ChartPanel;
@@ -15,6 +15,7 @@ import optimization.GradientDescent;
 import optimization.GradientDescentMethod;
 import generalLWRNetwork.Cell;
 import generalLWRNetwork.Destination;
+import generalLWRNetwork.DiscretizedGraph;
 import generalLWRNetwork.Junction;
 import generalLWRNetwork.LWR_network;
 import generalLWRNetwork.NetworkUIDFactory;
@@ -24,6 +25,7 @@ import generalNetwork.data.Json_data;
 import generalNetwork.data.demand.Demands;
 import generalNetwork.data.demand.DemandsFactory;
 import generalNetwork.graph.DisplayGUI;
+import generalNetwork.graph.Graph;
 import generalNetwork.graph.MutableGraph;
 import generalNetwork.graph.json.JsonFactory;
 import generalNetwork.state.State;
@@ -58,9 +60,6 @@ public class DTASolver {
    * @throws IOException
    */
   public static void main(String[] args) throws IOException, MOException {
-    // EditorGUI e = new EditorGUI();
-    // reportExample();
-    // complexExample();
 
     // ZiliaskopoulosNetwork();
 
@@ -358,8 +357,10 @@ public class DTASolver {
   /**
    * @brief Running the optimization from a network from PATH
    * @details PATH code being closed, I have only added my interface to the git.
-   * The following jar files are needed to be able to run it: commons-io.1.4.jar
-   * model-objects-0.1-SNAPSHOT.jar, CORE-01-SNAPSHOT.jar, jettison-1.3.2.jar
+   *          The following jar files are needed to be able to run it:
+   *          commons-io.1.4.jar
+   *          model-objects-0.1-SNAPSHOT.jar, CORE-01-SNAPSHOT.jar,
+   *          jettison-1.3.2.jar
    */
   public static void highwayNetwork() throws IOException, MOException {
 
@@ -375,6 +376,7 @@ public class DTASolver {
     System.out.print("Loading PATH xml file...");
     String xml = FileUtils.readFileToString(new File(
         "graphs/Rerouting_plus_BF_SR_InD_v3.xml"));
+    //Rerouting_plus_BF_SR_InD_v3.xml && Rerouting_sent.xml
     Scenario scenario =
         Serializer.xmlToObject(xml, Scenario.class, new ScenarioFactory());
     System.out.println("Done.");
@@ -410,20 +412,6 @@ public class DTASolver {
       tmp_link = link_iterator.next();
       PATH_links.put((Integer) (int) tmp_link.getId(), tmp_link);
     }
-
-    // We get the initial densities
-    Iterator<Density> densities =
-        scenario.getInitialDensitySet().getListOfDensities().iterator();
-
-    HashMap<Integer, Double> initial_densities =
-        new HashMap<Integer, Double>(10);
-    Density tmp_density;
-    while (densities.hasNext()) {
-      tmp_density = densities.next();
-      initial_densities.put((Integer) (int) tmp_density.getLinkId(),
-          Double.parseDouble(tmp_density.getContent()));
-    }
-    System.out.println("Initial densities:" + initial_densities.toString());
 
     // We get the non-compliant split ratios
     assert scenario.getSplitRatioSet().getListOfSplitRatioProfiles().size() == 1 : "Zero or multiple split ratios profile not implemented yet";
@@ -536,6 +524,9 @@ public class DTASolver {
     HashMap<Integer, generalNetwork.graph.Link> PATHLink_to_links =
         new HashMap<Integer, generalNetwork.graph.Link>(PATH_links.size());
 
+    HashMap<Integer, Link> JBLink_to_PATHlinks =
+        new HashMap<Integer, Link>(PATH_links.size());
+
     while (all_links.hasNext()) {
       tmp_link = all_links.next();
       generalNetwork.graph.Node from, to;
@@ -548,12 +539,76 @@ public class DTASolver {
       PATHLink_to_links.put((int) tmp_link.getId(),
           mutable_graph.getLastAddedLink());
 
+      JBLink_to_PATHlinks.put(mutable_graph.getLastAddedLink().getUnique_id(),
+          tmp_link);
+
       generalNetwork.graph.Link tmp = mutable_graph.getLastAddedLink();
-      from.addOutgoingLink(tmp);
-      to.addIncomingLink(tmp);
+      tmp.l = tmp_link.getLength();
     }
 
     assert mutable_graph.check() : "We should have nodes[i].id = i and links[i].id = i";
+
+    /*
+     * We update the priority at the nodes.
+     * The priority is based on the number of lanes if the incoming links
+     */
+    for (int i = 0; i < mutable_graph.sizeNode(); i++) {
+      generalNetwork.graph.Node tmp = mutable_graph.getNode(i);
+      if (tmp.incoming_links.size() > 1) {
+        int nb = tmp.incoming_links.size();
+
+        double total_nb_lanes = 0;
+        for (int j = 0; j < nb; j++) {
+          int id = tmp.incoming_links.get(j).getUnique_id();
+          Link l = JBLink_to_PATHlinks.get(id);
+          assert l != null;
+          total_nb_lanes += l.getLanes();
+        }
+
+        tmp.priorities = new HashMap<Integer, Double>(nb);
+        Vector<generalNetwork.graph.Link> incoming = tmp.incoming_links;
+        for (int link = 0; link < incoming.size(); link++) {
+          int id = tmp.incoming_links.get(link).getUnique_id();
+          Link l = JBLink_to_PATHlinks.get(id);
+          tmp.priorities.put(id, l.getLanes() / total_nb_lanes);
+        }
+      }
+    }
+
+    // We get the initial densities and put them into the JB-links
+    Iterator<Density> densities =
+        scenario.getInitialDensitySet().getListOfDensities().iterator();
+
+    Density tmp_density;
+    while (densities.hasNext()) {
+      tmp_density = densities.next();
+      generalNetwork.graph.Link l =
+          PATHLink_to_links.get((int) tmp_density.getLinkId());
+      assert l != null;
+      l.initial_density =
+          Double.parseDouble(tmp_density.getContent());
+
+    }
+
+    /* We update the fundamental triangular diagram in the links */
+
+    all_links = PATH_links.values().iterator();
+
+    while (all_links.hasNext()) {
+      Link tmp = all_links.next();
+      generalNetwork.graph.Link jb_link = PATHLink_to_links.get(tmp);
+
+    }
+
+    System.out.println(mutable_graph.toString());
+
+    Graph graph = new Graph(mutable_graph);
+
+    double delta_t = 300;
+    int time_steps = 10;
+
+    DiscretizedGraph discretized_graph = new DiscretizedGraph(graph, delta_t,
+        time_steps);
     // Then we create all the nodes
     // we create the hash map PATH_node -> JB_node
     // We create all the links with the right values of the incoming links,
@@ -582,6 +637,6 @@ public class DTASolver {
      * 
      * }
      */
-    System.out.println("Done.");
+    // System.out.println("Done.");
   }
 }

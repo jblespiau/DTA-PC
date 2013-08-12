@@ -291,6 +291,22 @@ public class LWR_network {
     return initial_profile;
   }
 
+  /**
+   * @return The initial profile taking into account the initial densities
+   *         stored
+   */
+  public Profile initialProfile() {
+    Profile result = new Profile(this);
+    for (int i = 0; i < cells.length; i++) {
+      Cell c = cells[i];
+      if (!c.isBuffer() && !c.isSink()) {
+        RoadChunk rc = (RoadChunk) c;
+        result.putCell(i, new CellInfo(rc.getInitialDensity()));
+      }
+    }
+    return result;
+  }
+
   // This is false now
   /*
    * private double[] initialSplitRatios() {

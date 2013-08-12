@@ -167,16 +167,18 @@ public class DiscretizedGraph {
     double w = link.w;
     double jam_density = link.jam_density;
     double F_max = link.F_max;
+    double init_density = link.initial_density;
 
     int nb_cell_to_build = (int) Math.ceil(length / (v * delta_t));
     assert nb_cell_to_build > 0 : "We must build a > 0 number of cells";
 
     // We build the following links
-    Cell cell = null;
+    RoadChunk cell = null;
     Junction current_j = null, previous_j = null;
     int i;
     for (i = 0; i < nb_cell_to_build - 1; i++) {
       cell = new RoadChunk(v * delta_t, v, w, F_max, jam_density, nb_time_steps);
+      cell.addInitialDensity(0, init_density);
       new_cells.add(cell);
       if (i == 0) {
         result.begin = cell;
@@ -196,6 +198,7 @@ public class DiscretizedGraph {
 
     // Last cell (or unique cell) of the link
     cell = new RoadChunk(v * delta_t, v, w, F_max, jam_density, nb_time_steps);
+    cell.addInitialDensity(0, init_density);
     new_cells.add(cell);
     if (i == 0) {
       result.begin = cell;

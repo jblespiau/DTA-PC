@@ -39,6 +39,8 @@ public class Simulator {
   /** The split ratios at the origins (compliant and non compliant agents) */
   public IntertemporalOriginsSplitRatios splits;
 
+  public Profile initialization = null;
+
   /** Share of the compliant flow */
   private double alpha;
 
@@ -174,8 +176,13 @@ public class Simulator {
       if (k == 0) {
         profiles[k] = lwr_network.emptyProfile();
       } else if (k == 1) {
+        Profile init;
+        if (initialization != null)
+          init = initialization.copy();
+        else
+          init = lwr_network.emptyProfile();
         profiles[k] = lwr_network.simulateProfileFrom(
-            lwr_network.emptyProfile(),
+            init,
             profiles[k - 1],
             delta_t,
             origin_demands, splits,
