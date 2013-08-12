@@ -180,4 +180,22 @@ public class CellInfo {
     return true;
   }
 
+  /**
+   * @Copy the whole profile
+   * @return A new profile containing the same information
+   */
+  public CellInfo copy() {
+    CellInfo result = new CellInfo();
+    result.supply = this.supply;
+    result.demand = this.demand;
+    result.total_density = this.total_density;
+    result.partial_densities =
+        new LinkedHashMap<Integer, Double>(this.partial_densities);
+    result.in_flows =
+        new LinkedHashMap<Integer, Double>(this.in_flows);
+    result.out_flows =
+        new LinkedHashMap<Integer, Double>(this.out_flows);
+    return result;
+  }
+
 }
