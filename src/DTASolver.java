@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -375,8 +376,8 @@ public class DTASolver {
      */
     System.out.print("Loading PATH xml file...");
     String xml = FileUtils.readFileToString(new File(
-        "graphs/Rerouting_plus_BF_SR_InD_v3.xml"));
-    //Rerouting_plus_BF_SR_InD_v3.xml && Rerouting_sent.xml
+        "graphs/Rerouting_sent.xml"));
+    // Rerouting_plus_BF_SR_InD_v3.xml && Rerouting_sent.xml
     Scenario scenario =
         Serializer.xmlToObject(xml, Scenario.class, new ScenarioFactory());
     System.out.println("Done.");
@@ -436,17 +437,28 @@ public class DTASolver {
     while (non_compliant_SR.hasNext()) {
       tmp_SR = non_compliant_SR.next();
       HashMapPairCellsDouble non_compliant_split_ratios;
-      if (Integer.parseInt(tmp_SR.getIds()) == 1) {
-        non_compliant_split_ratios = new HashMapPairCellsDouble();
-        SR_list.add(non_compliant_split_ratios);
-      } else {
-        non_compliant_split_ratios = SR_list.getLast();
-      }
-      non_compliant_split_ratios.put(
-          new PairCells((int) tmp_SR.getLinkIn(), (int) tmp_SR.getLinkOut()),
-          Double.parseDouble(tmp_SR.getContent()));
-    }
 
+      List<String> history =
+          new ArrayList<String>(Arrays.asList(tmp_SR.getContent().split(",")));
+      System.out.println("List" + history.toString());
+      double[] history_table = new double[history.size()];
+      for (int i = 0; i < history_table.length; i++)
+        history_table[i] = Double.parseDouble(history.get(i));
+
+      System.out.println("History:" + Arrays.toString(history_table));
+      for (int k = 0; k < history_table.length; k++) {
+        if (k < SR_list.size())
+          non_compliant_split_ratios = SR_list.get(k);
+        else {
+          non_compliant_split_ratios = new HashMapPairCellsDouble();
+          SR_list.addLast(non_compliant_split_ratios);
+        }
+
+        non_compliant_split_ratios.put(
+            new PairCells((int) tmp_SR.getLinkIn(), (int) tmp_SR.getLinkOut()),
+            history_table[k]);
+      }
+    }
     HashMapPairCellsDouble[] SR_array =
         new HashMapPairCellsDouble[SR_list.size()];
     SR_list.toArray(SR_array);
