@@ -415,91 +415,6 @@ public class DTASolver {
       PATH_links.put((Integer) (int) tmp_link.getId(), tmp_link);
     }
 
-    // We get the non-compliant split ratios
-    assert scenario.getSplitRatioSet().getListOfSplitRatioProfiles().size() == 1 : "Zero or multiple split ratios profile not implemented yet";
-    double split_ratios_dt = scenario
-        .getSplitRatioSet()
-        .getListOfSplitRatioProfiles()
-        .get(0).getDt();
-    System.out.println("Split ratios (dt =" + split_ratios_dt + "):");
-
-    LinkedList<HashMapPairCellsDouble> SR_list =
-        new LinkedList<HashMapPairCellsDouble>();
-
-    Iterator<Splitratio> non_compliant_SR =
-        scenario
-            .getSplitRatioSet()
-            .getListOfSplitRatioProfiles()
-            .get(0)
-            .getListOfSplitratios()
-            .iterator();
-
-    Splitratio tmp_SR;
-    while (non_compliant_SR.hasNext()) {
-      tmp_SR = non_compliant_SR.next();
-      HashMapPairCellsDouble non_compliant_split_ratios;
-
-      List<String> history =
-          new ArrayList<String>(Arrays.asList(tmp_SR.getContent().split(",")));
-      double[] history_table = new double[history.size()];
-      for (int i = 0; i < history_table.length; i++)
-        history_table[i] = Double.parseDouble(history.get(i));
-
-      for (int k = 0; k < history_table.length; k++) {
-        if (k < SR_list.size())
-          non_compliant_split_ratios = SR_list.get(k);
-        else {
-          non_compliant_split_ratios = new HashMapPairCellsDouble();
-          SR_list.addLast(non_compliant_split_ratios);
-        }
-
-        non_compliant_split_ratios.put(
-            new PairCells((int) tmp_SR.getLinkIn(), (int) tmp_SR.getLinkOut()),
-            history_table[k]);
-      }
-    }
-    HashMapPairCellsDouble[] SR_array =
-        new HashMapPairCellsDouble[SR_list.size()];
-    SR_list.toArray(SR_array);
-
-    System.out
-        .println("Non-compliant split ratios:" + Arrays.toString(SR_array));
-
-    // Demand set
-    Iterator<DemandProfile> it_demandProfile =
-        scenario.getDemandSet().getDemandProfile().iterator();
-    // For now we deal with only one origin
-    assert scenario.getDemandSet().getDemandProfile().size() == 1;
-
-    LinkedList<Double> demands = new LinkedList<Double>();
-
-    DemandProfile tmp_demandProfile;
-    while (it_demandProfile.hasNext()) { // There is only one for now
-      tmp_demandProfile = it_demandProfile.next();
-
-      Iterator<Demand> it_demand = tmp_demandProfile.getDemand().iterator();
-      Demand tmp_demand;
-      // We have the discretization
-      double dt = tmp_demandProfile.getDt();
-      int origin_id = (int) tmp_demandProfile.getLinkIdOrg();
-
-      while (it_demand.hasNext()) {
-        tmp_demand = it_demand.next();
-
-        List<String> history =
-            new ArrayList<String>(Arrays.asList(tmp_demand.getContent().split(
-                ",")));
-        double[] history_table = new double[history.size()];
-        for (int i = 0; i < history_table.length; i++)
-          history_table[i] = Double.parseDouble(history.get(i));
-
-        System.out.println("Demand for origin " + origin_id + " (dt = " + dt
-            + Arrays.toString(history_table));
-      }
-    }
-
-    System.out.println("Demand profiles:" + demands.toString());
-
     // Fundamental Triangular Diagram
     Iterator<edu.berkeley.path.model_objects.scenario.FundamentalDiagramProfile> it_fdp =
         scenario
@@ -640,6 +555,94 @@ public class DTASolver {
 
     DiscretizedGraph discretized_graph = new DiscretizedGraph(graph, delta_t,
         time_steps);
+
+    // HERE BUILD LWR_network
+    LWR_network lwr_network = new LWR_network(discretized_graph);
+
+    // We get the non-compliant split ratios
+    assert scenario.getSplitRatioSet().getListOfSplitRatioProfiles().size() == 1 : "Zero or multiple split ratios profile not implemented yet";
+    double split_ratios_dt = scenario
+        .getSplitRatioSet()
+        .getListOfSplitRatioProfiles()
+        .get(0).getDt();
+    System.out.println("Split ratios (dt =" + split_ratios_dt + "):");
+
+    LinkedList<HashMapPairCellsDouble> SR_list =
+        new LinkedList<HashMapPairCellsDouble>();
+
+    Iterator<Splitratio> non_compliant_SR =
+        scenario
+            .getSplitRatioSet()
+            .getListOfSplitRatioProfiles()
+            .get(0)
+            .getListOfSplitratios()
+            .iterator();
+
+    Splitratio tmp_SR;
+    while (non_compliant_SR.hasNext()) {
+      tmp_SR = non_compliant_SR.next();
+      HashMapPairCellsDouble non_compliant_split_ratios;
+
+      List<String> history =
+          new ArrayList<String>(Arrays.asList(tmp_SR.getContent().split(",")));
+      double[] history_table = new double[history.size()];
+      for (int i = 0; i < history_table.length; i++)
+        history_table[i] = Double.parseDouble(history.get(i));
+
+      for (int k = 0; k < history_table.length; k++) {
+        if (k < SR_list.size())
+          non_compliant_split_ratios = SR_list.get(k);
+        else {
+          non_compliant_split_ratios = new HashMapPairCellsDouble();
+          SR_list.addLast(non_compliant_split_ratios);
+        }
+
+        non_compliant_split_ratios.put(
+            new PairCells((int) tmp_SR.getLinkIn(), (int) tmp_SR.getLinkOut()),
+            history_table[k]);
+      }
+    }
+    HashMapPairCellsDouble[] SR_array =
+        new HashMapPairCellsDouble[SR_list.size()];
+    SR_list.toArray(SR_array);
+
+    System.out
+        .println("Non-compliant split ratios:" + Arrays.toString(SR_array));
+
+    // Demand set
+    Iterator<DemandProfile> it_demandProfile =
+        scenario.getDemandSet().getDemandProfile().iterator();
+    // For now we deal with only one origin
+    assert scenario.getDemandSet().getDemandProfile().size() == 1;
+
+    LinkedList<Double> demands = new LinkedList<Double>();
+
+    DemandProfile tmp_demandProfile;
+    while (it_demandProfile.hasNext()) { // There is only one for now
+      tmp_demandProfile = it_demandProfile.next();
+
+      Iterator<Demand> it_demand = tmp_demandProfile.getDemand().iterator();
+      Demand tmp_demand;
+      // We have the discretization
+      double dt = tmp_demandProfile.getDt();
+      int origin_id = (int) tmp_demandProfile.getLinkIdOrg();
+
+      while (it_demand.hasNext()) {
+        tmp_demand = it_demand.next();
+
+        List<String> history =
+            new ArrayList<String>(Arrays.asList(tmp_demand.getContent().split(
+                ",")));
+        double[] history_table = new double[history.size()];
+        for (int i = 0; i < history_table.length; i++)
+          history_table[i] = Double.parseDouble(history.get(i));
+
+        System.out.println("Demand for origin " + origin_id + " (dt = " + dt
+            + Arrays.toString(history_table));
+      }
+    }
+
+    System.out.println("Demand profiles:" + demands.toString());
     // Then we create all the nodes
     // we create the hash map PATH_node -> JB_node
     // We create all the links with the right values of the incoming links,
