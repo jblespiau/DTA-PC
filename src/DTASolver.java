@@ -41,6 +41,7 @@ import dta_solver.SO_OptimizerByFiniteDifferences;
 import dta_solver.Simulator;
 import edu.berkeley.path.model_objects.MOException;
 
+import edu.berkeley.path.model_objects.jaxb.Demand;
 import edu.berkeley.path.model_objects.jaxb.DemandProfile;
 import edu.berkeley.path.model_objects.jaxb.Link;
 import edu.berkeley.path.model_objects.jaxb.FundamentalDiagramProfile;
@@ -382,7 +383,7 @@ public class DTASolver {
         Serializer.xmlToObject(xml, Scenario.class, new ScenarioFactory());
     System.out.println("Done.");
 
-    System.out.print("Converting it into an usable network...");
+    System.out.println("Converting it into an usable network...");
     // We get the network
     NetworkSet network_set = scenario.getNetworkSet();
     List<edu.berkeley.path.model_objects.jaxb.Network> list = network_set
@@ -440,12 +441,10 @@ public class DTASolver {
 
       List<String> history =
           new ArrayList<String>(Arrays.asList(tmp_SR.getContent().split(",")));
-      System.out.println("List" + history.toString());
       double[] history_table = new double[history.size()];
       for (int i = 0; i < history_table.length; i++)
         history_table[i] = Double.parseDouble(history.get(i));
 
-      System.out.println("History:" + Arrays.toString(history_table));
       for (int k = 0; k < history_table.length; k++) {
         if (k < SR_list.size())
           non_compliant_split_ratios = SR_list.get(k);
@@ -467,16 +466,36 @@ public class DTASolver {
         .println("Non-compliant split ratios:" + Arrays.toString(SR_array));
 
     // Demand set
-    Iterator<DemandProfile> it_demand =
+    Iterator<DemandProfile> it_demandProfile =
         scenario.getDemandSet().getDemandProfile().iterator();
-    HashMap<Integer, Double> demands = new HashMap<Integer, Double>();
+    // For now we deal with only one origin
+    assert scenario.getDemandSet().getDemandProfile().size() == 1;
 
-    DemandProfile tmp_demand;
-    while (it_demand.hasNext()) {
-      tmp_demand = it_demand.next();
-      assert tmp_demand.getDemand().size() == 1 : "Dealing with constant demand";
-      demands.put((Integer) (int) tmp_demand.getLinkIdOrg(),
-          Double.parseDouble(tmp_demand.getDemand().get(0).getContent()));
+    LinkedList<Double> demands = new LinkedList<Double>();
+
+    DemandProfile tmp_demandProfile;
+    while (it_demandProfile.hasNext()) { // There is only one for now
+      tmp_demandProfile = it_demandProfile.next();
+
+      Iterator<Demand> it_demand = tmp_demandProfile.getDemand().iterator();
+      Demand tmp_demand;
+      // We have the discretization
+      double dt = tmp_demandProfile.getDt();
+      int origin_id = (int) tmp_demandProfile.getLinkIdOrg();
+
+      while (it_demand.hasNext()) {
+        tmp_demand = it_demand.next();
+
+        List<String> history =
+            new ArrayList<String>(Arrays.asList(tmp_demand.getContent().split(
+                ",")));
+        double[] history_table = new double[history.size()];
+        for (int i = 0; i < history_table.length; i++)
+          history_table[i] = Double.parseDouble(history.get(i));
+
+        System.out.println("Demand for origin " + origin_id + " (dt = " + dt
+            + Arrays.toString(history_table));
+      }
     }
 
     System.out.println("Demand profiles:" + demands.toString());
