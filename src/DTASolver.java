@@ -422,6 +422,7 @@ public class DTASolver {
             .getListOfFundamentalDiagramProfiles()
             .iterator();
 
+    // PATH link id -> FDP
     HashMap<Integer, FundamentalDiagramProfile> fundamentalDiagrams =
         new HashMap<Integer, FundamentalDiagramProfile>(
             scenario
@@ -432,15 +433,6 @@ public class DTASolver {
     while (it_fdp.hasNext()) {
       tmp_FDP = it_fdp.next();
       fundamentalDiagrams.put((int) tmp_FDP.getId(), tmp_FDP);
-      /*
-       * double dt = tmp_FDP.getDt();
-       * FundamentalDiagram fundamental_diagram = tmp_FDP
-       * .getFundamentalDiagram()
-       * .get(0);
-       * double capacity = fundamental_diagram.getCapacity();
-       * double congestion_speed = fundamental_diagram.getCongestionSpeed();
-       * double free_flow_speed = fundamental_diagram.getFreeFlowSpeed();
-       */
     }
 
     /*
@@ -544,6 +536,16 @@ public class DTASolver {
       Link tmp = all_links.next();
       generalNetwork.graph.Link jb_link = PATHLink_to_links.get(tmp);
 
+      //jb_link.= fundamental_diagram.getCapacity();
+      /*
+       * double dt = tmp_FDP.getDt();
+       * FundamentalDiagram fundamental_diagram = tmp_FDP
+       * .getFundamentalDiagram()
+       * .get(0);
+       * jb_link.= fundamental_diagram.getCapacity();
+       * double congestion_speed = fundamental_diagram.getCongestionSpeed();
+       * double free_flow_speed = fundamental_diagram.getFreeFlowSpeed();
+       */
     }
 
     System.out.println(mutable_graph.toString());

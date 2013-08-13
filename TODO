@@ -1,0 +1,20 @@
+- Add the nodes previous to the origin links as origin in the mutable graph
+("addSingleBufferSource")
+- Add the nodes without outgoing links to the list of destinations 
+("SingleBufferDestination type")
+
+- Gives the values to the fundamental diagram of cells:
+* Add the alues at the link level
+* Includes it into cells when discretizing the graph
+
+- Add the paths to the graph (takes the list of PATH links and transform it into
+JB-links (call the PATHLink_to_links hasmap)
+
+- Add the demand:
+* Transform the history of demand into a the discretization given for the 
+problem (look at generalNetwork.data.demand FunctionGraph)
+* Then add it to the LWR_Network
+-Add the split ratios to the LWR_network:
+* Create a new IntertemporalSplitRatios that will need to be filled by and using
+IntertemporalJunctionSplitRatios. In IntertemporalJunctionSplitRatios, there are
+the functions addNonCompliantSplitRatio and addCompliantSplitRatio to do so.
