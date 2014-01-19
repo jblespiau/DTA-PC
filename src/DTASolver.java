@@ -64,8 +64,10 @@ public class DTASolver {
   public static void main(String[] args) throws IOException, MOException {
 
     // ZiliaskopoulosNetwork();
-
-    highwayNetwork();
+    optimizationExampleByFiniteDifferences(1.0);
+    optimizationExampleByFiniteDifferences(0.1);
+    optimizationExampleByFiniteDifferences(0.0);
+    //highwayNetwork();
   }
 
   public static void printExample() {
@@ -101,9 +103,8 @@ public class DTASolver {
       System.out.println(result[i]);
   }
 
-  public static void optimizationExampleByFiniteDifferences() {
+  public static void optimizationExampleByFiniteDifferences(double alpha) {
     /* Share of the compliant flow */
-    double alpha = 1;
     String network_file = "graphs/TwoParallelPath.json";
     String data_file = "graphs/TwoParallelPathData.json";
 
