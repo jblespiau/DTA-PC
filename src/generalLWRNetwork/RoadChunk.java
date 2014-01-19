@@ -109,7 +109,8 @@ public class RoadChunk extends Cell {
 
     Iterator<Double> densities = initial_densities.values().iterator();
     while (densities.hasNext()) {
-      assert densities.next() >= 0 : "Cell " + u_id
+      Double d = densities.next();
+      assert d >= 0 : "Cell " + u_id
           + "the initial density " + densities.next()
           + " must be greater than 0";
     }
