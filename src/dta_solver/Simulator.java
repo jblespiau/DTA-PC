@@ -116,9 +116,6 @@ public class Simulator {
       System.out.println("Full System Optimal detected.");
     }
 
-    if (debug)
-      System.out.println(splits.toString());
-
     /* Building compact form in LWR_network */
     System.out.print("Creating the compact representation...");
     lwr_network = new LWR_network(discretized_graph);
@@ -135,6 +132,9 @@ public class Simulator {
      * origins
      */
     initializSplitRatios();
+
+    if (debug)
+      System.out.println(splits.toString());
 
     if (debug) {
       System.out.println("Printing the compact form");
