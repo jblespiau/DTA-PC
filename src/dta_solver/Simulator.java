@@ -116,12 +116,6 @@ public class Simulator {
       System.out.println("Full System Optimal detected.");
     }
 
-    /*
-     * Initialization of a physical set for the control split-ratios at the
-     * origins
-     */
-    initializSplitRatios();
-
     if (debug)
       System.out.println(splits.toString());
 
@@ -135,6 +129,12 @@ public class Simulator {
         .print("Checking that the network respect needed requirements...");
     lwr_network.checkConstraints(delta_t);
     System.out.println("Done");
+
+    /*
+     * Initialization of a physical set for the control split-ratios at the
+     * origins
+     */
+    initializSplitRatios();
 
     if (debug) {
       System.out.println("Printing the compact form");
@@ -251,6 +251,7 @@ public class Simulator {
     int nb_steps = time_discretization.getNb_steps();
     System.out
         .print("Initializing physical split-ratios at the origins...");
+    assert(lwr_network.sources != null);
     splits =
         IntertemporalOriginsSplitRatios.defaultPhysicalSplitRatios(
             nb_steps,
