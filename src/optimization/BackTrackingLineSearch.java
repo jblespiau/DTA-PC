@@ -60,7 +60,7 @@ public class BackTrackingLineSearch implements LineSearchMethod {
       for (int i = 0; i < temporary_position.length; i++)
         temporary_position[i] = initial_point[i] + t * direction[i];
       temporary_value = function.objective(temporary_position);
-      System.out.println("Current t:" + t + " for cost J: " + temporary_value);
+      //System.out.println("Current t:" + t + " for cost J: " + temporary_value);
     }
 
     return temporary_position;
