@@ -123,10 +123,20 @@ public class Simulator {
 
     /* Checking the requirements on the network */
     System.out
-        .print("Checking that the network respect needed requirements...");
+        .print("Checking that the network respect CFL conditions and triangular flow diagram ...");
     lwr_network.checkConstraints(delta_t);
     System.out.println("Done");
 
+    if (alpha != 1) {
+      System.out
+          .print("Checking that the split-ratios of the non-compliant flows are well defined ...");
+      boolean is_valid = lwr_network.check_non_compliant_flows_integrity();
+      if (is_valid) {
+        System.out.println("Done");
+      } else {
+        System.err.print("Failed !");
+      }
+    }
     /*
      * Initialization of a physical set for the control split-ratios at the
      * origins
@@ -251,7 +261,7 @@ public class Simulator {
     int nb_steps = time_discretization.getNb_steps();
     System.out
         .print("Initializing physical split-ratios at the origins...");
-    assert(lwr_network.sources != null);
+    assert (lwr_network.sources != null);
     splits =
         IntertemporalOriginsSplitRatios.defaultPhysicalSplitRatios(
             nb_steps,

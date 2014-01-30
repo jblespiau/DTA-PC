@@ -187,12 +187,25 @@ public class LWR_network {
     return nb_compliant_commodities;
   }
 
+  /**
+   * @brief Check the CFL conditions and the triangular diagram flow shape
+   * @param delta_t
+   *          The time step that defines the CFL condition
+   */
   public void checkConstraints(double delta_t) {
     for (int c = 0; c < cells.length; c++)
       cells[c].checkConstraints(delta_t);
 
     // for (int j = 0; j < junctions.length; j++)
     // junctions[j].checkConstraints();
+  }
+
+  /**
+   * @brief Check that the sum of the non-compliant flows at all junctions is 1
+   * @return True if valid, False otherwise
+   */
+  public boolean check_non_compliant_flows_integrity() {
+    return internal_split_ratios.check_data_integrity(junctions);
   }
 
   /**
